@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+
+    <title>Login</title>
+    <meta name="description" content="Login to awesome lists">
+    <link href="/static/output.css" rel="stylesheet">
+</head>
+
+<body>
+    <div>
+        <div>
+        <h2>Login</h2>
+        <form action="/login" method="post" class="flex flex-col space-y-1 justify-center">
+          <label for="username">Email:</label>
+          <input type="text" id="username" name="email" required>
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" required>
+          <button type="submit" class="mx-auto">Login</button>
+        </form>
+        <h2>Sign up</h2>
+        <form action="/sign-up" method="post" class="flex flex-col space-y-1">
+          <label for="username">Name:</label>
+          <input type="text" id="username" name="name" value="Jimmy" required>
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="email" required>
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" required>
+          <label for="password">Confirm Password:</label>
+          <input type="password" required>
+          <button type="submit" class="mx-auto">Sign Up</button>
+        </form>
+
+        </div>
+
+
+    </div>
+</body>
+
+</html>

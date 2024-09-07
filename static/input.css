@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+Primary
+#3C8023
+
+Primary Light
+#C8DA81
+
+Secondary
+#C8DA81, #E4D762
+
+
+White
+#EFECC8
+
+
+#84C738
+#EFECC8
+*/
+
+
+
+html {
+  background-color: #212121;
+  max-width: 700px;
+  font-family: Helvetica, sans-serif;
+  padding: 0 1em;
+  font-size: 20px;
+  color: #EFECC8;
+}
+
+span {
+  font-size: 0.7em;
+}
+
+h1, .input-h1 {
+  font-size: 1.9em;
+}
+
+h2 {
+  font-size: 1.65em;
+}
+
+input {
+  background-color: transparent;
+  border-bottom: 1px solid black;
+}
+
+input:focus {
+  outline: none;
+  border-bottom: 1px solid #3C8023;
+  transition: border-bottom 0.2s;
+}
+
+button, .button {
+  border: 1px solid hsl(93 61 76 / 99%);
+  padding: 0.5em 1em;
+  width: fit-content;
+  border-radius: 0.5em;
+}
+
+button:hover, button:focus, .button:hover, .button:focus {
+  background-color: hsl(0 0 0 / 20%);
+  outline: none;
+  transition: background-color 0.2s;
+}
+
+
+a {
+  color: #EFECC8;
+  text-decoration: none;
+}
+
+a:hover a:focus {
+  font-weight: bold;
+  transition: font-weight 0.2s;
+}
