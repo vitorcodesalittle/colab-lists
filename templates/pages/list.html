@@ -16,6 +16,12 @@
     <form action="/lists/{{ .List.Id }}" method="POST" class="flex-col space-y-1 flex">
       <input class="input-h1" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
       <input name="description" value="{{ .List.Description }}" placeholder="Describe your list" />
+      <label>Colaborators {{ .Colaborators | len }}:</label>
+      <select multiple name="colaborators">
+        {{ range .Colaborators }}
+        <option value="{{ .Id }}">{{ .Name }}</option>
+        {{ end }}
+      </select>
       <button type="submit">Save</button>
     </form>
     {{ else }}
@@ -38,6 +44,10 @@
 
       <p>Items:</p>
       <div>
+        {{ range .List.Groups }}
+
+        <p>{{ .Name }}</p>
+
         <table>
           <thead>
             <tr>
@@ -45,7 +55,7 @@
               <th colspan="2">Qty</th>
           </thead>
           <tbody>
-            {{ range .List.Items }}
+            {{ range .Items }}
             <tr>
               <td colspan="10">
                 {{ .Description}}
@@ -57,6 +67,9 @@
             {{ end }}
           </tbody>
         </table>
+
+        {{ end }}
+
       </div>
     </div>
     {{ end }}

@@ -36,7 +36,8 @@ span {
   font-size: 0.7em;
 }
 
-h1, .input-h1 {
+h1,
+.input-h1 {
   font-size: 1.9em;
 }
 
@@ -44,25 +45,31 @@ h2 {
   font-size: 1.65em;
 }
 
-input {
+input,
+option,
+select {
   background-color: transparent;
   border-bottom: 1px solid black;
 }
 
-input:focus {
+input:focus, select:focus {
   outline: none;
   border-bottom: 1px solid #3C8023;
   transition: border-bottom 0.2s;
 }
 
-button, .button {
+button,
+.button {
   border: 1px solid hsl(93 61 76 / 99%);
   padding: 0.5em 1em;
   width: fit-content;
   border-radius: 0.5em;
 }
 
-button:hover, button:focus, .button:hover, .button:focus {
+button:hover,
+button:focus,
+.button:hover,
+.button:focus {
   background-color: hsl(0 0 0 / 20%);
   outline: none;
   transition: background-color 0.2s;
