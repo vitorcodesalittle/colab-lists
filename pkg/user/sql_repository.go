@@ -14,37 +14,37 @@ func (s *SqlUsersRepository) CreateUser(username string, password string) (User,
 		return User{}, err
 	}
 	stmt, err := conn.Prepare(`INSERT INTO luser (username, passwordHash, passwordSalt) VALUES (?, ?, ?) RETURNING luserId`)
-  defer stmt.Close()
+	defer stmt.Close()
 	if err != nil {
-    return User{}, err
+		return User{}, err
 	}
 	passwordHash, err := hashPassword([]byte(password))
-  if err != nil {
-    return User{}, err
-  }
+	if err != nil {
+		return User{}, err
+	}
 	rs, err := stmt.Exec(username, passwordHash, "")
 	if err != nil {
 		return User{}, err
 	}
 	userId, err := rs.LastInsertId()
 	if err != nil {
-    return User{}, err
+		return User{}, err
 	}
 	if err != nil {
 		return User{}, err
 	}
-  conn.Close()
+	conn.Close()
 	return s.Get(userId)
 }
 
 func (s *SqlUsersRepository) Get(id int64) (User, error) {
 	conn, err := infra.CreateConnection()
-  defer conn.Close()
+	defer conn.Close()
 	if err != nil {
 		return User{}, err
 	}
 	stmt, err := conn.Prepare(`SELECT * FROM luser WHERE luserId = ?`)
-  defer stmt.Close()
+	defer stmt.Close()
 	if err != nil {
 		panic(err)
 	}
@@ -71,7 +71,7 @@ func scanUser(row Scanner) (User, error) {
 // GetAll implements UsersRepository.
 func (s *SqlUsersRepository) GetAll() ([]User, error) {
 	conn, err := infra.CreateConnection()
-  defer conn.Close()
+	defer conn.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -93,12 +93,12 @@ func (s *SqlUsersRepository) GetAll() ([]User, error) {
 // GetByUsername implements UsersRepository.
 func (s *SqlUsersRepository) GetByUsername(username string) (User, error) {
 	conn, err := infra.CreateConnection()
-  defer conn.Close()
+	defer conn.Close()
 	if err != nil {
 		return User{}, err
 	}
 	stmt, err := conn.Prepare(`SELECT * FROM luser WHERE username = ?`)
-  defer stmt.Close()
+	defer stmt.Close()
 	if err != nil {
 		return User{}, err
 	}
@@ -118,6 +118,6 @@ func hashPassword(password []byte) ([]byte, error) {
 }
 
 func (s *SqlUsersRepository) ComparePassword(password []byte, hashedPasswowrd []byte) bool {
-  err := bcrypt.CompareHashAndPassword(hashedPasswowrd, password)
-  return err == nil
+	err := bcrypt.CompareHashAndPassword(hashedPasswowrd, password)
+	return err == nil
 }

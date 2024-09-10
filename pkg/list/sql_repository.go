@@ -79,22 +79,22 @@ func (s *SqlListRepository) GetAll() ([]List, error) {
 	if err != nil {
 		panic(err)
 	}
-	rs, err:= sql.Query(`
+	rs, err := sql.Query(`
   SELECT *
   FROM list
   `)
 	if err != nil {
 		panic(err)
 	}
-  ls := make([]List, 0)
-  for rs.Next() {
-    l, err := scanList(rs)
-    if err != nil {
-      panic(err)
-    }
-    ls = append(ls, l)
-  }
-  return ls, nil
+	ls := make([]List, 0)
+	for rs.Next() {
+		l, err := scanList(rs)
+		if err != nil {
+			panic(err)
+		}
+		ls = append(ls, l)
+	}
+	return ls, nil
 }
 
 // Update implements ListsRepository.
