@@ -1,11 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"crypto/rand"
 	"log"
 	"net/http"
 	"strconv"
 	tmpl "text/template"
+	"time"
 
 	"vilmasoftware.com/colablists/pkg/list"
 	"vilmasoftware.com/colablists/pkg/user"
@@ -36,6 +37,83 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	templatesMap["login"].Execute(w, &LoginArgs{})
 }
 
+type Session struct {
+  user.User
+  SessionId string
+  LastUsed time.Time
+}
+
+var sessionsMap map[string]Session;
+
+func GenerateRandomBytes(n int) ([]byte, error) {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	// Note that err == nil only if we read len(b) bytes.
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
+}
+
+func getSessionId() string {
+  for true {
+    sessionIdBytes, err := GenerateRandomBytes(12)
+    if err != nil { panic(err) }
+    sessionId := string(sessionIdBytes)
+    if _, ok := sessionsMap[sessionId]; !ok {
+      return sessionId
+    }
+  }
+  return ""
+}
+
+func getUserFromSession(r *http.Request) (user.User, error) {
+  sessionId := r.Header.Get("Cookie")
+  session, ok := sessionsMap[sessionId]
+  if !ok {
+    return user.User{}, nil
+  }
+  return session.User, nil
+}
+
+func postLoginHandler(w http.ResponseWriter, r *http.Request) { user, err := usersRepository.GetByUsername(r.FormValue("username"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+  if usersRepository.ComparePassword([]byte(r.FormValue("password")), []byte(user.PasswordHash)) {
+    sessionId := getSessionId()
+    sessionsMap[sessionId] = Session{
+      User: user,
+      SessionId: sessionId,
+      LastUsed: time.Now(),
+    }
+    w.Header().Add("Set-Cookie", "SESSION="+sessionId)
+  } else {
+		http.Error(w, "", http.StatusUnauthorized)
+  }
+}
+
+func postLogoutHandler(w http.ResponseWriter, r *http.Request) {
+  cookie, err := r.Cookie("SESSION")
+  if err != nil {
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+  }
+  delete(sessionsMap, cookie.Value)
+  w.Header().Add("Set-Cookie", "SESSION=; expires=Thu, 01 Jan 1970 00:00:00 GMT")
+}
+
+func postSignupHandler(w http.ResponseWriter, r *http.Request) {
+  _, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
+  if err != nil {
+    log.Println(err)
+    http.Error(w, err.Error(), http.StatusInternalServerError)
+  } else {
+    http.Redirect(w, r, "/login", http.StatusSeeOther)
+  }
+}
+
+
 type ListsArgs struct {
 	Lists []list.List
 }
@@ -62,7 +140,7 @@ func listDetailHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	list, err := listsRepository.Get(id)
+	list, err := listsRepository.Get(int64(id))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -75,6 +153,16 @@ func listDetailHandler(w http.ResponseWriter, r *http.Request) {
 		Editing:      r.URL.Query().Has("edit"),
 		Colaborators: colaborators,
 	})
+}
+
+func collectUsers(lists []list.List) []user.User {
+	var users []user.User
+	for _, list := range lists {
+		for _, colaborator := range list.Colaborators {
+			users = append(users, colaborator)
+		}
+	}
+	return users
 }
 
 func main() {
@@ -93,37 +181,26 @@ func main() {
 		tmpl.ParseFiles("./templates/pages/list.html"),
 	)
 	// Create a new in-memory repository
-	listsRepository = list.NewListsInMemoryRepository([]list.List{
-		MockList(),
-		MockList(),
-		MockList(),
-		MockList(),
-		MockList(),
-	})
+	listsRepository = &list.SqlListRepository{}
 
-	lists, err := listsRepository.GetAll()
+	_, err := listsRepository.GetAll()
 	if err != nil {
 		panic(err)
 	}
-	usersRepository = user.NewUsersInMemoryRepository(collectUsers(lists))
+	usersRepository = &user.SqlUsersRepository{}
 
 	dir := http.Dir(".")
 	http.Handle("GET /static/", http.FileServer(dir))
 	http.HandleFunc("GET /login", loginHandler)
+	http.HandleFunc("POST /login", postLoginHandler)
+	http.HandleFunc("POST /logout", postLogoutHandler)
+	http.HandleFunc("POST /sign-up", postSignupHandler)
 	http.HandleFunc("GET /", indexHandler)
 	http.HandleFunc("GET /lists", listsHandler)
 	http.HandleFunc("GET /lists/{listId}", listDetailHandler)
 
-	fmt.Printf("Server started at http://localhost:8080\n")
+	log.Printf("Server started at http://localhost:8080\n")
 	log.Fatal(http.ListenAndServe(":8080", nil))
-}
 
-func collectUsers(lists []list.List) []user.User {
-	var users []user.User
-	for _, list := range lists {
-		for _, colaborator := range list.Colaborators {
-			users = append(users, colaborator)
-		}
-	}
-	return users
+	log.Println("Shutting server down...")
 }

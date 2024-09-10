@@ -26,7 +26,7 @@ func RandStringRunes(n int) string {
 
 func MockUser() user.User {
 	name := RandStringRunes(5)
-	u := user.User{Id: 1, Name: name, Email: fmt.Sprintf("%s@domain.com", name), Online: bool(rand.Intn(2) == 1)}
+	u := user.User{Id: 1, Username: fmt.Sprintf("%s@domain.com", name), Online: bool(rand.Intn(2) == 1)}
 	IdUserCurrent += 1
 	return u
 }

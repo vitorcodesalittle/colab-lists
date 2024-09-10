@@ -3,6 +3,7 @@ package list
 type ListCreationParams struct {
 	Title       string
 	Description string
+	CreatorId   int
 }
 
 const (
@@ -25,4 +26,3 @@ type ListUpdateParams struct {
 	ListCreationParams
 	Items []ItemUpdateParams
 }
-

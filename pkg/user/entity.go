@@ -2,13 +2,10 @@ package user
 
 
 type User struct {
-	Id     int
-	Name   string
-	Email  string
+	Id     int64
+	Username string
+  PasswordHash string
+  PasswordSalt string
 	Online bool
-}
-
-func (u *User) String() string {
-  return u.Name
 }
 
