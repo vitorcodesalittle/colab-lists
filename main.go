@@ -38,12 +38,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type Session struct {
-  user.User
-  SessionId string
-  LastUsed time.Time
+	user.User
+	SessionId string
+	LastUsed  time.Time
 }
 
-var sessionsMap map[string]Session;
+var sessionsMap map[string]Session
 
 func GenerateRandomBytes(n int) ([]byte, error) {
 	b := make([]byte, n)
@@ -57,62 +57,67 @@ func GenerateRandomBytes(n int) ([]byte, error) {
 }
 
 func getSessionId() string {
-  for true {
-    sessionIdBytes, err := GenerateRandomBytes(12)
-    if err != nil { panic(err) }
-    sessionId := string(sessionIdBytes)
-    if _, ok := sessionsMap[sessionId]; !ok {
-      return sessionId
-    }
-  }
-  return ""
+	for true {
+		sessionIdBytes, err := GenerateRandomBytes(12)
+		if err != nil {
+			panic(err)
+		}
+		sessionId := string(sessionIdBytes)
+		if _, ok := sessionsMap[sessionId]; !ok {
+			return sessionId
+		}
+	}
+	return ""
 }
 
 func getUserFromSession(r *http.Request) (user.User, error) {
-  sessionId := r.Header.Get("Cookie")
-  session, ok := sessionsMap[sessionId]
-  if !ok {
-    return user.User{}, nil
-  }
-  return session.User, nil
+	sessionId := r.Header.Get("Cookie")
+	session, ok := sessionsMap[sessionId]
+	if !ok {
+		return user.User{}, nil
+	}
+	return session.User, nil
 }
 
-func postLoginHandler(w http.ResponseWriter, r *http.Request) { user, err := usersRepository.GetByUsername(r.FormValue("username"))
+func postLoginHandler(w http.ResponseWriter, r *http.Request) {
+	log.Printf("%v:%v", r.FormValue("username"), r.FormValue("password"))
+	user, err := usersRepository.GetByUsername(r.FormValue("username"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-  if usersRepository.ComparePassword([]byte(r.FormValue("password")), []byte(user.PasswordHash)) {
-    sessionId := getSessionId()
-    sessionsMap[sessionId] = Session{
-      User: user,
-      SessionId: sessionId,
-      LastUsed: time.Now(),
-    }
-    w.Header().Add("Set-Cookie", "SESSION="+sessionId)
-  } else {
+	if usersRepository.ComparePassword([]byte(r.FormValue("password")), []byte(user.PasswordHash)) {
+		sessionId := getSessionId()
+		sessionsMap[sessionId] = Session{
+			User:      user,
+			SessionId: sessionId,
+			LastUsed:  time.Now(),
+		}
+		w.Header().Add("Set-Cookie", "SESSION="+sessionId)
+		http.Redirect(w, r, "/lists", http.StatusSeeOther)
+	} else {
 		http.Error(w, "", http.StatusUnauthorized)
-  }
+	}
 }
 
 func postLogoutHandler(w http.ResponseWriter, r *http.Request) {
-  cookie, err := r.Cookie("SESSION")
-  if err != nil {
-    http.Error(w, err.Error(), http.StatusInternalServerError)
-  }
-  delete(sessionsMap, cookie.Value)
-  w.Header().Add("Set-Cookie", "SESSION=; expires=Thu, 01 Jan 1970 00:00:00 GMT")
+	cookie, err := r.Cookie("SESSION")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	delete(sessionsMap, cookie.Value)
+	w.Header().Add("Set-Cookie", "SESSION=; expires=Thu, 01 Jan 1970 00:00:00 GMT")
 }
 
 func postSignupHandler(w http.ResponseWriter, r *http.Request) {
-  _, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
-  if err != nil {
-    log.Println(err)
-    http.Error(w, err.Error(), http.StatusInternalServerError)
-  } else {
-    http.Redirect(w, r, "/login", http.StatusSeeOther)
-  }
+	_, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
+	if err != nil {
+		log.Println("Error creating user")
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+	}
 }
-
 
 type ListsArgs struct {
 	Lists []list.List
@@ -155,6 +160,19 @@ func listDetailHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func getUserHandler(w http.ResponseWriter, r *http.Request) {
+	// Get id from path parameter
+	id, err := strconv.Atoi(r.PathValue("userId"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	user, err := usersRepository.Get(int64(id))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	w.Write([]byte(user.Username))
+}
+
 func collectUsers(lists []list.List) []user.User {
 	var users []user.User
 	for _, list := range lists {
@@ -168,6 +186,7 @@ func collectUsers(lists []list.List) []user.User {
 func main() {
 	// Fill templatesMap with all templates
 	templatesMap = make(map[string]*tmpl.Template)
+	sessionsMap = make(map[string]Session)
 	templatesMap["index"] = tmpl.Must(
 		tmpl.ParseFiles("./templates/pages/index.html"),
 	)
@@ -198,6 +217,7 @@ func main() {
 	http.HandleFunc("GET /", indexHandler)
 	http.HandleFunc("GET /lists", listsHandler)
 	http.HandleFunc("GET /lists/{listId}", listDetailHandler)
+	http.HandleFunc("GET /api/users/{userId}", getUserHandler)
 
 	log.Printf("Server started at http://localhost:8080\n")
 	log.Fatal(http.ListenAndServe(":8080", nil))

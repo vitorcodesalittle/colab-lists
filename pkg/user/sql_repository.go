@@ -1,8 +1,6 @@
 package user
 
 import (
-	"log"
-
 	"golang.org/x/crypto/bcrypt"
 	"vilmasoftware.com/colablists/pkg/infra"
 )
@@ -12,14 +10,13 @@ type SqlUsersRepository struct{}
 // CreateUser implements UsersRepository.
 func (s *SqlUsersRepository) CreateUser(username string, password string) (User, error) {
 	conn, err := infra.CreateConnection()
-  defer conn.Close()
 	if err != nil {
 		return User{}, err
 	}
 	stmt, err := conn.Prepare(`INSERT INTO luser (username, passwordHash, passwordSalt) VALUES (?, ?, ?) RETURNING luserId`)
   defer stmt.Close()
 	if err != nil {
-		log.Fatal(err)
+    return User{}, err
 	}
 	passwordHash, err := hashPassword([]byte(password))
   if err != nil {
@@ -29,12 +26,14 @@ func (s *SqlUsersRepository) CreateUser(username string, password string) (User,
 	if err != nil {
 		return User{}, err
 	}
-  log.Println("Getting inserted id")
 	userId, err := rs.LastInsertId()
 	if err != nil {
-    log.Println("Error getting inserted id")
-		log.Fatal(err)
+    return User{}, err
 	}
+	if err != nil {
+		return User{}, err
+	}
+  conn.Close()
 	return s.Get(userId)
 }
 
@@ -49,7 +48,6 @@ func (s *SqlUsersRepository) Get(id int64) (User, error) {
 	if err != nil {
 		panic(err)
 	}
-  log.Printf("Getting user with id %d\n", id)
 	row := stmt.QueryRow(id)
 	if row.Err() != nil {
 		return User{}, row.Err()
@@ -120,5 +118,6 @@ func hashPassword(password []byte) ([]byte, error) {
 }
 
 func (s *SqlUsersRepository) ComparePassword(password []byte, hashedPasswowrd []byte) bool {
-	return bcrypt.CompareHashAndPassword(hashedPasswowrd, password) != nil
+  err := bcrypt.CompareHashAndPassword(hashedPasswowrd, password)
+  return err == nil
 }
