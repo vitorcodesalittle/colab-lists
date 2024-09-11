@@ -4,6 +4,7 @@ import (
 	"log"
 
 	infra "vilmasoftware.com/colablists/pkg/infra"
+	"vilmasoftware.com/colablists/pkg/user"
 )
 
 type SqlListRepository struct{}
@@ -16,6 +17,7 @@ type scannable interface {
 func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
 	sql, err := infra.CreateConnection()
 	if err != nil {
+		sql.Close()
 		return List{}, err
 	}
 	stmt, err := sql.Prepare(`
@@ -34,6 +36,7 @@ func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
 	if err != nil {
 		log.Fatal("error executing statement")
 	}
+	sql.Close()
 	return s.Get(listId)
 }
 
@@ -47,8 +50,10 @@ type Scanner interface {
 }
 
 func scanList(row Scanner) (List, error) {
-	l := &List{}
-	err := row.Scan(&l.Id, &l.Title, &l.Description)
+	l := &List{
+		Creator: user.User{},
+	}
+	err := row.Scan(&l.Id, &l.Title, &l.Description, &l.Creator.Id)
 	if err != nil {
 		return List{}, err
 	}

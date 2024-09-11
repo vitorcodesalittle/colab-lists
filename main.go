@@ -2,21 +2,31 @@ package main
 
 import (
 	"crypto/rand"
+	"encoding/base64"
+	"errors"
 	"log"
 	"net/http"
 	"strconv"
 	tmpl "text/template"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"vilmasoftware.com/colablists/pkg/list"
 	"vilmasoftware.com/colablists/pkg/user"
 )
 
 var templatesMap map[string]*tmpl.Template
+var (
+	listsRepository list.ListsRepository = &list.SqlListRepository{}
+	usersRepository user.UsersRepository = &user.SqlUsersRepository{}
+)
 
 var (
-	listsRepository list.ListsRepository
-	usersRepository user.UsersRepository
+	liveEditor *list.LiveEditor = list.NewLiveEditor(listsRepository)
+	upgrader                    = websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+	}
 )
 
 type Args struct {
@@ -45,23 +55,21 @@ type Session struct {
 
 var sessionsMap map[string]Session
 
-func GenerateRandomBytes(n int) ([]byte, error) {
+func GenerateRandomBytes(n int) []byte {
+	if n == 0 {
+		panic("n must be greater than 0")
+	}
 	b := make([]byte, n)
 	_, err := rand.Read(b)
-	// Note that err == nil only if we read len(b) bytes.
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-
-	return b, nil
+	return b
 }
 
 func getSessionId() string {
 	for true {
-		sessionIdBytes, err := GenerateRandomBytes(12)
-		if err != nil {
-			panic(err)
-		}
+		sessionIdBytes := base64.RawStdEncoding.EncodeToString(GenerateRandomBytes(128))
 		sessionId := string(sessionIdBytes)
 		if _, ok := sessionsMap[sessionId]; !ok {
 			return sessionId
@@ -71,10 +79,13 @@ func getSessionId() string {
 }
 
 func getUserFromSession(r *http.Request) (user.User, error) {
-	sessionId := r.Header.Get("Cookie")
-	session, ok := sessionsMap[sessionId]
+	sessionId, err := r.Cookie("SESSION")
+	if err != nil {
+		return user.User{}, err
+	}
+	session, ok := sessionsMap[sessionId.Value]
 	if !ok {
-		return user.User{}, nil
+		return user.User{}, errors.New("Session not found")
 	}
 	return session.User, nil
 }
@@ -124,6 +135,9 @@ type ListsArgs struct {
 }
 
 func listsHandler(w http.ResponseWriter, r *http.Request) {
+	if redirectIfNotLoggedIn(w, r) {
+		return
+	}
 	lists, err := listsRepository.GetAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -139,7 +153,20 @@ type ListArgs struct {
 	Colaborators []user.User
 }
 
+func redirectIfNotLoggedIn(w http.ResponseWriter, r *http.Request) bool {
+	_, err := getUserFromSession(r)
+	if err != nil {
+		// Redirect to login
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return true
+	}
+	return false
+}
+
 func listDetailHandler(w http.ResponseWriter, r *http.Request) {
+	if redirectIfNotLoggedIn(w, r) {
+		return
+	}
 	// Get id from path parameter
 	id, err := strconv.Atoi(r.PathValue("listId"))
 	if err != nil {
@@ -173,6 +200,46 @@ func getUserHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(user.Username))
 }
 
+func postListsHandler(w http.ResponseWriter, r *http.Request) {
+	title := r.FormValue("title")
+	description := r.FormValue("description")
+	user, err := getUserFromSession(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+	}
+	_, err = listsRepository.Create(&list.ListCreationParams{
+		Title:       title,
+		Description: description,
+		CreatorId:   user.Id,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	http.Redirect(w, r, "/lists", http.StatusSeeOther)
+}
+
+func listEditorHandler(w http.ResponseWriter, r *http.Request) {
+    println("Hey os")
+	user, err := getUserFromSession(r)
+    println("got user")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	conn, err := upgrader.Upgrade(w, r, nil)
+    println("upgraded")
+	if err != nil {
+		log.Println(err)
+		// Return Internal Error
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	listId, err := strconv.Atoi(r.URL.Query().Get("listId"))
+    println("converted listId is " + strconv.Itoa(listId))
+	liveEditor.SetupList(int64(listId), user, conn)
+    println("List setup")
+}
+
 func collectUsers(lists []list.List) []user.User {
 	var users []user.User
 	for _, list := range lists {
@@ -199,14 +266,11 @@ func main() {
 	templatesMap["list"] = tmpl.Must(
 		tmpl.ParseFiles("./templates/pages/list.html"),
 	)
-	// Create a new in-memory repository
-	listsRepository = &list.SqlListRepository{}
 
 	_, err := listsRepository.GetAll()
 	if err != nil {
 		panic(err)
 	}
-	usersRepository = &user.SqlUsersRepository{}
 
 	dir := http.Dir(".")
 	http.Handle("GET /static/", http.FileServer(dir))
@@ -216,11 +280,11 @@ func main() {
 	http.HandleFunc("POST /sign-up", postSignupHandler)
 	http.HandleFunc("GET /", indexHandler)
 	http.HandleFunc("GET /lists", listsHandler)
+	http.HandleFunc("POST /lists", postListsHandler)
 	http.HandleFunc("GET /lists/{listId}", listDetailHandler)
 	http.HandleFunc("GET /api/users/{userId}", getUserHandler)
+	http.HandleFunc("GET /ws/list-editor", listEditorHandler)
 
 	log.Printf("Server started at http://localhost:8080\n")
 	log.Fatal(http.ListenAndServe(":8080", nil))
-
-	log.Println("Shutting server down...")
 }

@@ -7,4 +7,3 @@ type ListsRepository interface {
 	Update(list *ListUpdateParams) (List, error)
 	Delete(id int) error
 }
-

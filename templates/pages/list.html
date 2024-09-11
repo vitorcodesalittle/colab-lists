@@ -2,78 +2,84 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <meta content="IE=edge" http-equiv="X-UA-Compatible">
-  <title>TITLE</title>
-  <meta name="description" content="DESCRIPTION">
-  <link href="/static/output.css" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <title>TITLE</title>
+    <meta name="description" content="DESCRIPTION">
+    <link href="/static/output.css" rel="stylesheet">
+
+
+    <script src="https://unpkg.com/htmx.org@2.0.2"
+        integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx-ext-ws@2.0.1/ws.js"></script>
 </head>
 
 <body>
-  <div>
-    {{ if .Editing }}
-    <form action="/lists/{{ .List.Id }}" method="POST" class="flex-col space-y-1 flex">
-      <input class="input-h1" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
-      <input name="description" value="{{ .List.Description }}" placeholder="Describe your list" />
-      <label>Colaborators {{ .Colaborators | len }}:</label>
-      <select multiple name="colaborators">
-        {{ range .Colaborators }}
-        <option value="{{ .Id }}">{{ .Name }}</option>
+    <div>
+        {{ if .Editing }}
+        <form action="/lists/{{ .List.Id }}" method="POST" class="flex-col space-y-1 flex">
+            <input class="input-h1" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
+            <input name="description" value="{{ .List.Description }}" placeholder="Describe your list" />
+            <label>Colaborators {{ .Colaborators | len }}:</label>
+            <select multiple name="colaborators">
+                {{ range .Colaborators }}
+                <option value="{{ .Id }}">{{ .Name }}</option>
+                {{ end }}
+            </select>
+            <button type="submit">Save</button>
+        </form>
+        {{ else }}
+        <div class="flex-col space-y-1 flex">
+            <div class="flex flex-row justify-between">
+                <h1>{{ .List.Title }}</h1>
+                <a class="button" href="/lists/{{ .List.Id }}?edit">
+                    Edit
+                </a>
+            </div>
+            <p><i name="description">{{ .List.Description }}</i></p>
+
+            <p>Colaborators:</p>
+
+            <div>
+                {{ range .List.Colaborators }}
+                <span class="text-nowrap">{{ .Name }} {{ if .Online -}} (online) {{- end }}</span>
+                {{ end }}
+            </div>
+
+            <p>Items:</p>
+            <div hx-ext="ws" ws-connect="/ws/list-editor?listId={{ .List.Id }}">
+                {{ range .List.Groups }}
+
+                <p>{{ .Name }}</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th colspan="10">Description</th>
+                            <th colspan="2">Qty</th>
+                    </thead>
+                    <tbody>
+                        {{ range .Items }}
+                        <tr>
+                            <td colspan="10">
+                                {{ .Description}}
+                            </td>
+                            <td colspan="2">
+                                {{ .Quantity}}
+                            </td>
+                        </tr>
+                        {{ end }}
+                    </tbody>
+                </table>
+
+                {{ end }}
+
+            </div>
+        </div>
         {{ end }}
-      </select>
-      <button type="submit">Save</button>
-    </form>
-    {{ else }}
-    <div class="flex-col space-y-1 flex">
-      <div class="flex flex-row justify-between">
-        <h1>{{ .List.Title }}</h1>
-        <a class="button" href="/lists/{{ .List.Id }}?edit">
-          Edit
-        </a>
-      </div>
-      <p><i name="description">{{ .List.Description }}</i></p>
-
-      <p>Colaborators:</p>
-
-      <div>
-        {{ range .List.Colaborators }}
-        <span class="text-nowrap">{{ .Name }} {{ if .Online -}} (online) {{- end }}</span>
-        {{ end }}
-      </div>
-
-      <p>Items:</p>
-      <div>
-        {{ range .List.Groups }}
-
-        <p>{{ .Name }}</p>
-
-        <table>
-          <thead>
-            <tr>
-              <th colspan="10">Description</th>
-              <th colspan="2">Qty</th>
-          </thead>
-          <tbody>
-            {{ range .Items }}
-            <tr>
-              <td colspan="10">
-                {{ .Description}}
-              </td>
-              <td colspan="2">
-                {{ .Quantity}}
-              </td>
-            </tr>
-            {{ end }}
-          </tbody>
-        </table>
-
-        {{ end }}
-
-      </div>
     </div>
-    {{ end }}
-  </div>
 </body>
 
 </html>

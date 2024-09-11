@@ -3,13 +3,13 @@ package list
 type ListCreationParams struct {
 	Title       string
 	Description string
-	CreatorId   int
+	CreatorId   int64
 }
 
 const (
-	Add    = iota
-	Remove = iota
-	Update = iota
+	AddItem    = iota
+	RemoveItem = iota
+	UpdateItem = iota
 )
 
 type ItemUpdateParams struct {
