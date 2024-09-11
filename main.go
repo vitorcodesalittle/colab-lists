@@ -219,15 +219,12 @@ func postListsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func listEditorHandler(w http.ResponseWriter, r *http.Request) {
-    println("Hey os")
 	user, err := getUserFromSession(r)
-    println("got user")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
-    println("upgraded")
 	if err != nil {
 		log.Println(err)
 		// Return Internal Error
@@ -235,9 +232,7 @@ func listEditorHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	listId, err := strconv.Atoi(r.URL.Query().Get("listId"))
-    println("converted listId is " + strconv.Itoa(listId))
 	liveEditor.SetupList(int64(listId), user, conn)
-    println("List setup")
 }
 
 func collectUsers(lists []list.List) []user.User {
