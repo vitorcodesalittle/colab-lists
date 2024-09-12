@@ -27,7 +27,6 @@ func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
 	stmt, err := tx.Prepare(`
     INSERT INTO list (title, description, creatorLuserId)
     VALUES (?, ?, ?)
-    RETURNING listId
   `)
 	if err != nil {
 		log.Fatal("error preparing statement")
@@ -42,13 +41,14 @@ func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
 		log.Fatal("error executing statement")
 	}
 
-	result, err = tx.Exec("INSERT INTO list_groups (listId, name) VALUES (?, ?) RETURNING groupId", listId, "default")
+	result, err = tx.Exec("INSERT INTO list_groups (listId, name) VALUES (?, ?)", listId, "default")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	groupId, err := result.LastInsertId()
-	_, err = sql.Exec("INSERT INTO list_group_items (groupId, description, quantity, order_) VALUES (?, ?, ?, ?)", groupId, "default", 1, 1)
+	_, err = tx.Exec("INSERT INTO list_group_items (groupId, description, quantity, order_) VALUES (?, ?, ?, ?)", groupId, "default", 1, 1)
+
 	if err != nil {
 		log.Fatal(err)
 	}
