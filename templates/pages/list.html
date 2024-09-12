@@ -50,31 +50,33 @@
 
             <p>Items:</p>
             <div hx-ext="ws" ws-connect="/ws/list-editor?listId={{ .List.Id }}">
-                {{ range .List.Groups }}
+                <form ws-send id="form">
+                    {{ range .List.Groups }}
 
-                <p>{{ .Name }}</p>
+                    <p>{{ .Name }}</p>
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th colspan="10">Description</th>
-                            <th colspan="2">Qty</th>
-                    </thead>
-                    <tbody>
-                        {{ range .Items }}
-                        <tr>
-                            <td colspan="10">
-                                {{ .Description}}
-                            </td>
-                            <td colspan="2">
-                                {{ .Quantity}}
-                            </td>
-                        </tr>
-                        {{ end }}
-                    </tbody>
-                </table>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th colspan="10">Description</th>
+                                <th colspan="2">Qty</th>
+                        </thead>
+                        <tbody>
+                            {{ range .Items }}
+                            <tr>
+                                <td colspan="10">
+                                    <input hx-trigger="focus, blur, change" ws-send value="{{ .Description }}" name="description" />
+                                </td>
+                                <td colspan="2">
+                                    {{ .Quantity}}
+                                </td>
+                            </tr>
+                            {{ end }}
+                        </tbody>
+                    </table>
 
-                {{ end }}
+                    {{ end }}
+                </form>
 
             </div>
         </div>

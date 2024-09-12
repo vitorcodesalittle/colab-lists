@@ -187,6 +187,7 @@ func listDetailHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+
 func getUserHandler(w http.ResponseWriter, r *http.Request) {
 	// Get id from path parameter
 	id, err := strconv.Atoi(r.PathValue("userId"))
