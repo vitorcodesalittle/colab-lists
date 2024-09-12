@@ -12,8 +12,11 @@ type List struct {
 }
 
 type Group struct {
-	Name  string
-	Items []Item
+	GroupId   int
+	ListId    int
+	CreatedAt string
+	Name      string
+	Items     []Item
 }
 
 func (l *List) String() string {
@@ -22,9 +25,10 @@ func (l *List) String() string {
 
 type Item struct {
 	Id          int
-	Order       int
+    GroupId     int
 	Description string
 	Quantity    int
+	Order       int
 }
 
 func (i *Item) String() string {
