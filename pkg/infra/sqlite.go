@@ -2,6 +2,7 @@ package infra
 
 import (
 	sql "database/sql"
+	"errors"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -17,4 +18,12 @@ func UseConnection[T *any](do func (*sql.DB) (T, error)) (T, error) {
   }
   defer db.Close()
   return do(db)
+}
+
+
+func ErrorRollback(err error, tx *sql.Tx) error {
+    if errr := tx.Rollback(); errr != nil {
+        return errors.New("Rollback error: " + err.Error() + "\nCaused by" + errr.Error())
+    }
+    return err;
 }

@@ -22,38 +22,47 @@ func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
 	}
 	tx, err := sql.Begin()
 	if err != nil {
-		log.Fatal("error creating transaction")
+		return List{}, err
 	}
 	stmt, err := tx.Prepare(`
     INSERT INTO list (title, description, creatorLuserId)
     VALUES (?, ?, ?)
   `)
 	if err != nil {
-		log.Fatal("error preparing statement")
+		return List{}, err
 	}
 	result, err := stmt.Exec(list.Title, list.Description, list.CreatorId)
 	if err != nil {
-		log.Fatal("error executing statement")
+		return List{}, err
 	}
 
 	listId, err := result.LastInsertId()
 	if err != nil {
-		log.Fatal("error executing statement")
+		return List{}, err
+	}
+
+	_, err = tx.Exec(`
+    INSERT INTO list_colaborators (listId, luserId)
+    VALUES (?, ?)
+  `, listId, list.CreatorId)
+
+	if err != nil {
+		return List{}, err
 	}
 
 	result, err = tx.Exec("INSERT INTO list_groups (listId, name) VALUES (?, ?)", listId, "default")
 	if err != nil {
-		log.Fatal(err)
+		return List{}, err
 	}
 
 	groupId, err := result.LastInsertId()
 	_, err = tx.Exec("INSERT INTO list_group_items (groupId, description, quantity, order_) VALUES (?, ?, ?, ?)", groupId, "default", 1, 1)
 	if err != nil {
-		log.Fatal(err)
+		return List{}, err
 	}
 
 	if err = tx.Commit(); err != nil {
-		log.Fatal(err)
+		return List{}, err
 	}
 
 	sql.Close()
@@ -99,20 +108,50 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 		panic(err)
 	}
 	rs := stmt.QueryRow(id)
-	result, err := scanList(rs)
+	resultlis, err := scanList(rs)
+	if err != nil {
+		log.Println("Failed to scan list")
+		return List{}, err
+	}
+
+	stmt, err = tx.Prepare(`
+    SELECT lu.*
+    FROM luser lu
+    INNER JOIN list_colaborators lc ON lu.luserId = lc.luserId
+    WHERE lc.listId = ?
+    `)
+	if err != nil {
+		log.Println("Failed to query luser")
+		return List{}, infra.ErrorRollback(err, tx)
+	}
+	rscolaborators, err := stmt.Query(resultlis.Creator.Id)
+	if err != nil {
+		log.Println("Failed to query colaborators")
+		return List{}, infra.ErrorRollback(err, tx)
+	}
+	colaborators := make([]user.User, 0)
+	for rscolaborators.Next() {
+		u, err := user.ScanUser(rscolaborators)
+		if err != nil {
+			log.Println("Failed to scan user")
+			return List{}, infra.ErrorRollback(err, tx)
+		}
+		colaborators = append(colaborators, u)
+	}
+
 	stmt, err = tx.Prepare(`
     SELECT *
     FROM list_groups
     WHERE listId = ?
     `)
-    rs2, err := stmt.Query(id)
+	rs2, err := stmt.Query(id)
 	groups := make([]Group, 0)
 	for rs2.Next() {
 		g := Group{Items: make([]Item, 0)}
 		err := rs2.Scan(&g.GroupId, &g.ListId, &g.CreatedAt, &g.Name)
 		if err != nil {
 			log.Println("Failed to scan group")
-			return List{}, err
+			return List{}, infra.ErrorRollback(err, tx)
 		}
 		stmt, err = tx.Prepare(`
         SELECT *
@@ -121,26 +160,26 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
         `)
 		if err != nil {
 			log.Println("Failed to prepare statement for items")
-			return List{}, err
+			return List{}, infra.ErrorRollback(err, tx)
 		}
 		rsg, err := stmt.Query(g.GroupId)
 		if err != nil {
 			log.Println("Error querying items")
-			return List{}, err
+			return List{}, infra.ErrorRollback(err, tx)
 		}
 		for rsg.Next() {
 			i := Item{}
 			err := rsg.Scan(&i.Id, &i.GroupId, &i.Description, &i.Quantity, &i.Order)
 			if err != nil {
 				log.Println("Failed to scan item")
-				return List{}, err
+				return List{}, infra.ErrorRollback(err, tx)
 			}
 			g.Items = append(g.Items, i)
 		}
 		groups = append(groups, g)
 	}
-	result.Groups = groups
-	return result, nil
+	resultlis.Groups = groups
+	return resultlis, nil
 }
 
 // GetAll implements ListsRepository.

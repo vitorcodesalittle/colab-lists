@@ -52,21 +52,13 @@ func (s *SqlUsersRepository) Get(id int64) (User, error) {
 	if row.Err() != nil {
 		return User{}, row.Err()
 	}
-	return scanUser(row)
+	return ScanUser(row)
 }
 
 type Scanner interface {
 	Scan(dest ...interface{}) error
 }
 
-func scanUser(row Scanner) (User, error) {
-	user := &User{}
-	err := row.Scan(&user.Id, &user.Username, &user.PasswordHash, &user.PasswordSalt)
-	if err != nil {
-		return User{}, err
-	}
-	return *user, nil
-}
 
 // GetAll implements UsersRepository.
 func (s *SqlUsersRepository) GetAll() ([]User, error) {
@@ -81,7 +73,7 @@ func (s *SqlUsersRepository) GetAll() ([]User, error) {
 	}
 	users := make([]User, 0)
 	for rs.Next() {
-		user, err := scanUser(rs)
+		user, err := ScanUser(rs)
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +98,7 @@ func (s *SqlUsersRepository) GetByUsername(username string) (User, error) {
 	if row.Err() != nil {
 		return User{}, row.Err()
 	}
-	return scanUser(row)
+	return ScanUser(row)
 }
 
 func hashPassword(password []byte) ([]byte, error) {

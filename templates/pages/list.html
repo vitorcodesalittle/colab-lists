@@ -30,10 +30,10 @@
         <form action="/lists/{{ .List.Id }}" method="POST" class="flex-col space-y-1 flex">
             <input class="input-h1" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
             <input name="description" value="{{ .List.Description }}" placeholder="Describe your list" />
-            <label>Colaborators {{ .Colaborators | len }}</label>
+            <label>Colaborators {{ .AllUsers | len }}</label>
             <select multiple name="colaborators">
-                {{ range .Colaborators }}
-                <option value="{{ .Id }}">{{ .Name }}</option>
+                {{ range .AllUsers }}
+                <option value="{{ .Id }}">{{ .Username }}</option>
                 {{ end }}
             </select>
             <button type="submit">Save</button>
@@ -48,13 +48,16 @@
             </div>
             <p><i name="description">{{ .List.Description }}</i></p>
 
-            <p>Colaborators:</p>
-
-            <div>
-                {{ range .List.Colaborators }}
-                <span class="text-nowrap">{{ .Name }} {{ if .Online -}} (online) {{- end }}</span>
-                {{ end }}
+            {{block "colaborators" .List.Colaborators}}
+            <div id="colaborators" hx-swap-oob="outerHTML">
+                <p>Colaborators {{ . | len }}:</p>
+                <div>
+                    {{ range . }}
+                    <span class="text-nowrap">{{ .Username }} {{ if .Online -}} (online) {{- end }}</span>
+                    {{ end }}
+                </div>
             </div>
+            {{end}}
 
             <p>Items:</p>
             <div hx-ext="ws" ws-connect="/ws/list-editor?listId={{ .List.Id }}">

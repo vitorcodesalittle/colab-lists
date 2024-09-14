@@ -7,15 +7,14 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	tmpl "text/template"
 	"time"
 
 	"github.com/gorilla/websocket"
 	"vilmasoftware.com/colablists/pkg/list"
 	"vilmasoftware.com/colablists/pkg/user"
+	"vilmasoftware.com/colablists/pkg/views"
 )
 
-var templatesMap map[string]*tmpl.Template
 var (
 	listsRepository list.ListsRepository = &list.SqlListRepository{}
 	usersRepository user.UsersRepository = &user.SqlUsersRepository{}
@@ -29,22 +28,17 @@ var (
 	}
 )
 
-type Args struct {
-	Title       string
-	Description string
-}
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	templatesMap["index"].Execute(w, &Args{
+	views.Templates.RenderIndex(w, &views.IndexArgs{
 		Title:       "Lists app!!",
 		Description: "Awesome lists app",
 	})
 }
 
-type LoginArgs struct{}
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-	templatesMap["login"].Execute(w, &LoginArgs{})
+	views.Templates.RenderLogin(w, &views.LoginArgs{})
 }
 
 type Session struct {
@@ -53,7 +47,7 @@ type Session struct {
 	LastUsed  time.Time
 }
 
-var sessionsMap map[string]Session
+var sessionsMap map[string]Session = make(map[string]Session)
 
 func GenerateRandomBytes(n int) []byte {
 	if n == 0 {
@@ -142,7 +136,7 @@ func listsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	templatesMap["lists"].Execute(w, &ListsArgs{
+	views.Templates.RenderLists(w, &ListsArgs{
 		Lists: lists,
 	})
 }
@@ -150,7 +144,7 @@ func listsHandler(w http.ResponseWriter, r *http.Request) {
 type ListArgs struct {
 	List         list.List
 	Editing      bool
-	Colaborators []user.User
+	AllUsers []user.User
 }
 
 func redirectIfNotLoggedIn(w http.ResponseWriter, r *http.Request) bool {
@@ -176,17 +170,17 @@ func listDetailHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	colaborators, err := usersRepository.GetAll()
+	allUsers, err := usersRepository.GetAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	templatesMap["list"].Execute(w, &ListArgs{
+    listArgs := &ListArgs{
 		List:         list,
 		Editing:      r.URL.Query().Has("edit"),
-		Colaborators: colaborators,
-	})
+		AllUsers: allUsers,
+	}
+	views.Templates.RenderList(w, listArgs)
 }
-
 
 func getUserHandler(w http.ResponseWriter, r *http.Request) {
 	// Get id from path parameter
@@ -247,22 +241,6 @@ func collectUsers(lists []list.List) []user.User {
 }
 
 func main() {
-	// Fill templatesMap with all templates
-	templatesMap = make(map[string]*tmpl.Template)
-	sessionsMap = make(map[string]Session)
-	templatesMap["index"] = tmpl.Must(
-		tmpl.ParseFiles("./templates/pages/index.html"),
-	)
-	templatesMap["login"] = tmpl.Must(
-		tmpl.ParseFiles("./templates/pages/login.html"),
-	)
-	templatesMap["lists"] = tmpl.Must(
-		tmpl.ParseFiles("./templates/pages/lists.html"),
-	)
-	templatesMap["list"] = tmpl.Must(
-		tmpl.ParseFiles("./templates/pages/list.html"),
-	)
-
 	_, err := listsRepository.GetAll()
 	if err != nil {
 		panic(err)

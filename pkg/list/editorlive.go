@@ -1,11 +1,13 @@
 package list
 
 import (
+	"bytes"
 	"encoding/json"
 	"log"
 
 	"github.com/gorilla/websocket"
 	"vilmasoftware.com/colablists/pkg/user"
+	"vilmasoftware.com/colablists/pkg/views"
 )
 
 type ListUi struct {
@@ -24,6 +26,16 @@ type UserUi struct {
 	//*Action
 }
 
+func (l *LiveEditor) Info() {
+	println("Live editor info")
+	for k, v := range l.listsById {
+		println("List ", k, " has ", len(v.ColaboratorsOnline), " colaborators")
+		for _, u := range v.ColaboratorsOnline {
+			println("User ", u.Id, " has ", len(u.Connections), " connections")
+		}
+	}
+}
+
 func NewLiveEditor(repository ListsRepository) *LiveEditor {
 	return &LiveEditor{
 		listRepository: repository,
@@ -35,6 +47,7 @@ func (l *LiveEditor) GetConnectionsOfList(listId int64) []*websocket.Conn {
 	result := make([]*websocket.Conn, 0)
 	listUi, ok := l.listsById[listId]
 	if !ok {
+		println("Finding connections but list not found")
 		return result
 	}
 	for _, c := range listUi.ColaboratorsOnline {
@@ -57,11 +70,30 @@ func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
 
 func (l *LiveEditor) HandleEditGroupItem(listId int64, groupIndex int, groupText string) {
 	editList := l.GetCurrentList(listId)
-    if editList == nil {
-        return
-    }
+	if editList == nil {
+		return
+	}
 	group := editList.Groups[groupIndex]
 	group.Name = groupText
+}
+
+func (l *LiveEditor) removeConnection(conn *websocket.Conn) {
+	for listId, v := range l.listsById {
+		for userIdx, u := range v.ColaboratorsOnline {
+			removeIndex := -1
+			for connIdx, conn2 := range u.Connections {
+				if conn2 == conn {
+					removeIndex = connIdx
+					break
+				}
+			}
+			if removeIndex >= 0 {
+				l, _ := l.listsById[listId]
+				l.ColaboratorsOnline[userIdx].Connections = append(u.Connections[:removeIndex], u.Connections[removeIndex+1:]...)
+
+			}
+		}
+	}
 }
 
 func (l *LiveEditor) HandleWebsocketConn(conn *websocket.Conn) {
@@ -69,14 +101,32 @@ func (l *LiveEditor) HandleWebsocketConn(conn *websocket.Conn) {
 	for {
 		messageType, p, err := conn.ReadMessage()
 		if err != nil {
-			log.Println(err)
-			return
+
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				l.removeConnection(conn)
+				log.Println("Unexcepted Close Error: ", err)
+				return
+			} else if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				l.removeConnection(conn)
+				log.Println("Close Error: ", err)
+				return
+			}
+			log.Println("Unexpected error reading websocket message ", err.Error())
+			continue
 		}
 		switch messageType {
 		case websocket.CloseMessage:
+			log.Println("CloseMessage")
+			l.removeConnection(conn)
+			return
 		case websocket.PingMessage:
+			log.Println("PingMessage")
+			return
 		case websocket.PongMessage:
+			log.Println("PongMessage")
+			return
 		case websocket.BinaryMessage:
+			log.Println("BinaryMessage")
 			var msg json.RawMessage
 			action := Action{Msg: &msg}
 			if err := json.Unmarshal(p, &action); err != nil {
@@ -91,25 +141,50 @@ func (l *LiveEditor) HandleWebsocketConn(conn *websocket.Conn) {
 				l.HandleAddGroup(addGroupAction.ListId, addGroupAction.GroupText)
 			}
 		case websocket.TextMessage:
+			log.Println("TextMessage")
+			return
 		}
 	}
 }
 
 func (l *LiveEditor) SetupList(listId int64, user user.User, conn *websocket.Conn) {
-	list, err := l.listRepository.Get(listId)
-	panicIfError(err)
+	defer l.Info()
 	listUi, ok := l.listsById[listId]
 	if !ok {
+		println("NOT FOUND!")
+		list, err := l.listRepository.Get(listId)
+		panicIfError(err)
 		l.listsById[listId] = ListUi{
 			List:               list,
 			ColaboratorsOnline: []UserUi{{User: user, Connections: []*websocket.Conn{conn}}},
 		}
+		listUi = l.listsById[listId]
 	} else {
-		for _, u := range listUi.ColaboratorsOnline {
+		println("FOUND!")
+		found := false
+		for idx, u := range listUi.ColaboratorsOnline {
 			if u.Id == user.Id {
-				u.Connections = append(u.Connections, conn)
+				listUi.ColaboratorsOnline[idx].Connections = append(u.Connections, conn)
+				println("User with id ", user.Id, " found and has ", len(u.Connections), " connections")
+				found = true
 			}
 		}
+		if !found {
+			println("New colaborator")
+			listUi.ColaboratorsOnline = append(listUi.ColaboratorsOnline, UserUi{User: user, Connections: []*websocket.Conn{conn}})
+			l.listsById[listId] = listUi
+		}
+	}
+	s := ""
+	buf := bytes.NewBufferString(s)
+	if len(listUi.ColaboratorsOnline) == 1 {
+		println(len(listUi.ColaboratorsOnline[0].Connections), " connections")
+	}
+	views.Templates.RenderCollaboratorsList(buf, listUi.ColaboratorsOnline)
+	conns := l.GetConnectionsOfList(listId)
+	println("Sending colaborator update to ", len(conns), " connections")
+	for _, conn2 := range conns {
+		conn2.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
 	go l.HandleWebsocketConn(conn)
 }
