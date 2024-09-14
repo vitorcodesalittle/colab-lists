@@ -14,6 +14,8 @@ import (
 type ListUi struct {
 	List
 	ColaboratorsOnline []UserUi
+	// Try not to use this
+	// focusMap map[int64]map[int]int
 }
 
 type LiveEditor struct {
@@ -96,7 +98,7 @@ func (l *LiveEditor) removeConnection(conn *websocket.Conn) {
 	}
 }
 
-func (l *LiveEditor) HandleWebsocketConn(conn *websocket.Conn) {
+func (l *LiveEditor) HandleWebsocketConn(user user.User, conn *websocket.Conn) {
 	conn.WriteMessage(websocket.TextMessage, []byte("Hello"))
 	for {
 		messageType, p, err := conn.ReadMessage()
@@ -118,34 +120,50 @@ func (l *LiveEditor) HandleWebsocketConn(conn *websocket.Conn) {
 		case websocket.CloseMessage:
 			log.Println("CloseMessage")
 			l.removeConnection(conn)
-			return
+			continue
 		case websocket.PingMessage:
 			log.Println("PingMessage")
-			return
+			continue
 		case websocket.PongMessage:
 			log.Println("PongMessage")
-			return
+			continue
 		case websocket.BinaryMessage:
 			log.Println("BinaryMessage")
-			return
+			continue
 		case websocket.TextMessage:
 			log.Println("TextMessage")
-			var msg json.RawMessage
-			action := Action{Msg: &msg}
+			action := HtmxMessageI{}
 			if err := json.Unmarshal(p, &action); err != nil {
-				log.Fatal(err)
+				log.Println("Error unmarshalling message ", err)
+				continue
 			}
-			switch action.Type {
-            case FOCUS_ITEM:
-
+			if action.Header.ActionType == nil {
+				log.Println("ActionType is nil")
+				continue
+			}
+			switch *action.Header.ActionType {
+			case FOCUS_ITEM:
+				var focusItemAction FocusItemAction
+				if err := json.Unmarshal(p, &focusItemAction); err != nil {
+					log.Println("Error unmarshalling action", err)
+					continue
+				}
+				l.HandleFocusItem(focusItemAction.ListId, user.Id, focusItemAction.GroupIndex, focusItemAction.ItemIndex)
+			case UNFOCUS_ITEM:
+				var focusItemAction UnfocusItemAction
+				if err := json.Unmarshal(p, &focusItemAction); err != nil {
+					log.Println("Error unmarshalling action", err)
+					continue
+				}
+				l.HandleUnfocusItem(focusItemAction.ListId, user.Id, focusItemAction.GroupIndex, focusItemAction.ItemIndex)
 			case ADD_GROUP_ACTION:
 				var addGroupAction AddItemAction
-				if err := json.Unmarshal(msg, &addGroupAction); err != nil {
+				if err := json.Unmarshal(p, &addGroupAction); err != nil {
 					log.Fatal(err)
 				}
 				l.HandleAddGroup(addGroupAction.ListId, addGroupAction.GroupText)
 			}
-			return
+			continue
 		}
 	}
 }
@@ -181,21 +199,35 @@ func (l *LiveEditor) SetupList(listId int64, user user.User, conn *websocket.Con
 	for _, conn2 := range conns {
 		conn2.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
-	go l.HandleWebsocketConn(conn)
+	go l.HandleWebsocketConn(user, conn)
 }
 
 const (
 	ADD_GROUP    = iota
-	EDIT_GROU    = iota
 	FOCUS_ITEM   = iota
 	UNFOCUS_ITEM = iota
+	EDIT_GROU    = iota
 	ADD_ITEM     = iota
 )
 
-func (l *LiveEditor) HandleFocusItem(listId int64, itemId int64) {
+func (l *LiveEditor) HandleFocusItem(listId int64, userId int64, groupIndex int, itemIndex int) {
+	log.Println("Handling focus Item")
+	s := "TODO HANDLE FOCUS"
+	buf := bytes.NewBufferString(s)
+	conns := l.GetConnectionsOfList(listId)
+	for _, conn2 := range conns {
+		conn2.WriteMessage(websocket.TextMessage, buf.Bytes())
+	}
 }
 
-func (l *LiveEditor) HandleUnfocusItem(listId int64, itemId int64) {
+func (l *LiveEditor) HandleUnfocusItem(listId int64, userId int64, groupIndex int, itemIndex int) {
+	log.Println("Handling unfocus Item")
+    s := "TODO: HANDLE UNFOCUS"
+	buf := bytes.NewBufferString(s)
+	conns := l.GetConnectionsOfList(listId)
+	for _, conn2 := range conns {
+		conn2.WriteMessage(websocket.TextMessage, buf.Bytes())
+	}
 }
 
 func (l *LiveEditor) HandleAddItem(listId int64, groupIndex int, itemText string) {
@@ -230,17 +262,22 @@ type Action struct {
 	Msg  interface{} `json:"msg"`
 }
 
-
 type FocusItemAction struct {
-	ListId    int64  `json:"listId"`
-	GroupIndex int `json:"groupIndex"`
-	ItemIndex int `json:"itemIndex"`
+	ListId     int64 `json:"listId"`
+	GroupIndex int   `json:"groupIndex"`
+	ItemIndex  int   `json:"itemIndex"`
+}
+
+type UnfocusItemAction struct {
+	ListId     int64
+	GroupIndex int
+	ItemIndex  int
 }
 
 type BlurItemAction struct {
-	ListId    int64  `json:"listId"`
-	GroupIndex int `json:"groupIndex"`
-	ItemIndex int `json:"itemIndex"`
+	ListId     int64 `json:"listId"`
+	GroupIndex int   `json:"groupIndex"`
+	ItemIndex  int   `json:"itemIndex"`
 }
 
 type AddItemAction struct {
@@ -257,8 +294,13 @@ type HtmxMessage struct {
 	ActionType  *int    `json:"action-type"`
 }
 
+type HtmxMessageI struct {
+	Header HtmxMessage `json:"HEADERS"`
+	Any    interface{}
+}
+
 func (h *HtmxMessage) String() string {
-    return fmt.Sprintf("CurrentUrl: %s, Request: %s, Target: %s, Trigger: %s, TriggerName: %s, ActionType: %d\n", h.CurrentUrl, h.Request, h.Target, h.Trigger, h.TriggerName, h.ActionType)
+	return fmt.Sprintf("CurrentUrl: %s, Request: %s, Target: %s, Trigger: %s, TriggerName: %s, ActionType: %d\n", h.CurrentUrl, h.Request, h.Target, h.Trigger, h.TriggerName, h.ActionType)
 }
 
 // type AddGroupAction struct {

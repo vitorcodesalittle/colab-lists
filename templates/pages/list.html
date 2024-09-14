@@ -65,12 +65,13 @@
 
                 <p><strong>Group {{ $group.Name }}</strong></p>
                 {{ range $iidx, $item := $group.Items }}
-                <div class="border-green-500 border-solid">
-                    <div hx-trigger="blur from:#desc-0" hx-headers='{"action-type": 2}' ws-send>
+                <div class="focus-within:border-green-500 border">
+                    <div hx-trigger="blur from:#desc-0" hx-headers='{"action-type": 2}' hx-vals='{"groupIndex": {{ $gidx }}, "itemIndex": {{ $iidx }}, "listId": 17 }' ws-send>
                         <input hx-trigger="focus" hx-headers='{"action-type": 1}' id="desc-0" ws-send
-                                                                                  value="{{ $item.Description }}" name="description-0" hx-vals='{"groupIndex": {{ $gidx }}, "itemIndex": {{ $iidx }}, "listId": 17 }' />
+                            value="{{ $item.Description }}" name="description-0"
+                            hx-vals='{"groupIndex": {{ $gidx }}, "itemIndex": {{ $iidx }}, "listId": 17 }' />
                     </div>
-                    <input hx-trigger="focus, blur" id="[0].qty" ws-send value="{{ .Quantity }}" name="quantity-0" />
+                    <input hx-trigger="focus, blur" id="[0].qty" ws-send value="{{ .Quantity }}" name="quantity-0"/>
                     {{ end }}
                 </div>
 
