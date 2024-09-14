@@ -27,7 +27,7 @@ type UserUi struct {
 func NewLiveEditor(repository ListsRepository) *LiveEditor {
 	return &LiveEditor{
 		listRepository: repository,
-        listsById: make(map[int64]ListUi),
+		listsById:      make(map[int64]ListUi),
 	}
 }
 
@@ -43,24 +43,29 @@ func (l *LiveEditor) GetConnectionsOfList(listId int64) []*websocket.Conn {
 	return result
 }
 
-func (l *LiveEditor) HandleAddGroupItem(listId int64, groupText string) {
+func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
 	editList := l.GetCurrentList(listId)
+	if editList == nil {
+		return
+	}
 	editList.Groups = append(editList.Groups, Group{Name: groupText, Items: []Item{}})
 
-    for _, conn :=  range l.GetConnectionsOfList(listId) {
-        conn.WriteJSON(editList)
-    }
+	for _, conn := range l.GetConnectionsOfList(listId) {
+		conn.WriteJSON(editList)
+	}
 }
 
 func (l *LiveEditor) HandleEditGroupItem(listId int64, groupIndex int, groupText string) {
 	editList := l.GetCurrentList(listId)
+    if editList == nil {
+        return
+    }
 	group := editList.Groups[groupIndex]
 	group.Name = groupText
 }
 
 func (l *LiveEditor) HandleWebsocketConn(conn *websocket.Conn) {
-    log.Println("Handling websocket connection")
-    conn.WriteMessage(websocket.TextMessage, []byte("Hello"))
+	conn.WriteMessage(websocket.TextMessage, []byte("Hello"))
 	for {
 		messageType, p, err := conn.ReadMessage()
 		if err != nil {
@@ -72,19 +77,19 @@ func (l *LiveEditor) HandleWebsocketConn(conn *websocket.Conn) {
 		case websocket.PingMessage:
 		case websocket.PongMessage:
 		case websocket.BinaryMessage:
-            var msg json.RawMessage
-            env := Action{Msg: &msg}
-            if err := json.Unmarshal(p, &env); err != nil {
-                log.Fatal(err)
-            }
-            switch env.Type {
-            case ADD_GROUP_ACTION:
-                var addGroupAction AddItemAction
-                if err := json.Unmarshal(msg, &addGroupAction); err != nil {
-                    log.Fatal(err)
-                }
-                l.HandleAddGroupItem(addGroupAction.ListId, addGroupAction.GroupText)
-            }
+			var msg json.RawMessage
+			action := Action{Msg: &msg}
+			if err := json.Unmarshal(p, &action); err != nil {
+				log.Fatal(err)
+			}
+			switch action.Type {
+			case ADD_GROUP_ACTION:
+				var addGroupAction AddItemAction
+				if err := json.Unmarshal(msg, &addGroupAction); err != nil {
+					log.Fatal(err)
+				}
+				l.HandleAddGroup(addGroupAction.ListId, addGroupAction.GroupText)
+			}
 		case websocket.TextMessage:
 		}
 	}
