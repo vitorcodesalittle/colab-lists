@@ -14,6 +14,14 @@
         integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
         crossorigin="anonymous"></script>
     <script src="https://unpkg.com/htmx-ext-ws@2.0.1/ws.js"></script>
+
+    <script>
+        document.addEventListener('htmx:wsBeforeSend', (event) => {
+            console.log(event);
+            // Add the event 
+        })
+
+    </script>
 </head>
 
 <body>
@@ -22,7 +30,7 @@
         <form action="/lists/{{ .List.Id }}" method="POST" class="flex-col space-y-1 flex">
             <input class="input-h1" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
             <input name="description" value="{{ .List.Description }}" placeholder="Describe your list" />
-            <label>Colaborators {{ .Colaborators | len }}:</label>
+            <label>Colaborators {{ .Colaborators | len }}</label>
             <select multiple name="colaborators">
                 {{ range .Colaborators }}
                 <option value="{{ .Id }}">{{ .Name }}</option>
@@ -50,34 +58,20 @@
 
             <p>Items:</p>
             <div hx-ext="ws" ws-connect="/ws/list-editor?listId={{ .List.Id }}">
-                <form ws-send id="form">
-                    {{ range .List.Groups }}
+                {{ range .List.Groups }}
 
-                    <p>{{ .Name }}</p>
-
-                    <table>
-                        <thead>
-                            <tr>
-                                <th colspan="10">Description</th>
-                                <th colspan="2">Qty</th>
-                        </thead>
-                        <tbody>
-                            {{ range .Items }}
-                            <tr>
-                                <td colspan="10">
-                                    <input hx-trigger="focus, blur, change" ws-send value="{{ .Description }}" name="description" />
-                                </td>
-                                <td colspan="2">
-                                    {{ .Quantity}}
-                                </td>
-                            </tr>
-                            {{ end }}
-                        </tbody>
-                    </table>
-
+                <p><strong>{{ .Name }}</strong></p>
+                {{ range .Items }}
+                <div class="border-green-500 border-solid">
+                    <div hx-trigger="blur from:#desc" hx-headers='{"action-type": 2}' ws-send>
+                        <input hx-trigger="focus" hx-headers='{"action-type": 1}' id="desc[0]" ws-send
+                            value="{{ .Description }}" name="[0].description" />
+                    </div>
+                    <input hx-trigger="focus, blur" id="[0].qty" ws-send value="{{ .Quantity }}" name="[0].quantity" />
                     {{ end }}
-                </form>
+                </div>
 
+                {{ end }}
             </div>
         </div>
         {{ end }}
