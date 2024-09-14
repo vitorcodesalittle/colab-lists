@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"flag"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"strconv"
 	"time"
 
@@ -260,5 +264,25 @@ func main() {
 	http.HandleFunc("GET /ws/list-editor", listEditorHandler)
 
 	log.Printf("Server started at http://localhost:8080\n")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+
+
+	var listenAddress = flag.String("listen", ":8080", "Listen address.")
+	httpServer := http.Server{
+		Addr: *listenAddress,
+	}
+	go func() {
+		sigint := make(chan os.Signal, 1)
+		signal.Notify(sigint, os.Interrupt)
+		<-sigint
+		if err := httpServer.Shutdown(context.Background()); err != nil {
+			log.Printf("HTTP Server Shutdown Error: %v", err)
+		}
+	}()
+
+    if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
+        log.Println("Error")
+        log.Fatal(err)
+    }
+
+    log.Println("Bye")
 }
