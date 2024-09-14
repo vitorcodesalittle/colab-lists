@@ -3,6 +3,7 @@ package list
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/gorilla/websocket"
@@ -47,7 +48,6 @@ func (l *LiveEditor) GetConnectionsOfList(listId int64) []*websocket.Conn {
 	result := make([]*websocket.Conn, 0)
 	listUi, ok := l.listsById[listId]
 	if !ok {
-		println("Finding connections but list not found")
 		return result
 	}
 	for _, c := range listUi.ColaboratorsOnline {
@@ -127,12 +127,17 @@ func (l *LiveEditor) HandleWebsocketConn(conn *websocket.Conn) {
 			return
 		case websocket.BinaryMessage:
 			log.Println("BinaryMessage")
+			return
+		case websocket.TextMessage:
+			log.Println("TextMessage")
 			var msg json.RawMessage
 			action := Action{Msg: &msg}
 			if err := json.Unmarshal(p, &action); err != nil {
 				log.Fatal(err)
 			}
 			switch action.Type {
+            case FOCUS_ITEM:
+
 			case ADD_GROUP_ACTION:
 				var addGroupAction AddItemAction
 				if err := json.Unmarshal(msg, &addGroupAction); err != nil {
@@ -140,8 +145,6 @@ func (l *LiveEditor) HandleWebsocketConn(conn *websocket.Conn) {
 				}
 				l.HandleAddGroup(addGroupAction.ListId, addGroupAction.GroupText)
 			}
-		case websocket.TextMessage:
-			log.Println("TextMessage")
 			return
 		}
 	}
@@ -151,7 +154,6 @@ func (l *LiveEditor) SetupList(listId int64, user user.User, conn *websocket.Con
 	defer l.Info()
 	listUi, ok := l.listsById[listId]
 	if !ok {
-		println("NOT FOUND!")
 		list, err := l.listRepository.Get(listId)
 		panicIfError(err)
 		l.listsById[listId] = ListUi{
@@ -160,29 +162,22 @@ func (l *LiveEditor) SetupList(listId int64, user user.User, conn *websocket.Con
 		}
 		listUi = l.listsById[listId]
 	} else {
-		println("FOUND!")
 		found := false
 		for idx, u := range listUi.ColaboratorsOnline {
 			if u.Id == user.Id {
 				listUi.ColaboratorsOnline[idx].Connections = append(u.Connections, conn)
-				println("User with id ", user.Id, " found and has ", len(u.Connections), " connections")
 				found = true
 			}
 		}
 		if !found {
-			println("New colaborator")
 			listUi.ColaboratorsOnline = append(listUi.ColaboratorsOnline, UserUi{User: user, Connections: []*websocket.Conn{conn}})
 			l.listsById[listId] = listUi
 		}
 	}
 	s := ""
 	buf := bytes.NewBufferString(s)
-	if len(listUi.ColaboratorsOnline) == 1 {
-		println(len(listUi.ColaboratorsOnline[0].Connections), " connections")
-	}
 	views.Templates.RenderCollaboratorsList(buf, listUi.ColaboratorsOnline)
 	conns := l.GetConnectionsOfList(listId)
-	println("Sending colaborator update to ", len(conns), " connections")
 	for _, conn2 := range conns {
 		conn2.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
@@ -235,9 +230,35 @@ type Action struct {
 	Msg  interface{} `json:"msg"`
 }
 
+
+type FocusItemAction struct {
+	ListId    int64  `json:"listId"`
+	GroupIndex int `json:"groupIndex"`
+	ItemIndex int `json:"itemIndex"`
+}
+
+type BlurItemAction struct {
+	ListId    int64  `json:"listId"`
+	GroupIndex int `json:"groupIndex"`
+	ItemIndex int `json:"itemIndex"`
+}
+
 type AddItemAction struct {
 	ListId    int64  `json:"listId"`
 	GroupText string `json:"groupText"`
+}
+
+type HtmxMessage struct {
+	CurrentUrl  *string `json:"HX-Current-URL"`
+	Request     *string `json:"HX-Request"`
+	Target      *string `json:"HX-Target"`
+	Trigger     *string `json:"HX-Trigger"`
+	TriggerName *string `json:"HX-TriggerName"`
+	ActionType  *int    `json:"action-type"`
+}
+
+func (h *HtmxMessage) String() string {
+    return fmt.Sprintf("CurrentUrl: %s, Request: %s, Target: %s, Trigger: %s, TriggerName: %s, ActionType: %d\n", h.CurrentUrl, h.Request, h.Target, h.Trigger, h.TriggerName, h.ActionType)
 }
 
 // type AddGroupAction struct {

@@ -61,16 +61,16 @@
 
             <p>Items:</p>
             <div hx-ext="ws" ws-connect="/ws/list-editor?listId={{ .List.Id }}">
-                {{ range .List.Groups }}
+                {{ range $gidx, $group := .List.Groups }}
 
-                <p><strong>{{ .Name }}</strong></p>
-                {{ range .Items }}
+                <p><strong>Group {{ $group.Name }}</strong></p>
+                {{ range $iidx, $item := $group.Items }}
                 <div class="border-green-500 border-solid">
-                    <div hx-trigger="blur from:#desc" hx-headers='{"action-type": 2}' ws-send>
-                        <input hx-trigger="focus" hx-headers='{"action-type": 1}' id="desc[0]" ws-send
-                            value="{{ .Description }}" name="[0].description" />
+                    <div hx-trigger="blur from:#desc-0" hx-headers='{"action-type": 2}' ws-send>
+                        <input hx-trigger="focus" hx-headers='{"action-type": 1}' id="desc-0" ws-send
+                                                                                  value="{{ $item.Description }}" name="description-0" hx-vals='{"groupIndex": {{ $gidx }}, "itemIndex": {{ $iidx }}, "listId": 17 }' />
                     </div>
-                    <input hx-trigger="focus, blur" id="[0].qty" ws-send value="{{ .Quantity }}" name="[0].quantity" />
+                    <input hx-trigger="focus, blur" id="[0].qty" ws-send value="{{ .Quantity }}" name="quantity-0" />
                     {{ end }}
                 </div>
 
