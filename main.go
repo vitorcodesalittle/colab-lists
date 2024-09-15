@@ -15,6 +15,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	"vilmasoftware.com/colablists/pkg/list"
+	"vilmasoftware.com/colablists/pkg/realtime"
 	"vilmasoftware.com/colablists/pkg/user"
 	"vilmasoftware.com/colablists/pkg/views"
 )
@@ -25,7 +26,7 @@ var (
 )
 
 var (
-	liveEditor *list.LiveEditor = list.NewLiveEditor(listsRepository)
+	liveEditor *realtime.LiveEditor = realtime.NewLiveEditor(listsRepository)
 	upgrader                    = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,

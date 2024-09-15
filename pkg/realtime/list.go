@@ -1,4 +1,4 @@
-package list
+package realtime
 
 import (
 	"bytes"
@@ -7,12 +7,13 @@ import (
 	"log"
 
 	"github.com/gorilla/websocket"
+	"vilmasoftware.com/colablists/pkg/list"
 	"vilmasoftware.com/colablists/pkg/user"
 	"vilmasoftware.com/colablists/pkg/views"
 )
 
 type ListUi struct {
-	List
+	list.List
 	ColaboratorsOnline []UserUi
 	// Try not to use this
 	// focusMap map[int64]map[int]int
@@ -20,7 +21,7 @@ type ListUi struct {
 
 type LiveEditor struct {
 	listsById      map[int64]ListUi
-	listRepository ListsRepository
+	listRepository list.ListsRepository
 }
 
 type UserUi struct {
@@ -39,7 +40,7 @@ func (l *LiveEditor) Info() {
 	}
 }
 
-func NewLiveEditor(repository ListsRepository) *LiveEditor {
+func NewLiveEditor(repository list.ListsRepository) *LiveEditor {
 	return &LiveEditor{
 		listRepository: repository,
 		listsById:      make(map[int64]ListUi),
@@ -63,7 +64,7 @@ func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
 	if editList == nil {
 		return
 	}
-	editList.Groups = append(editList.Groups, Group{Name: groupText, Items: []Item{}})
+	editList.Groups = append(editList.Groups, list.Group{Name: groupText, Items: []list.Item{}})
 
 	for _, conn := range l.GetConnectionsOfList(listId) {
 		conn.WriteJSON(editList)
@@ -236,7 +237,7 @@ func (l *LiveEditor) HandleAddItem(listId int64, groupIndex int, itemText string
 	if groupIndex < 0 || groupIndex >= len(editList.Groups) {
 		return
 	}
-	editList.Groups[groupIndex].Items = append(items, Item{Id: 0, Description: itemText, Order: len(items)})
+	editList.Groups[groupIndex].Items = append(items, list.Item{Id: 0, Description: itemText, Order: len(items)})
 }
 
 func (l *LiveEditor) GetCurrentList(listId int64) *ListUi {
