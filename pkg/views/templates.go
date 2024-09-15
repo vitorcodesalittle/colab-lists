@@ -73,6 +73,7 @@ type ListUi struct {
 }
 type UserUi struct {
 	user.User
+    Color string
 	//*Action
 }
 

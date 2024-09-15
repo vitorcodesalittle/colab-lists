@@ -12,6 +12,15 @@ import (
 	"vilmasoftware.com/colablists/pkg/views"
 )
 
+const (
+	ACTION_NOOP         = iota
+	ACTION_FOCUS_ITEM   = iota
+	ACTION_UNFOCUS_ITEM = iota
+	ACTION_UPDATE_COLOR = iota
+	ACTION_EDIT_GROU    = iota
+	ACTION_ADD_ITEM     = iota
+)
+
 type Connection struct {
 	ListId int64
 	UserId int64
@@ -88,18 +97,18 @@ func (l *LiveEditor) removeConnection(conn *websocket.Conn) {
 	}
 }
 
-func (l *LiveEditor) HandleWebsocketConn(user user.User, conn *websocket.Conn) {
-	conn.WriteMessage(websocket.TextMessage, []byte("Hello"))
+func (l *LiveEditor) HandleWebsocketConn(conn *Connection) {
+	conn.Conn.WriteMessage(websocket.TextMessage, []byte("Hello"))
 	for {
-		messageType, p, err := conn.ReadMessage()
+		messageType, p, err := conn.Conn.ReadMessage()
 		if err != nil {
 
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				l.removeConnection(conn)
+				l.removeConnection(conn.Conn)
 				log.Println("Unexcepted Close Error: ", err)
 				return
 			} else if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				l.removeConnection(conn)
+				l.removeConnection(conn.Conn)
 				log.Println("Close Error: ", err)
 				return
 			}
@@ -109,7 +118,7 @@ func (l *LiveEditor) HandleWebsocketConn(user user.User, conn *websocket.Conn) {
 		switch messageType {
 		case websocket.CloseMessage:
 			log.Println("CloseMessage")
-			l.removeConnection(conn)
+			l.removeConnection(conn.Conn)
 			continue
 		case websocket.PingMessage:
 			log.Println("PingMessage")
@@ -133,28 +142,28 @@ func (l *LiveEditor) HandleWebsocketConn(user user.User, conn *websocket.Conn) {
 				continue
 			}
 			switch *action.Type {
-			case FOCUS_ITEM:
+			case ACTION_FOCUS_ITEM:
 				var focusItemAction FocusItemAction
 				if err := json.Unmarshal(p, &focusItemAction); err != nil {
 					log.Println("Error unmarshalling action", err)
 					continue
 				}
-				l.HandleFocusItem(focusItemAction.ListId, user.Id, focusItemAction.GroupIndex, focusItemAction.ItemIndex)
-			case UNFOCUS_ITEM:
+				l.HandleFocusItem(focusItemAction, conn)
+			case ACTION_UNFOCUS_ITEM:
 				var focusItemAction UnfocusItemAction
 				if err := json.Unmarshal(p, &focusItemAction); err != nil {
 					log.Println("Error unmarshalling action", err)
 					continue
 				}
-				l.HandleUnfocusItem(focusItemAction.ListId, user.Id, focusItemAction.GroupIndex, focusItemAction.ItemIndex)
-			case ADD_GROUP_ACTION:
-				var addGroupAction AddItemAction
-				if err := json.Unmarshal(p, &addGroupAction); err != nil {
-					log.Fatal(err)
+				l.HandleUnfocusItem(focusItemAction, conn)
+			case ACTION_UPDATE_COLOR:
+				var updateColorAction UpdateColorAction
+				if err := json.Unmarshal(p, &updateColorAction); err != nil {
+					log.Println("Error unmarshalling action", err)
+					continue
 				}
-				l.HandleAddGroup(addGroupAction.ListId, addGroupAction.GroupText)
+				l.HandleUpdateColor(updateColorAction, conn)
 			}
-			continue
 		}
 	}
 }
@@ -168,11 +177,21 @@ func (l *LiveEditor) SetupList(listId int64, user user.User, conn *websocket.Con
 		panicIfError(err)
 		l.listsById[listId] = &ListState{ui: &views.ListUi{
 			List:               list,
-			ColaboratorsOnline: []views.UserUi{{User: user}},
+			ColaboratorsOnline: []views.UserUi{{User: user, Color: "#18d825"}},
 		}, connections: []*Connection{conn2}}
 		listUi = l.listsById[listId]
 	} else {
 		listUi.connections = append(listUi.connections, conn2)
+		found := false
+		for _, userUi := range listUi.ui.ColaboratorsOnline {
+			if userUi.Id == user.Id {
+				found = true
+				break
+			}
+		}
+		if !found {
+			listUi.ui.ColaboratorsOnline = append(listUi.ui.ColaboratorsOnline, views.UserUi{User: user, Color: "#18d825"})
+		}
 		l.listsById[listId] = listUi
 	}
 	s := ""
@@ -182,32 +201,45 @@ func (l *LiveEditor) SetupList(listId int64, user user.User, conn *websocket.Con
 	for _, conn2 := range conns {
 		conn2.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
-	go l.HandleWebsocketConn(user, conn)
+	go l.HandleWebsocketConn(conn2)
 }
 
-const (
-	ADD_GROUP    = iota
-	FOCUS_ITEM   = iota
-	UNFOCUS_ITEM = iota
-	EDIT_GROU    = iota
-	ADD_ITEM     = iota
-)
-
-func (l *LiveEditor) HandleFocusItem(listId int64, userId int64, groupIndex int, itemIndex int) {
+func (l *LiveEditor) HandleFocusItem(action FocusItemAction, conn *Connection) {
 	log.Println("Handling focus Item")
-	s := "TODO HANDLE FOCUS"
+	s := "TODO FOCUS"
 	buf := bytes.NewBufferString(s)
-	conns := l.GetConnectionsOfList(listId)
+	conns := l.GetConnectionsOfList(conn.ListId)
 	for _, conn2 := range conns {
 		conn2.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
 }
 
-func (l *LiveEditor) HandleUnfocusItem(listId int64, userId int64, groupIndex int, itemIndex int) {
+func (l *LiveEditor) HandleUnfocusItem(action UnfocusItemAction, conn *Connection) {
 	log.Println("Handling unfocus Item")
 	s := "TODO: HANDLE UNFOCUS"
 	buf := bytes.NewBufferString(s)
-	conns := l.GetConnectionsOfList(listId)
+	conns := l.GetConnectionsOfList(conn.ListId)
+	for _, conn2 := range conns {
+		conn2.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
+	}
+}
+
+func (l *LiveEditor) HandleUpdateColor(action UpdateColorAction, conn *Connection) {
+	log.Println("Handling update color")
+	listUi, ok := l.listsById[conn.ListId]
+	if !ok {
+		return
+	}
+	log.Println("Updating color")
+	for i, userUi := range listUi.ui.ColaboratorsOnline {
+		if userUi.Id == action.UserId {
+			listUi.ui.ColaboratorsOnline[i].Color = action.Color
+		}
+	}
+	s := ""
+	buf := bytes.NewBufferString(s)
+	views.Templates.RenderCollaboratorsList(buf, listUi.ui.ColaboratorsOnline)
+	conns := l.GetConnectionsOfList(conn.ListId)
 	for _, conn2 := range conns {
 		conn2.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
@@ -236,35 +268,32 @@ func panicIfError(err error) {
 	}
 }
 
-const (
-	ADD_GROUP_ACTION = iota
-)
-
 type Action struct {
 	Type *int `json:"action-type"`
 	Msg  interface{}
 }
 
 type FocusItemAction struct {
-	ListId     int64 `json:"listId"`
-	GroupIndex int   `json:"groupIndex"`
-	ItemIndex  int   `json:"itemIndex"`
+	GroupIndex int `json:"groupIndex"`
+	ItemIndex  int `json:"itemIndex"`
 }
 
 type UnfocusItemAction struct {
-	ListId     int64
 	GroupIndex int
 	ItemIndex  int
 }
 
+type UpdateColorAction struct {
+	Color  string `json:"color"`
+	UserId int64  `json:"userId"`
+}
+
 type BlurItemAction struct {
-	ListId     int64 `json:"listId"`
-	GroupIndex int   `json:"groupIndex"`
-	ItemIndex  int   `json:"itemIndex"`
+	GroupIndex int `json:"groupIndex"`
+	ItemIndex  int `json:"itemIndex"`
 }
 
 type AddItemAction struct {
-	ListId    int64  `json:"listId"`
 	GroupText string `json:"groupText"`
 }
 

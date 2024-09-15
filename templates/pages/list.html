@@ -37,7 +37,7 @@
             <button type="submit">Save</button>
         </form>
         {{ else }}
-        <div class="flex-col space-y-1 flex">
+        <div class="flex-col space-y-1 flex" hx-ext="ws" ws-connect="/ws/list-editor?listId={{ .List.Id }}">
             <div class="flex flex-row justify-between">
                 <h1>{{ .List.Title }}</h1>
                 <a class="button" href="/lists/{{ .List.Id }}?edit">
@@ -51,25 +51,31 @@
                 <p>Colaborators {{ . | len }}:</p>
                 <div>
                     {{ range . }}
-                    <span class="text-nowrap">{{ .Username }} {{ if .Online -}} (online) {{- end }}</span>
+                    <div>
+                        <span class="text-nowrap" style='color: {{ .Color }}'>{{ .Username }} {{ if .Online -}} (online) {{- end }}</span>
+                        <input ws-send hx-vals='{"userId": {{ .Id }}, "action-type": 3 }' type="color" id="color-{{.Id}}" name="color" value="{{ .Color }}" />
+                        <label for="head">Color</label>
+                    </div>
                     {{ end }}
                 </div>
             </div>
             {{end}}
 
             <p>Items:</p>
-            <div hx-ext="ws" ws-connect="/ws/list-editor?listId={{ .List.Id }}">
+            <div>
                 {{ range $gidx, $group := .List.Groups }}
 
                 <p><strong>Group {{ $group.Name }}</strong></p>
                 {{ range $iidx, $item := $group.Items }}
                 <div class="focus-within:border-green-500 border">
-                    <div hx-trigger="blur from:#desc-0" hx-vals='{"action-type": 2, "groupIndex": {{ $gidx }}, "itemIndex": {{ $iidx }}, "listId": 17 }' ws-send>
-                        <input hx-trigger="focus" id="desc-0" ws-send
-                            value="{{ $item.Description }}" name="description-0"
+                    <div hx-trigger="blur from:#desc-0"
+                        hx-vals='{"action-type": 2, "groupIndex": {{ $gidx }}, "itemIndex": {{ $iidx }}, "listId": 17 }'
+                        ws-send>
+                        <input hx-trigger="focus" id="desc-0" ws-send value="{{ $item.Description }}"
+                            name="description-0"
                             hx-vals='{"action-type": 1, "groupIndex": {{ $gidx }}, "itemIndex": {{ $iidx }}, "listId": 17 }' />
                     </div>
-                    <input hx-trigger="focus, blur" id="[0].qty" ws-send value="{{ .Quantity }}" name="quantity-0"/>
+                    <input hx-trigger="focus, blur" id="[0].qty" ws-send value="{{ .Quantity }}" name="quantity-0" />
                     {{ end }}
                 </div>
 
