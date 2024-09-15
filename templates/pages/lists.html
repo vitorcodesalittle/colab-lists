@@ -9,9 +9,26 @@
     <title>Lists</title>
     <meta name="description" content="Manage lists">
     <link href="/static/output.css" rel="stylesheet">
+    <script src="https://unpkg.com/htmx.org@2.0.2"
+        integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx-ext-ws@2.0.1/ws.js"></script>
+    <script>
+        document.addEventListener('htmx:wsBeforeSend', (event) => {
+            console.log(event);
+            // Add the event 
+        })
+    </script>
 </head>
 
 <body>
+    {{ block "authnav" . }}
+    <nav>
+        <a href="/lists">Lists</a>
+        <a href="/login">Login</a>
+        <a href="/logout">Logout</a>
+    </nav>
+    {{ end }}
     <div>
         <h2>Lists</h2>
         <ul>

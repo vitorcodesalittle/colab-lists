@@ -9,22 +9,20 @@
     <meta name="description" content="DESCRIPTION">
     <link href="/static/output.css" rel="stylesheet">
 
-
     <script src="https://unpkg.com/htmx.org@2.0.2"
         integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
         crossorigin="anonymous"></script>
     <script src="https://unpkg.com/htmx-ext-ws@2.0.1/ws.js"></script>
-
     <script>
         document.addEventListener('htmx:wsBeforeSend', (event) => {
             console.log(event);
             // Add the event 
         })
-
     </script>
 </head>
 
 <body>
+    {{ template "authnav" }}
     <div>
         {{ if .Editing }}
         <form action="/lists/{{ .List.Id }}" method="POST" class="flex-col space-y-1 flex">

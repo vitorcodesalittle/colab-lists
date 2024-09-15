@@ -61,7 +61,7 @@ func newTemplates() *templates {
 	templates.Index = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/index.html"))
 	templates.Login = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/login.html"))
 	templates.Lists = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/lists.html"))
-	templates.List = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/list.html"))
+	templates.List = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/list.html", "./templates/pages/lists.html"))
 	return templates
 }
 

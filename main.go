@@ -34,7 +34,7 @@ var (
 )
 
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
+func getIndexHandler(w http.ResponseWriter, r *http.Request) {
 	views.Templates.RenderIndex(w, &views.IndexArgs{
 		Title:       "Lists app!!",
 		Description: "Awesome lists app",
@@ -42,7 +42,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func loginHandler(w http.ResponseWriter, r *http.Request) {
+func getLoginHandler(w http.ResponseWriter, r *http.Request) {
 	views.Templates.RenderLogin(w, &views.LoginArgs{})
 }
 
@@ -109,13 +109,14 @@ func postLoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func postLogoutHandler(w http.ResponseWriter, r *http.Request) {
+func getLogoutHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("SESSION")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	delete(sessionsMap, cookie.Value)
 	w.Header().Add("Set-Cookie", "SESSION=; expires=Thu, 01 Jan 1970 00:00:00 GMT")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func postSignupHandler(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +131,7 @@ func postSignupHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func listsHandler(w http.ResponseWriter, r *http.Request) {
+func getListsHandler(w http.ResponseWriter, r *http.Request) {
 	if redirectIfNotLoggedIn(w, r) {
 		return
 	}
@@ -153,7 +154,7 @@ func redirectIfNotLoggedIn(w http.ResponseWriter, r *http.Request) bool {
 	return false
 }
 
-func listDetailHandler(w http.ResponseWriter, r *http.Request) {
+func getListDetailHandler(w http.ResponseWriter, r *http.Request) {
 	if redirectIfNotLoggedIn(w, r) {
 		return
 	}
@@ -209,7 +210,7 @@ func postListsHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/lists", http.StatusSeeOther)
 }
 
-func listEditorHandler(w http.ResponseWriter, r *http.Request) {
+func getListEditorHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := getUserFromSession(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -244,16 +245,16 @@ func main() {
 
 	dir := http.Dir(".")
 	http.Handle("GET /static/", http.FileServer(dir))
-	http.HandleFunc("GET /login", loginHandler)
+	http.HandleFunc("GET /login", getLoginHandler)
 	http.HandleFunc("POST /login", postLoginHandler)
-	http.HandleFunc("POST /logout", postLogoutHandler)
+	http.HandleFunc("GET /logout", getLogoutHandler)
 	http.HandleFunc("POST /sign-up", postSignupHandler)
-	http.HandleFunc("GET /", indexHandler)
-	http.HandleFunc("GET /lists", listsHandler)
+	http.HandleFunc("GET /", getIndexHandler)
+	http.HandleFunc("GET /lists", getListsHandler)
 	http.HandleFunc("POST /lists", postListsHandler)
-	http.HandleFunc("GET /lists/{listId}", listDetailHandler)
+	http.HandleFunc("GET /lists/{listId}", getListDetailHandler)
 	http.HandleFunc("GET /api/users/{userId}", getUserHandler)
-	http.HandleFunc("GET /ws/list-editor", listEditorHandler)
+	http.HandleFunc("GET /ws/list-editor", getListEditorHandler)
 
 	log.Printf("Server started at http://localhost:8080\n")
 

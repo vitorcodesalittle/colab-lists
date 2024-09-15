@@ -24,12 +24,12 @@ func (c *Connection) String() string {
 }
 
 type ListState struct {
-    ui views.ListUi
+    ui *views.ListUi
     connections []*Connection
 }
 
 type LiveEditor struct {
-	listsById           map[int64]ListState
+	listsById           map[int64]*ListState
 	listRepository      list.ListsRepository
 }
 
@@ -45,7 +45,7 @@ func (l *LiveEditor) Info() {
 func NewLiveEditor(repository list.ListsRepository) *LiveEditor {
 	return &LiveEditor{
 		listRepository: repository,
-		listsById:      make(map[int64]ListState),
+		listsById:      make(map[int64]*ListState),
 	}
 }
 
@@ -86,7 +86,7 @@ func (l *LiveEditor) removeConnection(conn *websocket.Conn) {
                 connections = append(connections, c)
             }
         }
-        l.listsById[k] = ListState{ui: v.ui, connections: connections}
+        l.listsById[k] = &ListState{ui: v.ui, connections: connections}
     }
 }
 
@@ -167,7 +167,7 @@ func (l *LiveEditor) SetupList(listId int64, user user.User, conn *websocket.Con
 	if !ok {
 		list, err := l.listRepository.Get(listId)
 		panicIfError(err)
-        l.listsById[listId] = ListState{ui:views.ListUi{
+        l.listsById[listId] = &ListState{ui:&views.ListUi{
 			List:               list,
 			ColaboratorsOnline: []views.UserUi{{User: user}},
 		}, connections: []*Connection{{ListId: listId, UserId: user.Id, Conn: conn}}}
@@ -226,7 +226,7 @@ func (l *LiveEditor) HandleAddItem(listId int64, groupIndex int, itemText string
 func (l *LiveEditor) GetCurrentList(listId int64) *views.ListUi {
 	list, ok := l.listsById[listId]
 	if ok {
-		return &list.ui
+		return list.ui
 	}
 	return nil
 }
