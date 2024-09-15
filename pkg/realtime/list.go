@@ -70,7 +70,6 @@ func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
 		return
 	}
 	editList.Groups = append(editList.Groups, list.Group{Name: groupText, Items: []list.Item{}})
-
 	for _, conn := range l.GetConnectionsOfList(listId) {
 		conn.Conn.WriteJSON(editList)
 	}
@@ -150,12 +149,12 @@ func (l *LiveEditor) HandleWebsocketConn(conn *Connection) {
 				}
 				l.HandleFocusItem(focusItemAction, conn)
 			case ACTION_UNFOCUS_ITEM:
-				var focusItemAction UnfocusItemAction
-				if err := json.Unmarshal(p, &focusItemAction); err != nil {
+				var unfocusItemAction UnfocusItemAction
+				if err := json.Unmarshal(p, &unfocusItemAction); err != nil {
 					log.Println("Error unmarshalling action", err)
 					continue
 				}
-				l.HandleUnfocusItem(focusItemAction, conn)
+				l.HandleUnfocusItem(unfocusItemAction, conn)
 			case ACTION_UPDATE_COLOR:
 				var updateColorAction UpdateColorAction
 				if err := json.Unmarshal(p, &updateColorAction); err != nil {
@@ -206,21 +205,47 @@ func (l *LiveEditor) SetupList(listId int64, user user.User, conn *websocket.Con
 
 func (l *LiveEditor) HandleFocusItem(action FocusItemAction, conn *Connection) {
 	log.Println("Handling focus Item")
-	s := "TODO FOCUS"
-	buf := bytes.NewBufferString(s)
+	list, ok := l.listsById[conn.ListId]
+	if !ok {
+		return
+	}
+	item := list.ui.List.Groups[action.GroupIndex].Items[action.ItemIndex]
+    userUi := &views.UserUi{Color: "green"}
+    for _, c := range list.ui.ColaboratorsOnline {
+        if c.User.Id == conn.UserId {
+            userUi = &c
+        }
+    }
+	args := views.IndexedItem{
+		GroupIndex: action.GroupIndex,
+		ItemIndex:  action.ItemIndex,
+		Item:       item,
+		Color:      userUi.Color,
+		ActionType: ACTION_FOCUS_ITEM,
+	}
 	conns := l.GetConnectionsOfList(conn.ListId)
 	for _, conn2 := range conns {
-		conn2.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
+		conn2.Conn.WriteJSON(&args)
 	}
 }
 
 func (l *LiveEditor) HandleUnfocusItem(action UnfocusItemAction, conn *Connection) {
 	log.Println("Handling unfocus Item")
-	s := "TODO: HANDLE UNFOCUS"
-	buf := bytes.NewBufferString(s)
+	list, ok := l.listsById[conn.ListId]
+	if !ok {
+		return
+	}
+	item := list.ui.List.Groups[action.GroupIndex].Items[action.ItemIndex]
+	args := views.IndexedItem{
+		GroupIndex: action.GroupIndex,
+		ItemIndex:  action.ItemIndex,
+		Item:       item,
+		Color:      "",
+		ActionType: ACTION_UNFOCUS_ITEM,
+	}
 	conns := l.GetConnectionsOfList(conn.ListId)
 	for _, conn2 := range conns {
-		conn2.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
+		conn2.Conn.WriteJSON(&args)
 	}
 }
 
@@ -230,7 +255,6 @@ func (l *LiveEditor) HandleUpdateColor(action UpdateColorAction, conn *Connectio
 	if !ok {
 		return
 	}
-	log.Println("Updating color")
 	for i, userUi := range listUi.ui.ColaboratorsOnline {
 		if userUi.Id == action.UserId {
 			listUi.ui.ColaboratorsOnline[i].Color = action.Color
@@ -269,7 +293,7 @@ func panicIfError(err error) {
 }
 
 type Action struct {
-	Type *int `json:"action-type"`
+	Type *int `json:"actionType"`
 	Msg  interface{}
 }
 

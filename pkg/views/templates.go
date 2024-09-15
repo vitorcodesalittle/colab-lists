@@ -56,10 +56,18 @@ func (t *templates) RenderCollaboratorsList(w io.Writer, args []UserUi) {
 	t.List.ExecuteTemplate(w, "colaborators", args)
 }
 
+type ItemArgs = IndexedItem
+
+func (t *templates) RenderItem(w io.Writer, args ItemArgs) {
+	t.List.ExecuteTemplate(w, "item", args)
+}
+
 type IndexedItem struct {
-    GroupIndex int
-    ItemIndex int
-    Item list.Item
+    ActionType int       `json:"actionType"`
+	GroupIndex int       `json:"groupIndex"`
+	ItemIndex  int       `json:"itemIndex"`
+	Item       list.Item `json:"item"`
+	Color      string    `json:"color"`
 }
 
 func newTemplates() *templates {
@@ -68,9 +76,9 @@ func newTemplates() *templates {
 	templates.Login = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/login.html"))
 	templates.Lists = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/lists.html"))
 	templates.List = textTemplate.Must(textTemplate.New("list.html").Funcs(textTemplate.FuncMap{
-		"indexeditem": func(groupIndex int, itemIndex int, item *list.Item) *IndexedItem {
-            println("Indexed item", groupIndex, itemIndex, item)
-            return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item}
+		"indexeditem": func(groupIndex int, itemIndex int, item *list.Item, color string) *IndexedItem {
+			println("Indexed item", groupIndex, itemIndex, item, color)
+			return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color}
 		},
 	}).ParseFiles("./templates/pages/list.html", "./templates/pages/lists.html"))
 	return templates

@@ -14,16 +14,33 @@
         crossorigin="anonymous"></script>
     <script src="https://unpkg.com/htmx-ext-ws@2.0.1/ws.js"></script>
     <script>
-        document.addEventListener('htmx:wsBeforeSend', (event) => {
-            console.log(event);
-            // Add the event 
+        document.addEventListener('htmx:wsBeforeMessage', (event) => {
+            let msg;
+            try {
+                msg = JSON.parse(event.detail.message);
+            } catch (err) {
+                return true;
+            }
+            console.log(msg)
+            const { actionType } = msg;
+            if (actionType === 1) {
+                // Handle focus
+                const {groupIndex, itemIndex, color} = msg
+                document.querySelector(`#desc-${groupIndex}-${itemIndex}`).style.borderColor = color;
+                document.querySelector(`#desc-${groupIndex}-${itemIndex}`).classList.add(`border`);
+            } else if (actionType === 2) {
+                // Handle blur
+                const {groupIndex, itemIndex, color} = msg;
+                document.querySelector(`#desc-${groupIndex}-${itemIndex}`).classList.remove(`border`);
+            }
+            return false
         })
     </script>
 </head>
 
 <body>
     {{ template "authnav" }}
-    <div>
+    <div hx-ext="ws">
         {{ if .Editing }}
         <form action="/lists/{{ .List.Id }}" method="POST" class="flex-col space-y-1 flex">
             <input class="input-h1" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
@@ -37,57 +54,62 @@
             <button type="submit">Save</button>
         </form>
         {{ else }}
-        <div class="flex-col space-y-1 flex" hx-ext="ws" ws-connect="/ws/list-editor?listId={{ .List.Id }}">
-            <div class="flex flex-row justify-between">
-                <h1>{{ .List.Title }}</h1>
-                <a class="button" href="/lists/{{ .List.Id }}?edit">
-                    Edit
-                </a>
-            </div>
-            <p><i name="description">{{ .List.Description }}</i></p>
+        <div class="flex-col space-y-1 flex" ws-connect="/ws/list-editor?listId={{ .List.Id }}">
+            <div>
+                <div class="flex flex-row justify-between" hx-on:htmx:wsAfterMessage="console.log(event)">
+                    <h1>{{ .List.Title }}</h1>
+                    <a class="button" href="/lists/{{ .List.Id }}?edit">
+                        Edit
+                    </a>
+                </div>
+                <p><i name="description">{{ .List.Description }}</i></p>
 
-            {{block "colaborators" .List.Colaborators}}
-            <div id="colaborators" hx-swap-oob="outerHTML">
-                <p>Colaborators {{ . | len }}:</p>
-                <div>
-                    {{ range . }}
+                {{block "colaborators" .List.Colaborators}}
+                <div id="colaborators" hx-swap-oob="outerHTML">
+                    <p>Colaborators {{ . | len }}:</p>
                     <div>
-                        <span class="text-nowrap" style='color: {{ .Color }}'>{{ .Username }} {{ if .Online -}} (online)
-                            {{- end }}</span>
-                        <input ws-send hx-vals='{"userId": {{ .Id }}, "action-type": 3 }' type="color"
-                            id="color-{{.Id}}" name="color" value="{{ .Color }}" />
-                        <label for="head">Color</label>
+                        {{ range . }}
+                        <div>
+                            <span class="text-nowrap" style='color: {{ .Color }}'>{{ .Username }} {{ if .Online -}}
+                                (online)
+                                {{- end }}</span>
+                            <input ws-send hx-vals='{"userId": {{ .Id }}, "actionType": 3 }' type="color"
+                                id="color-{{.Id}}" name="color" value="{{ .Color }}" />
+                            <label for="head">Color</label>
+                        </div>
+                        {{ end }}
                     </div>
+                </div>
+                {{end}}
+
+                <div>
+                    {{ range $gidx, $group := .List.Groups }}
+                    <p><strong>Group {{ $group.Name }}</strong></p>
+                    <p>Items:</p>
+                    {{ range $iidx, $item := $group.Items }}
+                    {{ block "item" (indexeditem $gidx $iidx $item "") }}
+                    <div class='{{ if (ne "" .Color) }}border-{{.Color}}-500 border {{ else }} {{ end }}'
+                        hx-swap-oob="outerHTML" id="desc-{{.GroupIndex}}-{{.ItemIndex}}"
+                        hx-select-oob="#desc-{{.GroupIndex}}-{{.ItemIndex}}">
+                        <div hx-trigger="blur from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
+                            hx-vals='{"actionType": 2, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }'
+                            id="desc-{{.GroupIndex}}-{{.ItemIndex}}-div" ws-send>
+                            <input hx-trigger="focus" ws-send value="{{ .Item.Description }}" name="description-0"
+                                id="desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
+                                hx-vals='{"actionType": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' />
+                        </div>
+                        <input value="{{ .Item.Quantity }}" name="quantity-0" />
+                    </div>
+
+                    {{ end }}
+                    {{ end }}
                     {{ end }}
                 </div>
-            </div>
-            {{end}}
-
-            <p>Items:</p>
-            <div>
-                {{ range $gidx, $group := .List.Groups }}
-
-                <p><strong>Group {{ $group.Name }}</strong></p>
-                {{ range $iidx, $item := $group.Items }}
-
-                {{ block "item" (indexeditem $gidx $iidx $item) }}
-                <div class="focus-within:border-green-500 border">
-                    <div hx-trigger="blur from:#desc-{{.GroupIndex}}-{{.ItemIndex}}"
-                        hx-vals='{"action-type": 2, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' ws-send>
-                        <input hx-trigger="focus" id="desc-{{.GroupIndex}}-{{.ItemIndex}}" ws-send value="{{ .Item.Description }}"
-                            name="description-0"
-                            hx-vals='{"action-type": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' />
-                    </div>
-                    <input hx-trigger="focus, blur" id="[0].qty" ws-send value="{{ .Item.Quantity }}" name="quantity-0" />
-                </div>
-
-                {{ end }}
-                {{ end }}
-                {{ end }}
             </div>
         </div>
         {{ end }}
     </div>
+    <div class="border-green border border-red border-blue boder-pink hidden" />
 </body>
 
 </html>

@@ -6,7 +6,7 @@ type HtmxMessage struct {
 	Target      *string `json:"HX-Target"`
 	Trigger     *string `json:"HX-Trigger"`
 	TriggerName *string `json:"HX-TriggerName"`
-	ActionType  *int    `json:"action-type"`
+	ActionType  *int    `json:"actionType"`
 }
 
 type HtmxMessageI struct {
