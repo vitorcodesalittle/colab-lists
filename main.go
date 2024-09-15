@@ -27,12 +27,11 @@ var (
 
 var (
 	liveEditor *realtime.LiveEditor = realtime.NewLiveEditor(listsRepository)
-	upgrader                    = websocket.Upgrader{
+	upgrader                        = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
 )
-
 
 func getIndexHandler(w http.ResponseWriter, r *http.Request) {
 	views.Templates.RenderIndex(w, &views.IndexArgs{
@@ -40,7 +39,6 @@ func getIndexHandler(w http.ResponseWriter, r *http.Request) {
 		Description: "Awesome lists app",
 	})
 }
-
 
 func getLoginHandler(w http.ResponseWriter, r *http.Request) {
 	views.Templates.RenderLogin(w, &views.LoginArgs{})
@@ -116,7 +114,7 @@ func getLogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	delete(sessionsMap, cookie.Value)
 	w.Header().Add("Set-Cookie", "SESSION=; expires=Thu, 01 Jan 1970 00:00:00 GMT")
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func postSignupHandler(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +127,6 @@ func postSignupHandler(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 	}
 }
-
 
 func getListsHandler(w http.ResponseWriter, r *http.Request) {
 	if redirectIfNotLoggedIn(w, r) {
@@ -171,9 +168,9 @@ func getListDetailHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-    listArgs := &views.ListArgs{
-		List:         list,
-		Editing:      r.URL.Query().Has("edit"),
+	listArgs := &views.ListArgs{
+		List:     list,
+		Editing:  r.URL.Query().Has("edit"),
 		AllUsers: allUsers,
 	}
 	views.Templates.RenderList(w, listArgs)
@@ -258,8 +255,7 @@ func main() {
 
 	log.Printf("Server started at http://localhost:8080\n")
 
-
-	var listenAddress = flag.String("listen", ":8080", "Listen address.")
+	listenAddress := flag.String("listen", ":8080", "Listen address.")
 	httpServer := http.Server{
 		Addr: *listenAddress,
 	}
@@ -272,10 +268,10 @@ func main() {
 		}
 	}()
 
-    if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
-        log.Println("Error")
-        log.Fatal(err)
-    }
+	if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
+		log.Println("Error")
+		log.Fatal(err)
+	}
 
-    log.Println("Bye")
+	log.Println("Bye")
 }

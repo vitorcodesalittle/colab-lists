@@ -12,7 +12,6 @@ import (
 	"vilmasoftware.com/colablists/pkg/views"
 )
 
-
 type Connection struct {
 	ListId int64
 	UserId int64
@@ -24,21 +23,20 @@ func (c *Connection) String() string {
 }
 
 type ListState struct {
-    ui *views.ListUi
-    connections []*Connection
+	ui          *views.ListUi
+	connections []*Connection
 }
 
 type LiveEditor struct {
-	listsById           map[int64]*ListState
-	listRepository      list.ListsRepository
+	listsById      map[int64]*ListState
+	listRepository list.ListsRepository
 }
-
 
 func (l *LiveEditor) Info() {
 	println("Live editor info")
 	for k, v := range l.listsById {
 		println("List ", k, " has ", len(v.ui.ColaboratorsOnline), " colaborators")
-        println("List ", k, " has ", len(v.connections), " connections")
+		println("List ", k, " has ", len(v.connections), " connections")
 	}
 }
 
@@ -50,11 +48,11 @@ func NewLiveEditor(repository list.ListsRepository) *LiveEditor {
 }
 
 func (l *LiveEditor) GetConnectionsOfList(listId int64) []*Connection {
-    conns, ok := l.listsById[listId]
-    if !ok {
-        return []*Connection{}
-    }
-    return conns.connections
+	conns, ok := l.listsById[listId]
+	if !ok {
+		return []*Connection{}
+	}
+	return conns.connections
 }
 
 func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
@@ -79,15 +77,15 @@ func (l *LiveEditor) HandleEditGroupItem(listId int64, groupIndex int, groupText
 }
 
 func (l *LiveEditor) removeConnection(conn *websocket.Conn) {
-    for k, v := range l.listsById {
-        connections := make([]*Connection, 0)
-        for _, c := range v.connections {
-            if c.Conn != conn {
-                connections = append(connections, c)
-            }
-        }
-        l.listsById[k] = &ListState{ui: v.ui, connections: connections}
-    }
+	for k, v := range l.listsById {
+		connections := make([]*Connection, 0)
+		for _, c := range v.connections {
+			if c.Conn != conn {
+				connections = append(connections, c)
+			}
+		}
+		l.listsById[k] = &ListState{ui: v.ui, connections: connections}
+	}
 }
 
 func (l *LiveEditor) HandleWebsocketConn(user user.User, conn *websocket.Conn) {
@@ -124,8 +122,8 @@ func (l *LiveEditor) HandleWebsocketConn(user user.User, conn *websocket.Conn) {
 			continue
 		case websocket.TextMessage:
 			log.Println("TextMessage")
-            var msg json.RawMessage
-            action := Action{Msg: &msg}
+			var msg json.RawMessage
+			action := Action{Msg: &msg}
 			if err := json.Unmarshal(p, &action); err != nil {
 				log.Println("Error unmarshalling message ", err)
 				continue
@@ -164,17 +162,18 @@ func (l *LiveEditor) HandleWebsocketConn(user user.User, conn *websocket.Conn) {
 func (l *LiveEditor) SetupList(listId int64, user user.User, conn *websocket.Conn) {
 	defer l.Info()
 	listUi, ok := l.listsById[listId]
+	conn2 := &Connection{ListId: listId, UserId: user.Id, Conn: conn}
 	if !ok {
 		list, err := l.listRepository.Get(listId)
 		panicIfError(err)
-        l.listsById[listId] = &ListState{ui:&views.ListUi{
+		l.listsById[listId] = &ListState{ui: &views.ListUi{
 			List:               list,
 			ColaboratorsOnline: []views.UserUi{{User: user}},
-		}, connections: []*Connection{{ListId: listId, UserId: user.Id, Conn: conn}}}
+		}, connections: []*Connection{conn2}}
 		listUi = l.listsById[listId]
 	} else {
-        listUi.connections = append(listUi.connections, &Connection{ListId: listId, UserId: user.Id, Conn: conn})
-        l.listsById[listId] = listUi
+		listUi.connections = append(listUi.connections, conn2)
+		l.listsById[listId] = listUi
 	}
 	s := ""
 	buf := bytes.NewBufferString(s)
@@ -242,7 +241,7 @@ const (
 )
 
 type Action struct {
-	Type *int         `json:"action-type"`
+	Type *int `json:"action-type"`
 	Msg  interface{}
 }
 
@@ -268,7 +267,6 @@ type AddItemAction struct {
 	ListId    int64  `json:"listId"`
 	GroupText string `json:"groupText"`
 }
-
 
 // type AddGroupAction struct {
 // 	Action
