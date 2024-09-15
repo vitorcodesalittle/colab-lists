@@ -129,9 +129,6 @@ func postSignupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type ListsArgs struct {
-	Lists []list.List
-}
 
 func listsHandler(w http.ResponseWriter, r *http.Request) {
 	if redirectIfNotLoggedIn(w, r) {
@@ -141,15 +138,9 @@ func listsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	views.Templates.RenderLists(w, &ListsArgs{
+	views.Templates.RenderLists(w, &views.ListsArgs{
 		Lists: lists,
 	})
-}
-
-type ListArgs struct {
-	List         list.List
-	Editing      bool
-	AllUsers []user.User
 }
 
 func redirectIfNotLoggedIn(w http.ResponseWriter, r *http.Request) bool {
@@ -179,7 +170,7 @@ func listDetailHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-    listArgs := &ListArgs{
+    listArgs := &views.ListArgs{
 		List:         list,
 		Editing:      r.URL.Query().Has("edit"),
 		AllUsers: allUsers,
