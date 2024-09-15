@@ -56,12 +56,23 @@ func (t *templates) RenderCollaboratorsList(w io.Writer, args []UserUi) {
 	t.List.ExecuteTemplate(w, "colaborators", args)
 }
 
+type IndexedItem struct {
+    GroupIndex int
+    ItemIndex int
+    Item list.Item
+}
+
 func newTemplates() *templates {
 	templates := &templates{}
 	templates.Index = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/index.html"))
 	templates.Login = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/login.html"))
 	templates.Lists = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/lists.html"))
-	templates.List = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/list.html", "./templates/pages/lists.html"))
+	templates.List = textTemplate.Must(textTemplate.New("list.html").Funcs(textTemplate.FuncMap{
+		"indexeditem": func(groupIndex int, itemIndex int, item *list.Item) *IndexedItem {
+            println("Indexed item", groupIndex, itemIndex, item)
+            return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item}
+		},
+	}).ParseFiles("./templates/pages/list.html", "./templates/pages/lists.html"))
 	return templates
 }
 
@@ -73,7 +84,7 @@ type ListUi struct {
 }
 type UserUi struct {
 	user.User
-    Color string
+	Color string
 	//*Action
 }
 

@@ -52,8 +52,10 @@
                 <div>
                     {{ range . }}
                     <div>
-                        <span class="text-nowrap" style='color: {{ .Color }}'>{{ .Username }} {{ if .Online -}} (online) {{- end }}</span>
-                        <input ws-send hx-vals='{"userId": {{ .Id }}, "action-type": 3 }' type="color" id="color-{{.Id}}" name="color" value="{{ .Color }}" />
+                        <span class="text-nowrap" style='color: {{ .Color }}'>{{ .Username }} {{ if .Online -}} (online)
+                            {{- end }}</span>
+                        <input ws-send hx-vals='{"userId": {{ .Id }}, "action-type": 3 }' type="color"
+                            id="color-{{.Id}}" name="color" value="{{ .Color }}" />
                         <label for="head">Color</label>
                     </div>
                     {{ end }}
@@ -67,18 +69,20 @@
 
                 <p><strong>Group {{ $group.Name }}</strong></p>
                 {{ range $iidx, $item := $group.Items }}
+
+                {{ block "item" (indexeditem $gidx $iidx $item) }}
                 <div class="focus-within:border-green-500 border">
-                    <div hx-trigger="blur from:#desc-0"
-                        hx-vals='{"action-type": 2, "groupIndex": {{ $gidx }}, "itemIndex": {{ $iidx }}, "listId": 17 }'
-                        ws-send>
-                        <input hx-trigger="focus" id="desc-0" ws-send value="{{ $item.Description }}"
+                    <div hx-trigger="blur from:#desc-{{.GroupIndex}}-{{.ItemIndex}}"
+                        hx-vals='{"action-type": 2, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' ws-send>
+                        <input hx-trigger="focus" id="desc-{{.GroupIndex}}-{{.ItemIndex}}" ws-send value="{{ .Item.Description }}"
                             name="description-0"
-                            hx-vals='{"action-type": 1, "groupIndex": {{ $gidx }}, "itemIndex": {{ $iidx }}, "listId": 17 }' />
+                            hx-vals='{"action-type": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' />
                     </div>
-                    <input hx-trigger="focus, blur" id="[0].qty" ws-send value="{{ .Quantity }}" name="quantity-0" />
-                    {{ end }}
+                    <input hx-trigger="focus, blur" id="[0].qty" ws-send value="{{ .Item.Quantity }}" name="quantity-0" />
                 </div>
 
+                {{ end }}
+                {{ end }}
                 {{ end }}
             </div>
         </div>
