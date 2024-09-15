@@ -124,16 +124,17 @@ func (l *LiveEditor) HandleWebsocketConn(user user.User, conn *websocket.Conn) {
 			continue
 		case websocket.TextMessage:
 			log.Println("TextMessage")
-			action := HtmxMessageI{}
+            var msg json.RawMessage
+            action := Action{Msg: &msg}
 			if err := json.Unmarshal(p, &action); err != nil {
 				log.Println("Error unmarshalling message ", err)
 				continue
 			}
-			if action.Header.ActionType == nil {
+			if action.Type == nil {
 				log.Println("ActionType is nil")
 				continue
 			}
-			switch *action.Header.ActionType {
+			switch *action.Type {
 			case FOCUS_ITEM:
 				var focusItemAction FocusItemAction
 				if err := json.Unmarshal(p, &focusItemAction); err != nil {
@@ -241,8 +242,8 @@ const (
 )
 
 type Action struct {
-	Type int         `json:"type"`
-	Msg  interface{} `json:"msg"`
+	Type *int         `json:"action-type"`
+	Msg  interface{}
 }
 
 type FocusItemAction struct {
@@ -268,23 +269,6 @@ type AddItemAction struct {
 	GroupText string `json:"groupText"`
 }
 
-type HtmxMessage struct {
-	CurrentUrl  *string `json:"HX-Current-URL"`
-	Request     *string `json:"HX-Request"`
-	Target      *string `json:"HX-Target"`
-	Trigger     *string `json:"HX-Trigger"`
-	TriggerName *string `json:"HX-TriggerName"`
-	ActionType  *int    `json:"action-type"`
-}
-
-type HtmxMessageI struct {
-	Header HtmxMessage `json:"HEADERS"`
-	Any    interface{}
-}
-
-func (h *HtmxMessage) String() string {
-	return fmt.Sprintf("CurrentUrl: %s, Request: %s, Target: %s, Trigger: %s, TriggerName: %s, ActionType: %d\n", h.CurrentUrl, h.Request, h.Target, h.Trigger, h.TriggerName, h.ActionType)
-}
 
 // type AddGroupAction struct {
 // 	Action
