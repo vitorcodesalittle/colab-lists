@@ -69,6 +69,10 @@ type IndexedItem struct {
 	Item       list.Item `json:"item"`
 	Color      string    `json:"color"`
 }
+type IndexedGroup struct {
+    GroupIndex int       `json:"groupIndex"`
+    Group      list.Group `json:"group"`
+}
 
 func newTemplates() *templates {
 	templates := &templates{}
@@ -77,9 +81,12 @@ func newTemplates() *templates {
 	templates.Lists = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/lists.html"))
 	templates.List = textTemplate.Must(textTemplate.New("list.html").Funcs(textTemplate.FuncMap{
 		"indexeditem": func(groupIndex int, itemIndex int, item *list.Item, color string) *IndexedItem {
-			println("Indexed item", groupIndex, itemIndex, item, color)
 			return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color}
 		},
+        "indexedgroup": func(groupIndex int, group *list.Group) *IndexedGroup {
+            println("Calling indexedgroup with ", groupIndex, " and ", group)
+            return &IndexedGroup{GroupIndex: groupIndex, Group: *group}
+        },
 	}).ParseFiles("./templates/pages/list.html", "./templates/pages/lists.html"))
 	return templates
 }

@@ -21,8 +21,7 @@
             } catch (err) {
                 return true;
             }
-            console.log(msg)
-            const { actionType } = msg;
+            const {actionType} = msg;
             if (actionType === 1) {
                 // Handle focus
                 const {groupIndex, itemIndex, color} = msg
@@ -63,7 +62,6 @@
                     </a>
                 </div>
                 <p><i name="description">{{ .List.Description }}</i></p>
-
                 {{block "colaborators" .List.Colaborators}}
                 <div id="colaborators" hx-swap-oob="outerHTML">
                     <p>Colaborators {{ . | len }}:</p>
@@ -84,26 +82,37 @@
 
                 <div>
                     {{ range $gidx, $group := .List.Groups }}
-                    <p><strong>Group {{ $group.Name }}</strong></p>
-                    <p>Items:</p>
-                    {{ range $iidx, $item := $group.Items }}
-                    {{ block "item" (indexeditem $gidx $iidx $item "") }}
-                    <div class='{{ if (ne "" .Color) }}border-{{.Color}}-500 border {{ else }} {{ end }}'
-                        hx-swap-oob="outerHTML" id="desc-{{.GroupIndex}}-{{.ItemIndex}}"
-                        hx-select-oob="#desc-{{.GroupIndex}}-{{.ItemIndex}}">
-                        <div hx-trigger="blur from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
-                            hx-vals='{"actionType": 2, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }'
-                            id="desc-{{.GroupIndex}}-{{.ItemIndex}}-div" ws-send>
-                            <input hx-trigger="focus" ws-send value="{{ .Item.Description }}" name="description-0"
-                                id="desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
-                                hx-vals='{"actionType": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' />
+                    {{ block "group" (indexedgroup $gidx $group) }}
+                    <div>
+                        <p><strong>Group {{ .Group.Name }}</strong></p>
+                        <p>Items:</p>
+                        {{ range $iidx, $item := .Group.Items }}
+                        {{ block "item" (indexeditem $.GroupIndex $iidx $item "") }}
+                        <div class='{{ if (ne "" .Color) }}border-{{.Color}}-500 border {{ else }} {{ end }}'
+                            hx-swap-oob="outerHTML"
+                            id="desc-{{.GroupIndex}}-{{.ItemIndex}}"
+                            hx-select-oob="#desc-{{.GroupIndex}}-{{.ItemIndex}}">
+                            <div hx-trigger="blur from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
+                                hx-vals='{"actionType": 2, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }'
+                                id="desc-{{.GroupIndex}}-{{.ItemIndex}}-div"
+                                ws-send>
+                                <input hx-trigger="focus"
+                                       ws-send
+                                       value="{{ .Item.Description }}"
+                                       name="description-0"
+                                    id="desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
+                                    hx-vals='{"actionType": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' />
+                            </div>
+                            <input value="{{ .Item.Quantity }}" name="quantity-0" />
                         </div>
-                        <input value="{{ .Item.Quantity }}" name="quantity-0" />
-                    </div>
 
+                        {{ end }}
+                        <button>Add Item</button>
+                        {{ end }}
+                    </div>
                     {{ end }}
                     {{ end }}
-                    {{ end }}
+                    <button ws-send hx-vals='{"actionType": 4}'>Add group</button>
                 </div>
             </div>
         </div>

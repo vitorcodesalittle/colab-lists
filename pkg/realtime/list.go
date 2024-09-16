@@ -12,11 +12,13 @@ import (
 	"vilmasoftware.com/colablists/pkg/views"
 )
 
+// Must match actionType in html
 const (
 	ACTION_NOOP         = iota
 	ACTION_FOCUS_ITEM   = iota
 	ACTION_UNFOCUS_ITEM = iota
 	ACTION_UPDATE_COLOR = iota
+	ACTION_ADD_GROUP    = iota
 	ACTION_EDIT_GROU    = iota
 	ACTION_ADD_ITEM     = iota
 )
@@ -163,6 +165,8 @@ func (l *LiveEditor) HandleWebsocketConn(conn *Connection) {
 				}
 				l.HandleUpdateColor(updateColorAction, conn)
 			}
+		case ACTION_ADD_GROUP:
+			l.HandleAddGroup(conn.ListId, "New Group")
 		}
 	}
 }
@@ -210,12 +214,12 @@ func (l *LiveEditor) HandleFocusItem(action FocusItemAction, conn *Connection) {
 		return
 	}
 	item := list.ui.List.Groups[action.GroupIndex].Items[action.ItemIndex]
-    userUi := &views.UserUi{Color: "green"}
-    for _, c := range list.ui.ColaboratorsOnline {
-        if c.User.Id == conn.UserId {
-            userUi = &c
-        }
-    }
+	userUi := &views.UserUi{Color: "green"}
+	for _, c := range list.ui.ColaboratorsOnline {
+		if c.User.Id == conn.UserId {
+			userUi = &c
+		}
+	}
 	args := views.IndexedItem{
 		GroupIndex: action.GroupIndex,
 		ItemIndex:  action.ItemIndex,
