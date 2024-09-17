@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"io"
 	textTemplate "text/template"
 
@@ -62,16 +63,27 @@ func (t *templates) RenderItem(w io.Writer, args ItemArgs) {
 	t.List.ExecuteTemplate(w, "item", args)
 }
 
+type GroupArgs = IndexedGroup
+
+func (t *templates) RenderGroup(w io.Writer, args GroupArgs) {
+	t.List.ExecuteTemplate(w, "group", args)
+}
+
 type IndexedItem struct {
-    ActionType int       `json:"actionType"`
+	ActionType int       `json:"actionType"`
 	GroupIndex int       `json:"groupIndex"`
 	ItemIndex  int       `json:"itemIndex"`
 	Item       list.Item `json:"item"`
 	Color      string    `json:"color"`
 }
 type IndexedGroup struct {
-    GroupIndex int       `json:"groupIndex"`
-    Group      list.Group `json:"group"`
+	GroupIndex int        `json:"groupIndex"`
+	Group      list.Group `json:"group"`
+	Id         string
+}
+
+func NewGroupIndex(groupIndex int, group *list.Group) *IndexedGroup {
+	return &IndexedGroup{GroupIndex: groupIndex, Group: *group, Id: fmt.Sprintf("group-%d", groupIndex)}
 }
 
 func newTemplates() *templates {
@@ -83,10 +95,9 @@ func newTemplates() *templates {
 		"indexeditem": func(groupIndex int, itemIndex int, item *list.Item, color string) *IndexedItem {
 			return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color}
 		},
-        "indexedgroup": func(groupIndex int, group *list.Group) *IndexedGroup {
-            println("Calling indexedgroup with ", groupIndex, " and ", group)
-            return &IndexedGroup{GroupIndex: groupIndex, Group: *group}
-        },
+		"indexedgroup": func(groupIndex int, group *list.Group) *IndexedGroup {
+			return NewGroupIndex(groupIndex, group)
+		},
 	}).ParseFiles("./templates/pages/list.html", "./templates/pages/lists.html"))
 	return templates
 }

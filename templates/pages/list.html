@@ -34,6 +34,12 @@
             }
             return false
         })
+        document.addEventListener('htmx:oobAfterSwap', console.log)
+        document.addEventListener('htmx:oobBeforeSwap', console.log)
+        document.addEventListener('htmx:oobErrorNoTarget', console.error)
+        document.addEventListener('htmx:swapError', console.error)
+        document.addEventListener('htmx:targetError', console.error)
+
     </script>
 </head>
 
@@ -80,26 +86,21 @@
                 </div>
                 {{end}}
 
-                <div>
+                <div id="groups">
                     {{ range $gidx, $group := .List.Groups }}
                     {{ block "group" (indexedgroup $gidx $group) }}
-                    <div>
+                    <div hx-swap-oob="beforeend:#groups">
                         <p><strong>Group {{ .Group.Name }}</strong></p>
                         <p>Items:</p>
                         {{ range $iidx, $item := .Group.Items }}
                         {{ block "item" (indexeditem $.GroupIndex $iidx $item "") }}
                         <div class='{{ if (ne "" .Color) }}border-{{.Color}}-500 border {{ else }} {{ end }}'
-                            hx-swap-oob="outerHTML"
-                            id="desc-{{.GroupIndex}}-{{.ItemIndex}}"
+                            hx-swap-oob="outerHTML" id="desc-{{.GroupIndex}}-{{.ItemIndex}}"
                             hx-select-oob="#desc-{{.GroupIndex}}-{{.ItemIndex}}">
                             <div hx-trigger="blur from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                 hx-vals='{"actionType": 2, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }'
-                                id="desc-{{.GroupIndex}}-{{.ItemIndex}}-div"
-                                ws-send>
-                                <input hx-trigger="focus"
-                                       ws-send
-                                       value="{{ .Item.Description }}"
-                                       name="description-0"
+                                id="desc-{{.GroupIndex}}-{{.ItemIndex}}-div" ws-send>
+                                <input hx-trigger="focus" ws-send value="{{ .Item.Description }}" name="description-0"
                                     id="desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                     hx-vals='{"actionType": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' />
                             </div>
@@ -112,8 +113,8 @@
                     </div>
                     {{ end }}
                     {{ end }}
-                    <button ws-send hx-vals='{"actionType": 4}'>Add group</button>
                 </div>
+                <button ws-send hx-vals='{"actionType": 4}'>Add group</button>
             </div>
         </div>
         {{ end }}

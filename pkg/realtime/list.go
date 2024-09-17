@@ -66,25 +66,6 @@ func (l *LiveEditor) GetConnectionsOfList(listId int64) []*Connection {
 	return conns.connections
 }
 
-func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
-	editList := l.GetCurrentList(listId)
-	if editList == nil {
-		return
-	}
-	editList.Groups = append(editList.Groups, list.Group{Name: groupText, Items: []list.Item{}})
-	for _, conn := range l.GetConnectionsOfList(listId) {
-		conn.Conn.WriteJSON(editList)
-	}
-}
-
-func (l *LiveEditor) HandleEditGroupItem(listId int64, groupIndex int, groupText string) {
-	editList := l.GetCurrentList(listId)
-	if editList == nil {
-		return
-	}
-	group := editList.Groups[groupIndex]
-	group.Name = groupText
-}
 
 func (l *LiveEditor) removeConnection(conn *websocket.Conn) {
 	for k, v := range l.listsById {
@@ -164,9 +145,9 @@ func (l *LiveEditor) HandleWebsocketConn(conn *Connection) {
 					continue
 				}
 				l.HandleUpdateColor(updateColorAction, conn)
+			case ACTION_ADD_GROUP:
+				l.HandleAddGroup(conn.ListId, "New Group")
 			}
-		case ACTION_ADD_GROUP:
-			l.HandleAddGroup(conn.ListId, "New Group")
 		}
 	}
 }
@@ -271,6 +252,38 @@ func (l *LiveEditor) HandleUpdateColor(action UpdateColorAction, conn *Connectio
 	for _, conn2 := range conns {
 		conn2.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
+}
+
+
+func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
+	editList := l.GetCurrentList(listId)
+	if editList == nil {
+		return
+	}
+    groupIndex := len(editList.Groups)
+    g := list.Group{Name: groupText, Items: []list.Item{list.Item{
+        Order: 0,
+        GroupId: groupIndex,
+        Description: "New Item",
+        Id: 0,
+        Quantity: 1,
+    }}}
+	editList.Groups = append(editList.Groups, g)
+	s := ""
+	buf := bytes.NewBufferString(s)
+    views.Templates.RenderGroup(buf, *views.NewGroupIndex(groupIndex - 1, &g))
+	for _, conn := range l.GetConnectionsOfList(listId) {
+		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
+	}
+}
+
+func (l *LiveEditor) HandleEditGroupItem(listId int64, groupIndex int, groupText string) {
+	editList := l.GetCurrentList(listId)
+	if editList == nil {
+		return
+	}
+	group := editList.Groups[groupIndex]
+	group.Name = groupText
 }
 
 func (l *LiveEditor) HandleAddItem(listId int64, groupIndex int, itemText string) {
