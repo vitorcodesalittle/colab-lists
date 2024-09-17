@@ -2,9 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
-	"errors"
 	"flag"
 	"log"
 	"net/http"
@@ -16,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"vilmasoftware.com/colablists/pkg/list"
 	"vilmasoftware.com/colablists/pkg/realtime"
+	"vilmasoftware.com/colablists/pkg/session"
 	"vilmasoftware.com/colablists/pkg/user"
 	"vilmasoftware.com/colablists/pkg/views"
 )
@@ -50,42 +48,6 @@ type Session struct {
 	LastUsed  time.Time
 }
 
-var sessionsMap map[string]Session = make(map[string]Session)
-
-func GenerateRandomBytes(n int) []byte {
-	if n == 0 {
-		panic("n must be greater than 0")
-	}
-	b := make([]byte, n)
-	_, err := rand.Read(b)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
-
-func getSessionId() string {
-	for true {
-		sessionIdBytes := base64.RawStdEncoding.EncodeToString(GenerateRandomBytes(128))
-		sessionId := string(sessionIdBytes)
-		if _, ok := sessionsMap[sessionId]; !ok {
-			return sessionId
-		}
-	}
-	return ""
-}
-
-func getUserFromSession(r *http.Request) (user.User, error) {
-	sessionId, err := r.Cookie("SESSION")
-	if err != nil {
-		return user.User{}, err
-	}
-	session, ok := sessionsMap[sessionId.Value]
-	if !ok {
-		return user.User{}, errors.New("Session not found")
-	}
-	return session.User, nil
-}
 
 func postLoginHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%v:%v", r.FormValue("username"), r.FormValue("password"))
@@ -94,8 +56,8 @@ func postLoginHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	if usersRepository.ComparePassword([]byte(r.FormValue("password")), []byte(user.PasswordHash)) {
-		sessionId := getSessionId()
-		sessionsMap[sessionId] = Session{
+		sessionId := session.GetSessionId()
+		session.SessionsMap[sessionId] = session.Session{
 			User:      user,
 			SessionId: sessionId,
 			LastUsed:  time.Now(),
@@ -112,13 +74,14 @@ func getLogoutHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	delete(sessionsMap, cookie.Value)
+	delete(session.SessionsMap, cookie.Value)
 	w.Header().Add("Set-Cookie", "SESSION=; expires=Thu, 01 Jan 1970 00:00:00 GMT")
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func postSignupHandler(w http.ResponseWriter, r *http.Request) {
-	_, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
+	user, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
+    log.Println(user)
 	if err != nil {
 		log.Println("Error creating user")
 		log.Println(err)
@@ -142,7 +105,7 @@ func getListsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func redirectIfNotLoggedIn(w http.ResponseWriter, r *http.Request) bool {
-	_, err := getUserFromSession(r)
+	_, err := session.GetUserFromSession(r)
 	if err != nil {
 		// Redirect to login
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -197,7 +160,7 @@ func getUserHandler(w http.ResponseWriter, r *http.Request) {
 func postListsHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	description := r.FormValue("description")
-	user, err := getUserFromSession(r)
+	user, err := session.GetUserFromSession(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 	}
@@ -213,7 +176,7 @@ func postListsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getListEditorHandler(w http.ResponseWriter, r *http.Request) {
-	user, err := getUserFromSession(r)
+	user, err := session.GetUserFromSession(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
@@ -240,10 +203,12 @@ func collectUsers(lists []list.List) []user.User {
 }
 
 func main() {
-	_, err := listsRepository.GetAll()
-	if err != nil {
-		panic(err)
-	}
+    err := session.RestoreSessionsFromDb()
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
 
 	dir := http.Dir(".")
 	http.Handle("GET /static/", http.FileServer(dir))
@@ -278,5 +243,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println("Bye")
+    err = session.SaveSessionsInDb()
+
+    if err != nil {
+        log.Println("Failed to save current sessions map to DB")
+        log.Println(err.Error())
+    }
 }

@@ -38,3 +38,10 @@ CREATE TABLE list_group_items (
   FOREIGN KEY (groupId) REFERENCES list_groups(groupId)
 );
 
+
+CREATE TABLE luser_session (
+    sessionId TEXT PRIMARY KEY,
+    luserId INTEGER,
+    lastUsed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (luserId) REFERENCES luser(luserId)
+);
