@@ -1,6 +1,8 @@
 package user
 
 import (
+	"database/sql"
+
 	"golang.org/x/crypto/bcrypt"
 	"vilmasoftware.com/colablists/pkg/infra"
 )
@@ -9,20 +11,17 @@ type SqlUsersRepository struct{}
 
 // CreateUser implements UsersRepository.
 func (s *SqlUsersRepository) CreateUser(username string, password string) (User, error) {
+	println("Creating user")
 	conn, err := infra.CreateConnection()
 	if err != nil {
 		return User{}, err
 	}
-	stmt, err := conn.Prepare(`INSERT INTO luser (username, passwordHash, passwordSalt) VALUES (?, ?, ?) RETURNING luserId`)
-	defer stmt.Close()
-	if err != nil {
-		return User{}, err
-	}
+	defer conn.Close()
 	passwordHash, err := hashPassword([]byte(password))
 	if err != nil {
 		return User{}, err
 	}
-	rs, err := stmt.Exec(username, passwordHash, "")
+	rs, err := conn.Exec(`INSERT INTO luser (username, passwordHash, passwordSalt) VALUES (?, ?, ?)`, username, passwordHash, "")
 	if err != nil {
 		return User{}, err
 	}
@@ -30,16 +29,27 @@ func (s *SqlUsersRepository) CreateUser(username string, password string) (User,
 	if err != nil {
 		return User{}, err
 	}
+	user, err := s.GetWithConnection(conn, userId)
+	return user, err
+}
+
+func (s *SqlUsersRepository) GetWithConnection(conn *sql.DB, id int64) (User, error) {
+	stmt, err := conn.Prepare(`SELECT * FROM luser WHERE luserId = ?`)
+	defer stmt.Close()
 	if err != nil {
-		return User{}, err
+		panic(err)
 	}
-	conn.Close()
-	return s.Get(userId)
+	row := stmt.QueryRow(id)
+	if row.Err() != nil {
+		return User{}, row.Err()
+	}
+	result, err := ScanUser(row)
+	return result, err
 }
 
 func (s *SqlUsersRepository) Get(id int64) (User, error) {
+	println("Getting a user")
 	conn, err := infra.CreateConnection()
-	defer conn.Close()
 	if err != nil {
 		return User{}, err
 	}
@@ -52,13 +62,15 @@ func (s *SqlUsersRepository) Get(id int64) (User, error) {
 	if row.Err() != nil {
 		return User{}, row.Err()
 	}
-	return ScanUser(row)
+	result, err := ScanUser(row)
+
+	conn.Close()
+	return result, err
 }
 
 type Scanner interface {
 	Scan(dest ...interface{}) error
 }
-
 
 // GetAll implements UsersRepository.
 func (s *SqlUsersRepository) GetAll() ([]User, error) {
@@ -71,6 +83,7 @@ func (s *SqlUsersRepository) GetAll() ([]User, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rs.Close()
 	users := make([]User, 0)
 	for rs.Next() {
 		user, err := ScanUser(rs)

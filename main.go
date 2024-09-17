@@ -48,7 +48,6 @@ type Session struct {
 	LastUsed  time.Time
 }
 
-
 func postLoginHandler(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%v:%v", r.FormValue("username"), r.FormValue("password"))
 	user, err := usersRepository.GetByUsername(r.FormValue("username"))
@@ -81,12 +80,13 @@ func getLogoutHandler(w http.ResponseWriter, r *http.Request) {
 
 func postSignupHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
-    log.Println(user)
+	log.Println(user)
 	if err != nil {
 		log.Println("Error creating user")
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
+		log.Println("All good! user created")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 	}
 }
@@ -132,10 +132,10 @@ func getListDetailHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-    list2 := liveEditor.GetCurrentList(int64(id))
-    if list2 != nil {
-        list = list2.List
-    }
+	list2 := liveEditor.GetCurrentList(int64(id))
+	if list2 != nil {
+		list = list2.List
+	}
 	listArgs := &views.ListArgs{
 		List:     list,
 		Editing:  r.URL.Query().Has("edit"),
@@ -203,12 +203,10 @@ func collectUsers(lists []list.List) []user.User {
 }
 
 func main() {
-    err := session.RestoreSessionsFromDb()
-
-    if err != nil {
-        log.Fatal(err)
-    }
-
+	err := session.RestoreSessionsFromDb()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	dir := http.Dir(".")
 	http.Handle("GET /static/", http.FileServer(dir))
@@ -243,10 +241,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-    err = session.SaveSessionsInDb()
-
-    if err != nil {
-        log.Println("Failed to save current sessions map to DB")
-        log.Println(err.Error())
-    }
+	err = session.SaveSessionsInDb()
+	if err != nil {
+		log.Println("Failed to save current sessions map to DB")
+		log.Println(err.Error())
+	}
 }

@@ -129,6 +129,7 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 		log.Println("Failed to query colaborators")
 		return List{}, infra.ErrorRollback(err, tx)
 	}
+    defer rscolaborators.Close()
 	colaborators := make([]user.User, 0)
 	for rscolaborators.Next() {
 		u, err := user.ScanUser(rscolaborators)
@@ -145,6 +146,10 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
     WHERE listId = ?
     `)
 	rs2, err := stmt.Query(id)
+    if err != nil {
+        return List{}, err
+    }
+    defer rs2.Close()
 	groups := make([]Group, 0)
 	for rs2.Next() {
 		g := Group{Items: make([]Item, 0)}
@@ -167,6 +172,7 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 			log.Println("Error querying items")
 			return List{}, infra.ErrorRollback(err, tx)
 		}
+        defer rsg.Close()
 		for rsg.Next() {
 			i := Item{}
 			err := rsg.Scan(&i.Id, &i.GroupId, &i.Description, &i.Quantity, &i.Order)
@@ -195,6 +201,7 @@ func (s *SqlListRepository) GetAll() ([]List, error) {
 	if err != nil {
 		panic(err)
 	}
+    defer rs.Close()
 	ls := make([]List, 0)
 	for rs.Next() {
 		l, err := scanList(rs)

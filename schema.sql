@@ -42,6 +42,6 @@ CREATE TABLE list_group_items (
 CREATE TABLE luser_session (
     sessionId TEXT PRIMARY KEY,
     luserId INTEGER,
-    lastUsed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (luserId) REFERENCES luser(luserId)
+    lastUsed TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    -- FOREIGN KEY (luserId) REFERENCES luser(luserId)
 );
