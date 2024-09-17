@@ -168,6 +168,11 @@ func getListDetailHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
+    list2 := liveEditor.GetCurrentList(int64(id))
+    if list2 != nil {
+        list = list2.List
+    }
 	listArgs := &views.ListArgs{
 		List:     list,
 		Editing:  r.URL.Query().Has("edit"),
