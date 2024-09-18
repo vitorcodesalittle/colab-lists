@@ -109,14 +109,12 @@
                                 {{ block "item" (indexeditem $.GroupIndex $iidx $item "") }}
                                 <div hx-swap-oob="{{ .HxSwapOob }}">
                                     <div id="desc-{{.GroupIndex}}-{{.ItemIndex}}"
-                                        class='{{ if (ne "" .Color) }}border-{{.Color}}-500 border {{ else }} {{ end }} flex-row flex space-x-2'>
-                                        <div>
+                                        class='{{ if (ne "" .Color) }}border-{{.Color}}-500 border{{ end }} flex-row flex space-x-2'>
+                                        <div hx-trigger="focus from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input" ws-send value="{{ .Item.Description }}" hx-vals='{"actionType": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' >
                                             <div hx-trigger="blur from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                                 hx-vals='{"actionType": 2, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }'
                                                 id="desc-{{.GroupIndex}}-{{.ItemIndex}}-div" ws-send>
-                                                <input hx-trigger="focus" ws-send value="{{ .Item.Description }}"
-                                                    name="description-0" id="desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
-                                                    hx-vals='{"actionType": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' />
+                                                <input name="description" id="desc-{{.GroupIndex}}-{{.ItemIndex}}-input" value="{{ .Item.Description }}"/>
                                             </div>
                                             <input value="{{ .Item.Quantity }}" name="quantity-0" />
                                         </div>
