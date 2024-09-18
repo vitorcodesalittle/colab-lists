@@ -21,6 +21,7 @@ const (
 	ACTION_ADD_GROUP    = iota
 	ACTION_EDIT_GROUP   = iota
 	ACTION_ADD_ITEM     = iota
+	ACTION_DELETE_GROUP = iota
 )
 
 type Connection struct {
@@ -160,7 +161,15 @@ func (l *LiveEditor) HandleWebsocketConn(conn *Connection) {
 					continue
 				}
 				l.HandleEditGroup(&editGroupAction, conn)
+			case ACTION_DELETE_GROUP:
+				var deleteGroupAction DeleteGroupArgs
+				if err := json.Unmarshal(p, &deleteGroupAction); err != nil {
+					log.Println("Error unmarshalling action", err)
+					continue
+				}
+				l.HandleDeleteGroup(&deleteGroupAction, conn)
 			}
+
 		}
 	}
 }
@@ -287,7 +296,7 @@ func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
 	editList.Groups = append(editList.Groups, g)
 	s := ""
 	buf := bytes.NewBufferString(s)
-    views.Templates.RenderGroup(buf, *views.NewGroupIndex(groupIndex, &g, "beforeend:#groups"))
+	views.Templates.RenderGroup(buf, *views.NewGroupIndex(groupIndex, &g, "beforeend:#groups"))
 	for _, conn := range l.GetConnectionsOfList(listId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
@@ -301,9 +310,9 @@ func (l *LiveEditor) HandleEditGroup(action *EditGroupAction, conn *Connection) 
 	editList.Groups[action.GroupIndex].Name = action.Text
 	s := ""
 	buf := bytes.NewBufferString(s)
-    gi := *views.NewGroupIndex(action.GroupIndex, &editList.Groups[action.GroupIndex], "outerHTML:" )
-    gi.HxSwapOob = "outerHTML:#"+gi.Id
-    views.Templates.RenderGroup(buf, gi)
+	gi := *views.NewGroupIndex(action.GroupIndex, &editList.Groups[action.GroupIndex], "outerHTML:")
+	gi.HxSwapOob = "outerHTML:#" + gi.Id
+	views.Templates.RenderGroup(buf, gi)
 
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
@@ -333,6 +342,23 @@ func (l *LiveEditor) HandleAddItem(args *AddItemAction, conn *Connection) {
 	color := l.GetColaboratorOnline(conn.ListId, conn.UserId).Color
 
 	views.Templates.RenderItem(buf, *views.NewIndexedItem(args.GroupIndex, len(items)-1, &editList.Groups[args.GroupIndex].Items[len(items)-1], color, true))
+	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
+		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
+	}
+}
+
+func (l *LiveEditor) HandleDeleteGroup(args *DeleteGroupArgs, conn *Connection) {
+	editList := l.GetCurrentList(conn.ListId)
+	if args.GroupIndex < 0 || args.GroupIndex >= len(editList.Groups) {
+		return
+	}
+    group := editList.Groups[args.GroupIndex]
+	editList.Groups = append(editList.Groups[:args.GroupIndex], editList.Groups[args.GroupIndex+1:]...)
+	s := ""
+	buf := bytes.NewBufferString(s)
+    g := *views.NewGroupIndex(args.GroupIndex, &group, "delete")
+    g.HxSwapOob = "delete:#" + g.Id
+	views.Templates.RenderGroup(buf, g)
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
@@ -388,6 +414,10 @@ type AddItemAction struct {
 }
 
 type EditItemAction struct {
+	GroupIndex int `json:"groupIndex"`
+}
+
+type DeleteGroupArgs struct {
 	GroupIndex int `json:"groupIndex"`
 }
 

@@ -94,10 +94,15 @@
                     {{ block "group" (indexedgroup $gidx $group) }}
                     <div hx-swap-oob="{{ .HxSwapOob }}">
                         <div id="{{.Id}}">
-                            <label>
-                                Group
-                                <input value="{{ .Group.Name }}" hx-trigger="change changed throttle:400ms" name="text" hx-vals='{"actionType": 5, "groupIndex": {{ .GroupIndex }}}'  ws-send />
-                            </label>
+                            <div>
+                                <label>
+                                    Group
+                                    <input value="{{ .Group.Name }}" hx-trigger="change changed throttle:400ms"
+                                        name="text" hx-vals='{"actionType": 5, "groupIndex": {{ .GroupIndex }}}'
+                                        ws-send />
+                                </label>
+                                <div ws-send hx-vals='{"actionType": 7, "groupIndex": {{ .GroupIndex }}}'>x</div>
+                            </div>
                             <p>Items ({{ .Group.Items | len }}):</p>
                             <div id="items-{{.GroupIndex}}">
                                 {{ range $iidx, $item := .Group.Items }}
