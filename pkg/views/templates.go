@@ -80,7 +80,7 @@ type IndexedItem struct {
 	ItemIndex  int       `json:"itemIndex"`
 	Item       list.Item `json:"item"`
 	Color      string    `json:"color"`
-	IsAdding   bool      `json:"isAdding"`
+    HxSwapOob  string
 }
 type IndexedGroup struct {
 	GroupIndex int        `json:"groupIndex"`
@@ -93,8 +93,8 @@ func NewGroupIndex(groupIndex int, group *list.Group, hxSwapOob string) *Indexed
     return &IndexedGroup{GroupIndex: groupIndex, Group: *group, Id: fmt.Sprintf("group-%d", groupIndex), HxSwapOob: hxSwapOob}
 }
 
-func NewIndexedItem(groupIndex int, itemIndex int, item *list.Item, color string, isAdding bool) *IndexedItem {
-	return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color, IsAdding: isAdding}
+func NewIndexedItem(groupIndex int, itemIndex int, item *list.Item, color string, hxSwapOob string) *IndexedItem {
+    return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color, HxSwapOob: hxSwapOob}
 }
 
 func newTemplates() *templates {
@@ -103,8 +103,8 @@ func newTemplates() *templates {
 	templates.Login = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/login.html"))
 	templates.Lists = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/lists.html"))
 	templates.List = textTemplate.Must(textTemplate.New("list.html").Funcs(textTemplate.FuncMap{
-		"indexeditem": func(groupIndex int, itemIndex int, item *list.Item, color string, isAdding bool) *IndexedItem {
-			return NewIndexedItem(groupIndex, itemIndex, item, color, isAdding)
+		"indexeditem": func(groupIndex int, itemIndex int, item *list.Item, color string) *IndexedItem {
+			return NewIndexedItem(groupIndex, itemIndex, item, color, "")
 		},
 		"indexedgroup": func(groupIndex int, group *list.Group) *IndexedGroup {
 			return NewGroupIndex(groupIndex, group, "")

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/gorilla/websocket"
 	"vilmasoftware.com/colablists/pkg/list"
@@ -22,6 +23,7 @@ const (
 	ACTION_EDIT_GROUP   = iota
 	ACTION_ADD_ITEM     = iota
 	ACTION_DELETE_GROUP = iota
+	ACTION_DELETE_ITEM = iota
 )
 
 type Connection struct {
@@ -168,6 +170,13 @@ func (l *LiveEditor) HandleWebsocketConn(conn *Connection) {
 					continue
 				}
 				l.HandleDeleteGroup(&deleteGroupAction, conn)
+            case ACTION_DELETE_ITEM:
+				var deleteItemArgs DeleteItemArgs
+				if err := json.Unmarshal(p, &deleteItemArgs); err != nil {
+					log.Println("Error unmarshalling action", err)
+					continue
+				}
+				l.HandleDeleteItem(&deleteItemArgs, conn)
 			}
 
 		}
@@ -341,7 +350,7 @@ func (l *LiveEditor) HandleAddItem(args *AddItemAction, conn *Connection) {
 	buf := bytes.NewBufferString(s)
 	color := l.GetColaboratorOnline(conn.ListId, conn.UserId).Color
 
-	views.Templates.RenderItem(buf, *views.NewIndexedItem(args.GroupIndex, len(items)-1, &editList.Groups[args.GroupIndex].Items[len(items)-1], color, true))
+	views.Templates.RenderItem(buf, *views.NewIndexedItem(args.GroupIndex, len(items), &editList.Groups[args.GroupIndex].Items[len(items)-1], color, "beforeend:#items-"+strconv.Itoa(args.GroupIndex)))
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
@@ -352,16 +361,43 @@ func (l *LiveEditor) HandleDeleteGroup(args *DeleteGroupArgs, conn *Connection) 
 	if args.GroupIndex < 0 || args.GroupIndex >= len(editList.Groups) {
 		return
 	}
-    group := editList.Groups[args.GroupIndex]
+	group := editList.Groups[args.GroupIndex]
 	editList.Groups = append(editList.Groups[:args.GroupIndex], editList.Groups[args.GroupIndex+1:]...)
 	s := ""
 	buf := bytes.NewBufferString(s)
-    g := *views.NewGroupIndex(args.GroupIndex, &group, "delete")
-    g.HxSwapOob = "delete:#" + g.Id
+	g := *views.NewGroupIndex(args.GroupIndex, &group, "delete")
+	g.HxSwapOob = "delete:#" + g.Id
 	views.Templates.RenderGroup(buf, g)
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
+}
+
+func (l *LiveEditor) HandleDeleteItem(args *DeleteItemArgs, conn *Connection) {
+    editList := l.GetCurrentList(conn.ListId)
+    if args.GroupIndex < 0 || args.GroupIndex >= len(editList.Groups) {
+        return
+    }
+    group := editList.Groups[args.GroupIndex]
+    if args.ItemIndex < 0 || args.ItemIndex >= len(group.Items) {
+        return
+    }
+    item := group.Items[args.ItemIndex]
+    group.Items = append(group.Items[:args.ItemIndex], group.Items[args.ItemIndex+1:]...)
+    s := ""
+    buf := bytes.NewBufferString(s)
+    color := l.GetColaboratorOnline(conn.ListId, conn.UserId).Color
+    i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, &item, color, fmt.Sprintf("delete:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
+    views.Templates.RenderItem(buf, i)
+    for _, conn := range l.GetConnectionsOfList(conn.ListId) {
+        conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
+    }
+
+}
+
+type DeleteItemArgs struct {
+    GroupIndex int `json:"groupIndex"`
+    ItemIndex int `json:"itemIndex"`
 }
 
 func (l *LiveEditor) GetCurrentList(listId int64) *views.ListUi {
