@@ -159,7 +159,7 @@ func (l *LiveEditor) HandleWebsocketConn(conn *Connection) {
 					log.Println("Error unmarshalling action", err)
 					continue
 				}
-				l.HandleEditGroup(conn.ListId, editGroupAction.GroupIndex, "New Group")
+				l.HandleEditGroup(&editGroupAction, conn)
 			}
 		}
 	}
@@ -287,22 +287,22 @@ func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
 	editList.Groups = append(editList.Groups, g)
 	s := ""
 	buf := bytes.NewBufferString(s)
-	views.Templates.RenderGroup(buf, *views.NewGroupIndex(groupIndex, &g))
+	views.Templates.RenderGroup(buf, *views.NewGroupIndex(groupIndex, &g, true))
 	for _, conn := range l.GetConnectionsOfList(listId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
 }
 
-func (l *LiveEditor) HandleEditGroup(listId int64, groupIndex int, groupText string) {
-	editList := l.GetCurrentList(listId)
+func (l *LiveEditor) HandleEditGroup(action *EditGroupAction, conn *Connection) {
+	editList := l.GetCurrentList(conn.ListId)
 	if editList == nil {
 		return
 	}
-	editList.Groups[groupIndex].Name = groupText
+	editList.Groups[action.GroupIndex].Name = action.Text
 	s := ""
 	buf := bytes.NewBufferString(s)
-	views.Templates.RenderGroup(buf, *views.NewGroupIndex(groupIndex, &editList.Groups[groupIndex]))
-	for _, conn := range l.GetConnectionsOfList(listId) {
+	views.Templates.RenderGroup(buf, *views.NewGroupIndex(action.GroupIndex, &editList.Groups[action.GroupIndex], false))
+	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
 }

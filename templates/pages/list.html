@@ -92,9 +92,12 @@
                 <div id="groups">
                     {{ range $gidx, $group := .List.Groups }}
                     {{ block "group" (indexedgroup $gidx $group) }}
-                    <div hx-swap-oob="beforeend:#groups">
+                    <div hx-swap-oob="{{ if .IsAdding }}beforeend:#groups{{ else }}outerHTML:#{{ .Id }}{{ end }}">
                         <div id="{{.Id}}">
-                            <p><strong>Group {{ .Group.Name }}</strong></p>
+                            <label>
+                                Group
+                                <input value="{{ .Group.Name }}" hx-trigger="change changed throttle:400ms" name="text" hx-vals='{"actionType": 5, "groupIndex": {{ .GroupIndex }}}'  ws-send />
+                            </label>
                             <p>Items ({{ .Group.Items | len }}):</p>
                             <div id="items-{{.GroupIndex}}">
                                 {{ range $iidx, $item := .Group.Items }}

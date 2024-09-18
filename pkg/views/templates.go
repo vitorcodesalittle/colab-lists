@@ -86,14 +86,15 @@ type IndexedGroup struct {
 	GroupIndex int        `json:"groupIndex"`
 	Group      list.Group `json:"group"`
 	Id         string
+	IsAdding   bool
 }
 
-func NewGroupIndex(groupIndex int, group *list.Group) *IndexedGroup {
-	return &IndexedGroup{GroupIndex: groupIndex, Group: *group, Id: fmt.Sprintf("group-%d", groupIndex)}
+func NewGroupIndex(groupIndex int, group *list.Group, isAdding bool) *IndexedGroup {
+    return &IndexedGroup{GroupIndex: groupIndex, Group: *group, Id: fmt.Sprintf("group-%d", groupIndex), IsAdding: isAdding}
 }
 
 func NewIndexedItem(groupIndex int, itemIndex int, item *list.Item, color string, isAdding bool) *IndexedItem {
-    return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color, IsAdding: isAdding}
+	return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color, IsAdding: isAdding}
 }
 
 func newTemplates() *templates {
@@ -106,7 +107,7 @@ func newTemplates() *templates {
 			return NewIndexedItem(groupIndex, itemIndex, item, color, isAdding)
 		},
 		"indexedgroup": func(groupIndex int, group *list.Group) *IndexedGroup {
-			return NewGroupIndex(groupIndex, group)
+			return NewGroupIndex(groupIndex, group, false)
 		},
 	}).ParseFiles("./templates/pages/list.html", "./templates/pages/lists.html"))
 	return templates
