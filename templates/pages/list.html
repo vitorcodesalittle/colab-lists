@@ -110,13 +110,13 @@
                                 <div hx-swap-oob="{{ .HxSwapOob }}">
                                     <div id="desc-{{.GroupIndex}}-{{.ItemIndex}}"
                                         class='{{ if (ne "" .Color) }}border-{{.Color}}-500 border{{ end }} flex-row flex space-x-2'>
-                                        <div hx-trigger="focus from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input" ws-send value="{{ .Item.Description }}" hx-vals='{"actionType": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' >
-                                            <div hx-trigger="blur from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
+                                        <div hx-trigger="focus from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input, focus from:#qty-{{.GroupIndex}}-{{.ItemIndex}}-input" ws-send value="{{ .Item.Description }}" hx-vals='{"actionType": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }' >
+                                            <div hx-trigger="blur from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input, blur from:#qty-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                                 hx-vals='{"actionType": 2, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }'
                                                 id="desc-{{.GroupIndex}}-{{.ItemIndex}}-div" ws-send>
                                                 <input name="description" id="desc-{{.GroupIndex}}-{{.ItemIndex}}-input" value="{{ .Item.Description }}"/>
                                             </div>
-                                            <input value="{{ .Item.Quantity }}" name="quantity-0" />
+                                            <input value="{{ .Item.Quantity }}" name="quantity" id="qty-{{.GroupIndex}}-{{.ItemIndex}}-input" />
                                         </div>
                                         <button ws-send hx-vals='{"actionType": 8, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }}}' >x</button>
                                     </div>
