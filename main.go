@@ -49,14 +49,13 @@ type Session struct {
 }
 
 func postLoginHandler(w http.ResponseWriter, r *http.Request) {
-	log.Printf("%v:%v", r.FormValue("username"), r.FormValue("password"))
 	user, err := usersRepository.GetByUsername(r.FormValue("username"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	if usersRepository.ComparePassword([]byte(r.FormValue("password")), []byte(user.PasswordHash)) {
 		sessionId := session.GetSessionId()
-		session.SessionsMap[sessionId] = session.Session{
+		session.SessionsMap[sessionId] = &session.Session{
 			User:      user,
 			SessionId: sessionId,
 			LastUsed:  time.Now(),
@@ -79,14 +78,11 @@ func getLogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postSignupHandler(w http.ResponseWriter, r *http.Request) {
-	user, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
-	log.Println(user)
+	_, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
 	if err != nil {
-		log.Println("Error creating user")
 		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
-		log.Println("All good! user created")
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 	}
 }
@@ -183,7 +179,6 @@ func getListEditorHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println(err)
 		// Return Internal Error
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

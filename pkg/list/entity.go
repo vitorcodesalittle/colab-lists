@@ -1,6 +1,10 @@
 package list
 
-import "vilmasoftware.com/colablists/pkg/user"
+import (
+	"fmt"
+
+	"vilmasoftware.com/colablists/pkg/user"
+)
 
 type List struct {
 	Id           int
@@ -20,7 +24,14 @@ type Group struct {
 }
 
 func (l *List) String() string {
-	return "List " + string(l.Id) + ": " + l.Title
+    return fmt.Sprintf(`List {
+        Id: %d,
+        Title: %s,
+        Description: %s,
+        Creator: %s,
+        Colaborators: %v,
+        Groups: %v
+    }`, l.Id, l.Title, l.Description, l.Creator, l.Colaborators, l.Groups)
 }
 
 type Item struct {

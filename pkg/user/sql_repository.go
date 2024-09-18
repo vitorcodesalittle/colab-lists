@@ -96,22 +96,26 @@ func (s *SqlUsersRepository) GetAll() ([]User, error) {
 }
 
 // GetByUsername implements UsersRepository.
-func (s *SqlUsersRepository) GetByUsername(username string) (User, error) {
+func (s *SqlUsersRepository) GetByUsername(username string) (*User, error) {
 	conn, err := infra.CreateConnection()
 	defer conn.Close()
 	if err != nil {
-		return User{}, err
+		return nil, err
 	}
 	stmt, err := conn.Prepare(`SELECT * FROM luser WHERE username = ?`)
 	defer stmt.Close()
 	if err != nil {
-		return User{}, err
+		return nil, err
 	}
 	row := stmt.QueryRow(username)
 	if row.Err() != nil {
-		return User{}, row.Err()
+		return nil, row.Err()
 	}
-	return ScanUser(row)
+    user, err := ScanUser(row)
+    if err != nil {
+        return nil, err
+    }
+    return &user, nil
 }
 
 func hashPassword(password []byte) ([]byte, error) {

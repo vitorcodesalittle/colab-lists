@@ -105,12 +105,14 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
     Where listId = ?
     `)
 	if err != nil {
+        tx.Rollback()
 		panic(err)
 	}
 	rs := stmt.QueryRow(id)
 	resultlis, err := scanList(rs)
 	if err != nil {
 		log.Println("Failed to scan list")
+        tx.Rollback()
 		return List{}, err
 	}
 
@@ -147,7 +149,7 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
     `)
 	rs2, err := stmt.Query(id)
     if err != nil {
-        return List{}, err
+        return List{}, infra.ErrorRollback(err, tx)
     }
     defer rs2.Close()
 	groups := make([]Group, 0)
@@ -184,6 +186,10 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 		}
 		groups = append(groups, g)
 	}
+    err = tx.Commit()
+    if err != nil {
+        return List{}, err
+    }
 	resultlis.Groups = groups
 	return resultlis, nil
 }

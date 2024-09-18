@@ -48,13 +48,14 @@ func RestoreSessionsFromDb() error {
 	rows, err := sql.Query("SELECT session.*, lu.username FROM luser_session session LEFT JOIN luser lu ON session.luserId = lu.luserId")
     defer rows.Close()
 	for rows.Next() {
-		session := &Session{User: user.User{}}
+        user := user.User{}
+		session := &Session{User: &user}
 		err := rows.Scan(&session.SessionId, &session.User.Id, &session.LastUsed, &session.User.Username)
 		if err != nil {
 			log.Println("Error scanning session")
 			return err
 		}
-		SessionsMap[session.SessionId] = *session
+		SessionsMap[session.SessionId] = session
 	}
 
 	return nil

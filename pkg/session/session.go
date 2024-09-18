@@ -11,10 +11,10 @@ import (
 )
 
 
-var SessionsMap map[string]Session = make(map[string]Session)
+var SessionsMap map[string]*Session = make(map[string]*Session)
 
 type Session struct {
-	user.User
+	*user.User
 	SessionId string
 	LastUsed  time.Time
 }
@@ -42,14 +42,14 @@ func GetSessionId() string {
 	return ""
 }
 
-func GetUserFromSession(r *http.Request) (user.User, error) {
+func GetUserFromSession(r *http.Request) (*user.User, error) {
 	sessionId, err := r.Cookie("SESSION")
 	if err != nil {
-		return user.User{}, err
+		return nil, err
 	}
 	session, ok := SessionsMap[sessionId.Value]
 	if !ok {
-		return user.User{}, errors.New("Session not found")
+		return nil, errors.New("Session not found")
 	}
 	return session.User, nil
 }

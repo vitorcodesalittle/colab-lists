@@ -53,9 +53,14 @@ type Colaborator struct {
 }
 type ColaboratorsListArgs = []Colaborator
 
-func (t *templates) RenderCollaboratorsList(w io.Writer, args []UserUi) {
+func (t *templates) RenderCollaboratorsList(w io.Writer, args []*UserUi) {
 	t.List.ExecuteTemplate(w, "colaborators", args)
 }
+
+//type ItemArgs struct {
+//	IndexedItem
+//	IsAdding bool
+//}
 
 type ItemArgs = IndexedItem
 
@@ -75,6 +80,7 @@ type IndexedItem struct {
 	ItemIndex  int       `json:"itemIndex"`
 	Item       list.Item `json:"item"`
 	Color      string    `json:"color"`
+	IsAdding   bool      `json:"isAdding"`
 }
 type IndexedGroup struct {
 	GroupIndex int        `json:"groupIndex"`
@@ -86,14 +92,18 @@ func NewGroupIndex(groupIndex int, group *list.Group) *IndexedGroup {
 	return &IndexedGroup{GroupIndex: groupIndex, Group: *group, Id: fmt.Sprintf("group-%d", groupIndex)}
 }
 
+func NewIndexedItem(groupIndex int, itemIndex int, item *list.Item, color string, isAdding bool) *IndexedItem {
+    return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color, IsAdding: isAdding}
+}
+
 func newTemplates() *templates {
 	templates := &templates{}
 	templates.Index = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/index.html"))
 	templates.Login = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/login.html"))
 	templates.Lists = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/lists.html"))
 	templates.List = textTemplate.Must(textTemplate.New("list.html").Funcs(textTemplate.FuncMap{
-		"indexeditem": func(groupIndex int, itemIndex int, item *list.Item, color string) *IndexedItem {
-			return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color}
+		"indexeditem": func(groupIndex int, itemIndex int, item *list.Item, color string, isAdding bool) *IndexedItem {
+			return NewIndexedItem(groupIndex, itemIndex, item, color, isAdding)
 		},
 		"indexedgroup": func(groupIndex int, group *list.Group) *IndexedGroup {
 			return NewGroupIndex(groupIndex, group)
@@ -104,12 +114,12 @@ func newTemplates() *templates {
 
 type ListUi struct {
 	list.List
-	ColaboratorsOnline []UserUi
+	ColaboratorsOnline []*UserUi
 	// Try not to use this
 	// focusMap map[int64]map[int]int
 }
 type UserUi struct {
-	user.User
+	*user.User
 	Color string
 	//*Action
 }
