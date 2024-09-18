@@ -287,7 +287,7 @@ func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
 	editList.Groups = append(editList.Groups, g)
 	s := ""
 	buf := bytes.NewBufferString(s)
-	views.Templates.RenderGroup(buf, *views.NewGroupIndex(groupIndex, &g, true))
+    views.Templates.RenderGroup(buf, *views.NewGroupIndex(groupIndex, &g, "beforeend:#groups"))
 	for _, conn := range l.GetConnectionsOfList(listId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
@@ -301,7 +301,10 @@ func (l *LiveEditor) HandleEditGroup(action *EditGroupAction, conn *Connection) 
 	editList.Groups[action.GroupIndex].Name = action.Text
 	s := ""
 	buf := bytes.NewBufferString(s)
-	views.Templates.RenderGroup(buf, *views.NewGroupIndex(action.GroupIndex, &editList.Groups[action.GroupIndex], false))
+    gi := *views.NewGroupIndex(action.GroupIndex, &editList.Groups[action.GroupIndex], "outerHTML:" )
+    gi.HxSwapOob = "outerHTML:#"+gi.Id
+    views.Templates.RenderGroup(buf, gi)
+
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}

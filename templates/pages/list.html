@@ -92,7 +92,7 @@
                 <div id="groups">
                     {{ range $gidx, $group := .List.Groups }}
                     {{ block "group" (indexedgroup $gidx $group) }}
-                    <div hx-swap-oob="{{ if .IsAdding }}beforeend:#groups{{ else }}outerHTML:#{{ .Id }}{{ end }}">
+                    <div hx-swap-oob="{{ .HxSwapOob }}">
                         <div id="{{.Id}}">
                             <label>
                                 Group
