@@ -23,7 +23,8 @@ const (
 	ACTION_EDIT_GROUP   = iota
 	ACTION_ADD_ITEM     = iota
 	ACTION_DELETE_GROUP = iota
-	ACTION_DELETE_ITEM = iota
+	ACTION_DELETE_ITEM  = iota
+	ACTION_EDIT_ITEM    = iota
 )
 
 type Connection struct {
@@ -170,13 +171,20 @@ func (l *LiveEditor) HandleWebsocketConn(conn *Connection) {
 					continue
 				}
 				l.HandleDeleteGroup(&deleteGroupAction, conn)
-            case ACTION_DELETE_ITEM:
+			case ACTION_DELETE_ITEM:
 				var deleteItemArgs DeleteItemArgs
 				if err := json.Unmarshal(p, &deleteItemArgs); err != nil {
 					log.Println("Error unmarshalling action", err)
 					continue
 				}
 				l.HandleDeleteItem(&deleteItemArgs, conn)
+			case ACTION_EDIT_ITEM:
+				var editItemArgs EditItemArgs
+				if err := json.Unmarshal(p, &editItemArgs); err != nil {
+					log.Println("Error unmarshalling action", err)
+					continue
+				}
+                l.HandleEditItem(&editItemArgs, conn)
 			}
 
 		}
@@ -328,14 +336,6 @@ func (l *LiveEditor) HandleEditGroup(action *EditGroupAction, conn *Connection) 
 	}
 }
 
-func (l *LiveEditor) HandleEditGroupItem(listId int64, groupIndex int, groupText string) {
-	editList := l.GetCurrentList(listId)
-	if editList == nil {
-		return
-	}
-	group := editList.Groups[groupIndex]
-	group.Name = groupText
-}
 
 func (l *LiveEditor) HandleAddItem(args *AddItemAction, conn *Connection) {
 	println("HandleAddItem")
@@ -374,6 +374,28 @@ func (l *LiveEditor) HandleDeleteGroup(args *DeleteGroupArgs, conn *Connection) 
 }
 
 func (l *LiveEditor) HandleDeleteItem(args *DeleteItemArgs, conn *Connection) {
+	editList := l.GetCurrentList(conn.ListId)
+	if args.GroupIndex < 0 || args.GroupIndex >= len(editList.Groups) {
+		return
+	}
+	group := editList.Groups[args.GroupIndex]
+	if args.ItemIndex < 0 || args.ItemIndex >= len(group.Items) {
+		return
+	}
+	item := group.Items[args.ItemIndex]
+	group.Items = append(group.Items[:args.ItemIndex], group.Items[args.ItemIndex+1:]...)
+	s := ""
+	buf := bytes.NewBufferString(s)
+	color := l.GetColaboratorOnline(conn.ListId, conn.UserId).Color
+	i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, &item, color, fmt.Sprintf("delete:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
+	views.Templates.RenderItem(buf, i)
+	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
+		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
+	}
+}
+
+func (l* LiveEditor) HandleEditItem(args *EditItemArgs, conn *Connection) {
+    println("Handling edit item")
     editList := l.GetCurrentList(conn.ListId)
     if args.GroupIndex < 0 || args.GroupIndex >= len(editList.Groups) {
         return
@@ -382,22 +404,29 @@ func (l *LiveEditor) HandleDeleteItem(args *DeleteItemArgs, conn *Connection) {
     if args.ItemIndex < 0 || args.ItemIndex >= len(group.Items) {
         return
     }
+    qtd, err := strconv.Atoi(args.Quantity)
+    if err != nil {
+        log.Println("Error converting quantity to int ", err)
+        return
+    }
     item := group.Items[args.ItemIndex]
-    group.Items = append(group.Items[:args.ItemIndex], group.Items[args.ItemIndex+1:]...)
+    item.Description = args.Description
+    item.Quantity = qtd
+    println("Description : " + item.Description)
+    println("Quantity : " + strconv.Itoa(item.Quantity))
     s := ""
     buf := bytes.NewBufferString(s)
     color := l.GetColaboratorOnline(conn.ListId, conn.UserId).Color
-    i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, &item, color, fmt.Sprintf("delete:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
+    i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, &item, color, fmt.Sprintf("outerHTML:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
     views.Templates.RenderItem(buf, i)
     for _, conn := range l.GetConnectionsOfList(conn.ListId) {
         conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
     }
-
 }
 
 type DeleteItemArgs struct {
-    GroupIndex int `json:"groupIndex"`
-    ItemIndex int `json:"itemIndex"`
+	GroupIndex int `json:"groupIndex"`
+	ItemIndex  int `json:"itemIndex"`
 }
 
 func (l *LiveEditor) GetCurrentList(listId int64) *views.ListUi {
@@ -455,6 +484,13 @@ type EditItemAction struct {
 
 type DeleteGroupArgs struct {
 	GroupIndex int `json:"groupIndex"`
+}
+
+type EditItemArgs struct {
+	GroupIndex  int    `json:"groupIndex"`
+	ItemIndex   int    `json:"itemIndex"`
+	Description string `json:"description"`
+	Quantity    string `json:"quantity"`
 }
 
 // type AddGroupAction struct {
