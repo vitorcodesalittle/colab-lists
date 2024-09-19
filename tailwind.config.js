@@ -23,8 +23,14 @@ module.exports = {
               600: '#849C85',
               700: '#69856A',
               800: '#EBF5EC'
-          }
+          },
+          ...require('tailwindcss/colors')
+      },
+      fontFamily: {
+          'display': ["Kolker Brush"],
+          'body': ["Gowun Batang"]
       }
+
   },
   plugins: [],
 }

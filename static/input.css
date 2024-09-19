@@ -24,10 +24,8 @@ White
 
 
 html {
-  background-color: #212121;
   padding: 0 1em;
   font-size: 20px;
-  color: #EFECC8;
 }
 
 body {
@@ -59,36 +57,27 @@ input,
 option,
 select {
   background-color: transparent;
+  padding-bottom: 5px;
   border-bottom: 1px solid black;
 }
 
 input:focus, select:focus {
   outline: none;
-  border-bottom: 1px solid #3C8023;
   transition: border-bottom 0.2s;
 }
 
 button,
 .button {
-  border: 1px solid hsl(93 61 76 / 99%);
   padding: 0.5em 1em;
   width: fit-content;
   border-radius: 0.5em;
-}
 
-button:hover,
-button:focus,
-.button:hover,
-.button:focus {
-  background-color: hsl(0 0 0 / 20%);
-  outline: none;
-  transition: background-color 0.2s;
+  @apply hover:bg-neutral-200 focus:bg-neutral-200 transition
 }
-
 
 a {
-  color: #EFECC8;
   text-decoration: none;
+  @apply border-b-2 border-transparent focus:border-b-2 hover:border-b-2 mb-2 focus:border-brand-400 hover:border-brand-400 transition
 }
 
 a:hover a:focus {
