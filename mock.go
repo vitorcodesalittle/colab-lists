@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	IdListCurrent = 1
-	IdItemCurrent = 1
-	IdUserCurrent = 1
+	IdListCurrent int64 = 1
+	IdItemCurrent int64 = 1
+	IdUserCurrent int64 = 1
 )
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -31,8 +31,8 @@ func MockUser() user.User {
 	return u
 }
 
-func MockItem() list.Item {
-	item := list.Item{
+func MockItem() *list.Item {
+	item := &list.Item{
 		Id:          IdItemCurrent + 1,
 		Order:       IdItemCurrent + 1,
 		Description: fmt.Sprintf("Item %d", IdItemCurrent),
@@ -44,13 +44,13 @@ func MockItem() list.Item {
 
 func MockList() list.List {
 	numItems := rand.Intn(20)
-	group := list.Group{Name: "Group test", Items: make([]list.Item, numItems)}
+	group := list.Group{Name: "Group test", Items: make([]*list.Item, numItems)}
 	numColaborators := 7
 	l := list.List{
 		Id:           IdListCurrent,
 		Title:        fmt.Sprintf("List %d", IdListCurrent),
 		Description:  fmt.Sprintf("Description of list %d", IdListCurrent),
-		Groups:       []list.Group{group},
+		Groups:       []*list.Group{&group},
 		Colaborators: make([]user.User, numColaborators),
 		Creator:      MockUser(),
 	}

@@ -152,9 +152,9 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
         return List{}, infra.ErrorRollback(err, tx)
     }
     defer rs2.Close()
-	groups := make([]Group, 0)
+	groups := make([]*Group, 0)
 	for rs2.Next() {
-		g := Group{Items: make([]Item, 0)}
+		g := &Group{Items: make([]*Item, 0)}
 		err := rs2.Scan(&g.GroupId, &g.ListId, &g.CreatedAt, &g.Name)
 		if err != nil {
 			log.Println("Failed to scan group")
@@ -182,7 +182,7 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 				log.Println("Failed to scan item")
 				return List{}, infra.ErrorRollback(err, tx)
 			}
-			g.Items = append(g.Items, i)
+			g.Items = append(g.Items, &i)
 		}
 		groups = append(groups, g)
 	}
@@ -220,6 +220,53 @@ func (s *SqlListRepository) GetAll() ([]List, error) {
 }
 
 // Update implements ListsRepository.
-func (s *SqlListRepository) Update(list *ListUpdateParams) (List, error) {
-	panic("unimplemented")
+func (s *SqlListRepository) Update(list *List) (*List, error) {
+    log.Println("Updating list")
+    sql, err := infra.CreateConnection()
+    if err != nil {
+        return nil, err
+    }
+    defer sql.Close()
+
+    tx, err := sql.Begin()
+    defer tx.Rollback()
+
+    _, err = tx.Exec(`
+        UPDATE list
+        SET title = ?,
+        description = ?
+    `, list.Title, list.Description)
+    if err != nil {
+        return nil, err
+    }
+    _, err = tx.Exec(`
+        DELETE FROM list_groups
+        WHERE listId = ?
+    `, list.Id)
+    if err != nil {
+        return nil, err
+    }
+    for _, group := range list.Groups {
+        result, err := tx.Exec(`
+            INSERT INTO list_groups (listId, name)
+            VALUES (?, ?)
+        `, list.Id, group.Name)
+        if err != nil {
+            return nil, err
+        }
+        groupId, err := result.LastInsertId()
+        if err != nil {
+            return nil, err
+        }
+        for itemindex, item := range group.Items {
+            _, err = tx.Exec(`
+                INSERT INTO list_group_items (groupId, description, quantity, order_)
+                VALUES (?, ?, ?, ?)
+            `, groupId, item.Description, item.Quantity, itemindex)
+            if err != nil {
+                return nil, err
+            }
+        }
+    }
+    return list, tx.Commit()
 }

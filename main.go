@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -130,7 +131,7 @@ func getListDetailHandler(w http.ResponseWriter, r *http.Request) {
 
 	list2 := liveEditor.GetCurrentList(int64(id))
 	if list2 != nil {
-		list = list2.List
+		list = *list2.List
 	}
 	listArgs := &views.ListArgs{
 		List:     list,
@@ -169,6 +170,25 @@ func postListsHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	http.Redirect(w, r, "/lists", http.StatusSeeOther)
+}
+func putListSaveHandler(w http.ResponseWriter, r *http.Request) {
+    listId, err := strconv.ParseInt(r.PathValue("listId"), 10, 64)
+    if err != nil {
+        http.Error(w, "listId path value should be integer", http.StatusBadRequest)
+    }
+    found := liveEditor.GetCurrentList(listId)
+    if found == nil {
+        http.Error(w, "List not found", http.StatusNotFound)
+        return
+    }
+    fmt.Printf("%v\n", found)
+    log.Println("Saving list", found.List)
+    list, err := listsRepository.Update(found.List)
+    // TODO: send changes to all users
+	views.Templates.RenderSaveList(w, &views.ListArgs{List: *list, IsDirty: false})
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
 }
 
 func getListEditorHandler(w http.ResponseWriter, r *http.Request) {
@@ -215,6 +235,7 @@ func main() {
 	http.HandleFunc("GET /lists/{listId}", getListDetailHandler)
 	http.HandleFunc("GET /api/users/{userId}", getUserHandler)
 	http.HandleFunc("GET /ws/list-editor", getListEditorHandler)
+	http.HandleFunc("PUT /lists/{listId}/save", putListSaveHandler)
 
 	log.Printf("Server started at http://localhost:8080\n")
 

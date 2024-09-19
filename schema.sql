@@ -26,7 +26,7 @@ CREATE TABLE list_groups (
   listId INT,
   createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   name TEXT,
-  FOREIGN KEY (listId) REFERENCES list(listId)
+  FOREIGN KEY (listId) REFERENCES list(listId) ON DELETE SET NULL
 );
 
 CREATE TABLE list_group_items (
@@ -35,7 +35,7 @@ CREATE TABLE list_group_items (
   description TEXT,
   quantity INT,
   order_ INT,
-  FOREIGN KEY (groupId) REFERENCES list_groups(groupId)
+  FOREIGN KEY (groupId) REFERENCES list_groups(groupId) ON DELETE CASCADE
 );
 
 

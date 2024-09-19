@@ -21,8 +21,3 @@ type ItemUpdateParams struct {
 	Operation   int
 }
 
-type ListUpdateParams struct {
-	Id int
-	ListCreationParams
-	Items []ItemUpdateParams
-}

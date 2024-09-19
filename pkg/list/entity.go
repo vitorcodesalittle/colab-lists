@@ -7,20 +7,20 @@ import (
 )
 
 type List struct {
-	Id           int
+	Id           int64
 	Title        string
 	Description  string
 	Colaborators []user.User
 	Creator      user.User
-	Groups       []Group
+	Groups       []*Group
 }
 
 type Group struct {
-	GroupId   int
-	ListId    int
+	GroupId   int64
+	ListId    int64
 	CreatedAt string
 	Name      string
-	Items     []Item
+	Items     []*Item
 }
 
 func (l *List) String() string {
@@ -35,11 +35,11 @@ func (l *List) String() string {
 }
 
 type Item struct {
-	Id          int
-    GroupId     int
+	Id          int64
+    GroupId     int64
 	Description string
 	Quantity    int
-	Order       int
+	Order       int64
 }
 
 func (i *Item) String() string {

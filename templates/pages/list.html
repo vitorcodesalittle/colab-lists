@@ -60,6 +60,7 @@
                 {{ end }}
             </select>
             <button type="submit">Save</button>
+
         </form>
         {{ else }}
         <div class="flex-col space-y-1 flex" hx-ext="ws">
@@ -89,6 +90,14 @@
                 </div>
                 {{end}}
 
+                {{ block "save" . }}
+                <div hx-swap-oob="true" id="save">
+                    {{ if .IsDirty }}
+                    <button hx-put="/lists/{{ .List.Id }}/save" hx-indicator="save-indicator">Save</button>
+                    <p id="save-indicator" class="htmx-indicator">Saving list...</p>
+                    {{ end }}
+                </div>
+                {{ end }}
                 <div id="groups">
                     {{ range $gidx, $group := .List.Groups }}
                     {{ block "group" (indexedgroup $gidx $group) }}
@@ -118,7 +127,7 @@
                                                 id="desc-{{.GroupIndex}}-{{.ItemIndex}}-div" ws-send
                                                 class="flex flex-col space-y-2">
                                                 <input ws-send hx-trigger="change changed throttle:400ms"
-                                                    hx-vals='{"actionType": 9, "quantity": {{ .Item.Quantity }}}'
+                                                    hx-vals='{"actionType": 9, "quantity": "{{ .Item.Quantity }}"}'
                                                     name="description" id="desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                                     value="{{ .Item.Description }}" />
                                                 <input ws-send hx-trigger="change changed throttle:400ms"

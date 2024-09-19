@@ -28,6 +28,7 @@ type ListArgs struct {
 	List     list.List
 	Editing  bool
 	AllUsers []user.User
+	IsDirty  bool
 }
 
 func (t *templates) RenderIndex(w io.Writer, args *IndexArgs) {
@@ -74,13 +75,17 @@ func (t *templates) RenderGroup(w io.Writer, args GroupArgs) {
 	t.List.ExecuteTemplate(w, "group", args)
 }
 
+func (t *templates) RenderSaveList(w io.Writer, args *ListArgs) {
+	t.List.ExecuteTemplate(w, "save", args)
+}
+
 type IndexedItem struct {
 	ActionType int       `json:"actionType"`
 	GroupIndex int       `json:"groupIndex"`
 	ItemIndex  int       `json:"itemIndex"`
 	Item       list.Item `json:"item"`
 	Color      string    `json:"color"`
-    HxSwapOob  string
+	HxSwapOob  string
 }
 type IndexedGroup struct {
 	GroupIndex int        `json:"groupIndex"`
@@ -90,11 +95,11 @@ type IndexedGroup struct {
 }
 
 func NewGroupIndex(groupIndex int, group *list.Group, hxSwapOob string) *IndexedGroup {
-    return &IndexedGroup{GroupIndex: groupIndex, Group: *group, Id: fmt.Sprintf("group-%d", groupIndex), HxSwapOob: hxSwapOob}
+	return &IndexedGroup{GroupIndex: groupIndex, Group: *group, Id: fmt.Sprintf("group-%d", groupIndex), HxSwapOob: hxSwapOob}
 }
 
 func NewIndexedItem(groupIndex int, itemIndex int, item *list.Item, color string, hxSwapOob string) *IndexedItem {
-    return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color, HxSwapOob: hxSwapOob}
+	return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color, HxSwapOob: hxSwapOob}
 }
 
 func newTemplates() *templates {
@@ -114,7 +119,7 @@ func newTemplates() *templates {
 }
 
 type ListUi struct {
-	list.List
+	*list.List
 	ColaboratorsOnline []*UserUi
 	// Try not to use this
 	// focusMap map[int64]map[int]int
@@ -126,4 +131,3 @@ type UserUi struct {
 }
 
 var Templates *templates = newTemplates()
-
