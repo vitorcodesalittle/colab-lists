@@ -11,7 +11,6 @@ type SqlUsersRepository struct{}
 
 // CreateUser implements UsersRepository.
 func (s *SqlUsersRepository) CreateUser(username string, password string) (User, error) {
-	println("Creating user")
 	conn, err := infra.CreateConnection()
 	if err != nil {
 		return User{}, err
@@ -48,7 +47,6 @@ func (s *SqlUsersRepository) GetWithConnection(conn *sql.DB, id int64) (User, er
 }
 
 func (s *SqlUsersRepository) Get(id int64) (User, error) {
-	println("Getting a user")
 	conn, err := infra.CreateConnection()
 	if err != nil {
 		return User{}, err
