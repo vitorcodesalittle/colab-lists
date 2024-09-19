@@ -9,6 +9,11 @@
     <title>Lists</title>
     <meta name="description" content="Manage lists">
     <link href="/static/output.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kolker+Brush&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@2.0.2"
         integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
         crossorigin="anonymous"></script>
@@ -23,11 +28,21 @@
 
 <body>
     {{ block "authnav" . }}
-    <nav>
-        <a href="/lists">Lists</a>
-        <a href="/login">Login</a>
-        <a href="/logout">Logout</a>
-    </nav>
+    <div class=" bg-brand-800 px-4 py-2 relative">
+        <div class="group/menu absolute h-0 t-0 z-50 flex flex-col justify-center border">
+            <div class="group-hover/menu:visible invisible flex flex-row justify-start space-x-2">
+                <a href="/lists">Lists</a>
+                <a href="/login">Login</a>
+                <a href="/logout">Logout</a>
+            </div>
+            Menu
+        </div>
+        <div class="w-full flex flex-row items-center justify-center">
+            <h1 class="callout-font">
+                Market Lists
+            </h1>
+        </div>
+    </div>
     {{ end }}
     <div>
         <h2>Lists</h2>

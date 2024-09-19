@@ -9,6 +9,12 @@
     <meta name="description" content="DESCRIPTION">
     <link href="/static/output.css" rel="stylesheet">
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kolker+Brush&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+
     <script src="https://unpkg.com/htmx.org@2.0.2"
         integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
         crossorigin="anonymous"></script>
@@ -51,7 +57,7 @@
     <div>
         {{ if .Editing }}
         <form action="/lists/{{ .List.Id }}" method="POST" class="flex-col space-y-1 flex">
-            <input class="input-h1" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
+            <input class="input-h3" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
             <input name="description" value="{{ .List.Description }}" placeholder="Describe your list" />
             <label>Colaborators {{ .AllUsers | len }}</label>
             <select multiple name="colaborators">
@@ -66,7 +72,7 @@
         <div class="flex-col space-y-1 flex" hx-ext="ws">
             <div ws-connect="/ws/list-editor?listId={{.List.Id}}">
                 <div class="flex flex-row justify-between" hx-on:htmx:wsAfterMessage="console.log(event)">
-                    <h1>{{ .List.Title }}</h1>
+                    <h3>{{ .List.Title }}</h3>
                     <a class="button" href="/lists/{{ .List.Id }}?edit">
                         Edit
                     </a>

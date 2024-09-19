@@ -25,24 +25,34 @@ White
 
 html {
   background-color: #212121;
-  max-width: 700px;
-  font-family: Helvetica, sans-serif;
   padding: 0 1em;
   font-size: 20px;
   color: #EFECC8;
+}
+
+body {
+  max-width: 700px;
+  margin: 0, auto;
+  font-family: "Gowun Batang", serif;
+  font-weight: 400;
+  font-style: normal;
 }
 
 span {
   font-size: 0.7em;
 }
 
-h1,
-.input-h1 {
-  font-size: 1.9em;
+h1 {
+    font-size: 2.5em;
 }
 
-h2 {
-  font-size: 1.65em;
+h2,
+.input-h2 {
+  font-size: 1.89em;
+}
+
+h3 {
+  font-size: 1.69em;
 }
 
 input,
