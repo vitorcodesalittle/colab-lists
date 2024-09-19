@@ -1,6 +1,7 @@
 package list
 
 import (
+	"errors"
 	"log"
 
 	infra "vilmasoftware.com/colablists/pkg/infra"
@@ -214,6 +215,9 @@ func (s *SqlListRepository) GetAll() ([]List, error) {
 
 // Update implements ListsRepository.
 func (s *SqlListRepository) Update(list *List) (*List, error) {
+    if list == nil || list.Id <= 0 {
+        return nil, errors.New("list.Id must be a positive integer")
+    }
     sql, err := infra.CreateConnection()
     if err != nil {
         return nil, err
@@ -227,7 +231,8 @@ func (s *SqlListRepository) Update(list *List) (*List, error) {
         UPDATE list
         SET title = ?,
         description = ?
-    `, list.Title, list.Description)
+        WHERE listId = ?
+    `, list.Title, list.Description, list.Id)
     if err != nil {
         return nil, err
     }
