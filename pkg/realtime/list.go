@@ -341,7 +341,6 @@ func (l *LiveEditor) HandleEditGroup(action *EditGroupAction, conn *Connection) 
 }
 
 func (l *LiveEditor) HandleAddItem(args *AddItemAction, conn *Connection) {
-	println("HandleAddItem")
 	editList := l.GetCurrentList(conn.ListId)
 	items := editList.Groups[args.GroupIndex].Items
 	if args.GroupIndex < 0 || args.GroupIndex >= len(editList.Groups) {
