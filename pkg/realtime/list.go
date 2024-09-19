@@ -103,20 +103,15 @@ func (l *LiveEditor) HandleWebsocketConn(conn *Connection) {
 		}
 		switch messageType {
 		case websocket.CloseMessage:
-			log.Println("CloseMessage")
 			l.removeConnection(conn.Conn)
 			continue
 		case websocket.PingMessage:
-			log.Println("PingMessage")
 			continue
 		case websocket.PongMessage:
-			log.Println("PongMessage")
 			continue
 		case websocket.BinaryMessage:
-			log.Println("BinaryMessage")
 			continue
 		case websocket.TextMessage:
-			log.Println("TextMessage")
 			var msg json.RawMessage
 			action := Action{Msg: &msg}
 			if err := json.Unmarshal(p, &action); err != nil {
@@ -236,7 +231,6 @@ func (l *LiveEditor) SetupList(listId int64, user *user.User, conn *websocket.Co
 }
 
 func (l *LiveEditor) HandleFocusItem(action *FocusItemAction, conn *Connection) {
-	log.Println("Handling focus Item")
 	list, ok := l.listsById[conn.ListId]
 	if !ok {
 		return
@@ -256,7 +250,6 @@ func (l *LiveEditor) HandleFocusItem(action *FocusItemAction, conn *Connection) 
 }
 
 func (l *LiveEditor) HandleUnfocusItem(action *UnfocusItemAction, conn *Connection) {
-	log.Println("Handling unfocus Item")
 	list, ok := l.listsById[conn.ListId]
 	if !ok {
 		return
@@ -289,7 +282,6 @@ func (l *LiveEditor) GetColaboratorOnline(listId int64, userId int64) *views.Use
 }
 
 func (l *LiveEditor) HandleUpdateColor(action *UpdateColorAction, conn *Connection) {
-	log.Println("Handling update color")
 	listUi, ok := l.listsById[conn.ListId]
 	if !ok {
 		return
@@ -334,9 +326,7 @@ func (l *LiveEditor) HandleEditGroup(action *EditGroupAction, conn *Connection) 
 	if editList == nil {
 		return
 	}
-	fmt.Printf("items before:\n %v", editList.Groups[action.GroupIndex].Items)
 	editList.Groups[action.GroupIndex].Name = action.Text
-	fmt.Printf("items after:\n %v", editList.Groups[action.GroupIndex].Items)
 	l.SetDirty(conn.ListId)
 	s := ""
 	buf := bytes.NewBufferString(s)
@@ -414,7 +404,6 @@ func (l *LiveEditor) HandleDeleteItem(args *DeleteItemArgs, conn *Connection) {
 }
 
 func (l *LiveEditor) HandleEditItem(args *EditItemArgs, conn *Connection) {
-	log.Println("Handling edit item")
 	editList := l.GetCurrentList(conn.ListId)
 	if args.GroupIndex < 0 || args.GroupIndex >= len(editList.Groups) {
 		return

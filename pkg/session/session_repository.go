@@ -1,7 +1,6 @@
 package session
 
 import (
-	"log"
 
 	"vilmasoftware.com/colablists/pkg/infra"
 	"vilmasoftware.com/colablists/pkg/user"
@@ -52,7 +51,6 @@ func RestoreSessionsFromDb() error {
 		session := &Session{User: &user}
 		err := rows.Scan(&session.SessionId, &session.User.Id, &session.LastUsed, &session.User.Username)
 		if err != nil {
-			log.Println("Error scanning session")
 			return err
 		}
 		SessionsMap[session.SessionId] = session

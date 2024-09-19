@@ -111,7 +111,6 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 	rs := stmt.QueryRow(id)
 	resultlis, err := scanList(rs)
 	if err != nil {
-		log.Println("Failed to scan list")
         tx.Rollback()
 		return List{}, err
 	}
@@ -128,7 +127,6 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 	}
 	rscolaborators, err := stmt.Query(resultlis.Creator.Id)
 	if err != nil {
-		log.Println("Failed to query colaborators")
 		return List{}, infra.ErrorRollback(err, tx)
 	}
     defer rscolaborators.Close()
@@ -136,7 +134,6 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 	for rscolaborators.Next() {
 		u, err := user.ScanUser(rscolaborators)
 		if err != nil {
-			log.Println("Failed to scan user")
 			return List{}, infra.ErrorRollback(err, tx)
 		}
 		colaborators = append(colaborators, u)
@@ -157,7 +154,6 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 		g := &Group{Items: make([]*Item, 0)}
 		err := rs2.Scan(&g.GroupId, &g.ListId, &g.CreatedAt, &g.Name)
 		if err != nil {
-			log.Println("Failed to scan group")
 			return List{}, infra.ErrorRollback(err, tx)
 		}
 		stmt, err = tx.Prepare(`
@@ -166,12 +162,10 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
         WHERE groupId = ?
         `)
 		if err != nil {
-			log.Println("Failed to prepare statement for items")
 			return List{}, infra.ErrorRollback(err, tx)
 		}
 		rsg, err := stmt.Query(g.GroupId)
 		if err != nil {
-			log.Println("Error querying items")
 			return List{}, infra.ErrorRollback(err, tx)
 		}
         defer rsg.Close()
@@ -179,7 +173,6 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 			i := Item{}
 			err := rsg.Scan(&i.Id, &i.GroupId, &i.Description, &i.Quantity, &i.Order)
 			if err != nil {
-				log.Println("Failed to scan item")
 				return List{}, infra.ErrorRollback(err, tx)
 			}
 			g.Items = append(g.Items, &i)
@@ -221,7 +214,6 @@ func (s *SqlListRepository) GetAll() ([]List, error) {
 
 // Update implements ListsRepository.
 func (s *SqlListRepository) Update(list *List) (*List, error) {
-    log.Println("Updating list")
     sql, err := infra.CreateConnection()
     if err != nil {
         return nil, err

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -81,7 +80,6 @@ func getLogoutHandler(w http.ResponseWriter, r *http.Request) {
 func postSignupHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
 	if err != nil {
-		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -171,6 +169,7 @@ func postListsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	http.Redirect(w, r, "/lists", http.StatusSeeOther)
 }
+
 func putListSaveHandler(w http.ResponseWriter, r *http.Request) {
     listId, err := strconv.ParseInt(r.PathValue("listId"), 10, 64)
     if err != nil {
@@ -181,8 +180,6 @@ func putListSaveHandler(w http.ResponseWriter, r *http.Request) {
         http.Error(w, "List not found", http.StatusNotFound)
         return
     }
-    fmt.Printf("%v\n", found)
-    log.Println("Saving list", found.List)
     list, err := listsRepository.Update(found.List)
     // TODO: send changes to all users
 	views.Templates.RenderSaveList(w, &views.ListArgs{List: *list, IsDirty: false})
@@ -242,6 +239,10 @@ func main() {
 	listenAddress := flag.String("listen", ":8080", "Listen address.")
 	httpServer := http.Server{
 		Addr: *listenAddress,
+        ReadHeaderTimeout: 3 * time.Second,
+        ReadTimeout: 5 * time.Second,
+        IdleTimeout: 10 * time.Second,
+        WriteTimeout: 10 * time.Second,
 	}
 	go func() {
 		sigint := make(chan os.Signal, 1)
@@ -253,7 +254,6 @@ func main() {
 	}()
 
 	if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
-		log.Println("Error")
 		log.Fatal(err)
 	}
 
