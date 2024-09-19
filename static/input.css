@@ -85,3 +85,23 @@ a:hover a:focus {
   font-weight: bold;
   transition: font-weight 0.2s;
 }
+
+
+.callout-font {
+  /* https://fonts.google.com/specimen/Kolker+Brush/tester?classification=Display,Handwriting */
+  font-family: "Kolker Brush", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
+.font-regular {
+  font-family: "Gowun Batang", serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.font-bold {
+  font-family: "Gowun Batang", serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
