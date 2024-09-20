@@ -144,7 +144,7 @@ func newTemplates() *templates {
 		"indexedgroup": func(groupIndex int, group *list.Group) *IndexedGroup {
 			return NewGroupIndex(groupIndex, group, "")
 		},
-	}).ParseFiles("./templates/pages/list.html", "./templates/pages/lists.html", "./templates/pages/_base.html"))
+	}).ParseFiles("./templates/pages/list.html", "./templates/pages/_base.html"))
 	return templates
 }
 

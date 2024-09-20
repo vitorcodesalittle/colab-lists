@@ -32,7 +32,7 @@
 {{ define "body" }}
 
 {{ template "authnav" }}
-<div>
+<div class="p-4">
     {{ if .Editing }}
     <form action="/lists/{{ .List.Id }}" method="POST" class="flex-col space-y-1 flex">
         <input class="input-h3" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
@@ -93,7 +93,10 @@
                                 <input value="{{ .Group.Name }}" hx-trigger="change changed throttle:400ms" name="text"
                                     hx-vals='{"actionType": 5, "groupIndex": {{ .GroupIndex }}}' ws-send />
                             </label>
-                            <button ws-send hx-vals='{"actionType": 7, "groupIndex": {{ .GroupIndex }}}'>x</>
+                            <button ws-send hx-vals='{"actionType": 7, "groupIndex": {{ .GroupIndex }}}'>
+                                <span class="i-mdi-close border text-brand-800 text-lg"></span>
+                            </button>
+
                         </div>
                         <p>Items ({{ .Group.Items | len }}):</p>
                         <div id="items-{{.GroupIndex}}">
@@ -103,7 +106,9 @@
                                 <div class="{{ if (ne "" .Color) }}border-{{.Color}}-500 {{ else }} border-transparent {{ end }} border flex flex-row"
                                     id="desc-{{.GroupIndex}}-{{.ItemIndex}}" class='flex-row flex space-x-2'>
                                     <button ws-send
-                                        hx-vals='{"actionType": 8, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }}}'>x</button>
+                                        hx-vals='{"actionType": 8, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }}}'>
+                                        <span class="i-mdi-close border text-brand-800 text-lg"></span>
+                                    </button>
                                     <div hx-trigger="focus from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input, focus from:#qty-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                         ws-send value="{{ .Item.Description }}"
                                         hx-vals='{"actionType": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }'>

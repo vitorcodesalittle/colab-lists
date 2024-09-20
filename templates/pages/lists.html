@@ -1,26 +1,36 @@
 {{ define "body" }}
-    {{ template "authnav" }}
-    <div class="px-4">
-        <h2>Lists</h2>
-        <ul>
+{{ template "authnav" }}
+<div class="px-4">
+    <div class="flex flex-col items-center">
+        <h2>Your Lists</h2>
+        <ul class="space-y-2">
             {{ range .Lists }}
-            <li class="w-fit">
-                <a class="flex flex-row space-x-2 items-center" href="/lists/{{ .Id }}">
-                    <p>{{ .Title }}</p>
-                    <span>{{ .Description }}</span>
+            <li class="w-96">
+                <a class="flex flex-row space-x-2 w-full items-center border-b-brand-200 border-b transition-all hover:border-b-brand-500"
+                    href="/lists/{{ .Id }}">
+                    <p class="">{{ .Title }}</p>
+                    <div class="flex flex-grow flex-row justify-end items-center space-x-2">
+                        <span>{{ .Description }}</span>
+                        <time datetime="{{ .UpdatedAt }}">
+                            {{ .UpdatedAt.Format "2006-01-02" }}
+                        </time>
+                    </div>
                 </a>
             </li>
             {{ end }}
         </ul>
         <span>You have a total of {{ .Lists | len }} lists</span>
-        <h2>Create a new list</h2>
-        <form method="post" action="/lists" class="flex flex-col space-y-1">
-            <label for="title">Title</label>
-            <input type="text" id="title" name="title" required>
-            <label for="title">Description</label>
-            <input type="text" id="description" name="description">
-            <button type="submit" class="mr-auto ml-auto">Create</button>
-        </form>
     </div>
+    <div>
+    </div>
+    <h2>Create a new list</h2>
+    <form method="post" action="/lists" class="flex flex-col space-y-1">
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" required>
+        <label for="title">Description</label>
+        <input type="text" id="description" name="description">
+        <button type="submit" class="mr-auto ml-auto bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold mx-auto mt-4"">Create</button>
+    </form>
+</div>
 
 {{ end }}

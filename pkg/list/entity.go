@@ -2,6 +2,7 @@ package list
 
 import (
 	"fmt"
+	"time"
 
 	"vilmasoftware.com/colablists/pkg/user"
 )
@@ -13,6 +14,8 @@ type List struct {
 	Colaborators []user.User
 	Creator      user.User
 	Groups       []*Group
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type Group struct {
@@ -24,7 +27,7 @@ type Group struct {
 }
 
 func (l *List) String() string {
-    return fmt.Sprintf(`List {
+	return fmt.Sprintf(`List {
         Id: %d,
         Title: %s,
         Description: %s,
@@ -36,7 +39,7 @@ func (l *List) String() string {
 
 type Item struct {
 	Id          int64
-    GroupId     int64
+	GroupId     int64
 	Description string
 	Quantity    int
 	Order       int64
