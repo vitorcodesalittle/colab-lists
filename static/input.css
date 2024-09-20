@@ -26,6 +26,7 @@ White
 html {
   padding: 0 1em;
   font-size: 20px;
+  @apply bg-brand-100 text-neutral-900
 }
 
 body {
@@ -71,13 +72,10 @@ button,
   padding: 0.5em 1em;
   width: fit-content;
   border-radius: 0.5em;
-
-  @apply hover:bg-neutral-200 focus:bg-neutral-200 transition
 }
 
 a {
   text-decoration: none;
-  @apply border-b-2 border-transparent focus:border-b-2 hover:border-b-2 mb-2 focus:border-brand-400 hover:border-brand-400 transition
 }
 
 a:hover a:focus {

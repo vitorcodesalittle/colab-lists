@@ -11,11 +11,12 @@ import (
 )
 
 type templates struct {
-	Index *textTemplate.Template
-	List  *textTemplate.Template
-	Lists *textTemplate.Template
-	Login *textTemplate.Template
-	Base  *textTemplate.Template
+	Index  *textTemplate.Template
+	List   *textTemplate.Template
+	Lists  *textTemplate.Template
+	Auth   *textTemplate.Template
+	Signup *textTemplate.Template
+	Base   *textTemplate.Template
 }
 
 type IndexArgs struct {
@@ -38,13 +39,12 @@ func (t *templates) RenderIndex(w io.Writer, args *IndexArgs) {
 }
 
 func (t *templates) RenderList(w io.Writer, args *ListArgs) {
-	t.RenderBase(w, &BaseArgs{ExtraHead: t.RenderListString(w, "extrahead", args), Body: t.RenderListString(w, "body", args)})
-    
+	t.RenderBase(w, &BaseArgs{ExtraHead: t.ExecuteTemplateString(t.List, "extrahead", args), Body: t.ExecuteTemplateString(t.List, "body", args)})
 }
 
-func (t *templates) RenderListString(w io.Writer, templateName string, args *ListArgs) string {
+func (t *templates) ExecuteTemplateString(template *textTemplate.Template, templateName string, args interface{}) string {
 	b := bytes.NewBufferString("")
-	t.List.ExecuteTemplate(b, templateName, args)
+	template.ExecuteTemplate(b, templateName, args)
 	return b.String()
 }
 
@@ -54,8 +54,12 @@ func (t *templates) RenderLists(w io.Writer, args *ListsArgs) {
 
 type LoginArgs struct{}
 
-func (t *templates) RenderLogin(w io.Writer, args *LoginArgs) {
-	t.Login.Execute(w, args)
+func (t *templates) RenderLogin(w io.Writer) {
+	t.RenderBase(w, &BaseArgs{Body: t.ExecuteTemplateString(t.Auth, "bodylogin", nil)})
+}
+
+func (t *templates) RenderSignup(w io.Writer) {
+	t.RenderBase(w, &BaseArgs{Body: t.ExecuteTemplateString(t.Auth, "bodysignup", nil)})
 }
 
 type Colaborator struct {
@@ -86,6 +90,10 @@ func (t *templates) RenderGroup(w io.Writer, args GroupArgs) {
 
 func (t *templates) RenderSaveList(w io.Writer, args *ListArgs) {
 	t.List.ExecuteTemplate(w, "save", args)
+}
+
+func (t *templates) RenderSignUp(w io.Writer) {
+	t.RenderBase(w, &BaseArgs{Body: t.ExecuteTemplateString(t.Signup, "body", nil)})
 }
 
 type BaseArgs struct {
@@ -123,13 +131,11 @@ func NewIndexedItem(groupIndex int, itemIndex int, item *list.Item, color string
 	return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color, HxSwapOob: hxSwapOob}
 }
 
-
-
 func newTemplates() *templates {
 	templates := &templates{}
-	templates.Base = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/base.html"))
+	templates.Base = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/_base.html"))
 	templates.Index = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/index.html"))
-	templates.Login = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/login.html"))
+	templates.Auth = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/auth.html"))
 	templates.Lists = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/lists.html"))
 	templates.List = textTemplate.Must(textTemplate.New("list.html").Funcs(textTemplate.FuncMap{
 		"indexeditem": func(groupIndex int, itemIndex int, item *list.Item, color string) *IndexedItem {
@@ -148,6 +154,7 @@ type ListUi struct {
 	// Try not to use this
 	// focusMap map[int64]map[int]int
 }
+
 type UserUi struct {
 	*user.User
 	Color string

@@ -39,7 +39,7 @@ func getIndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getLoginHandler(w http.ResponseWriter, r *http.Request) {
-	views.Templates.RenderLogin(w, &views.LoginArgs{})
+	views.Templates.RenderLogin(w)
 }
 
 type Session struct {
@@ -136,6 +136,7 @@ func getListDetailHandler(w http.ResponseWriter, r *http.Request) {
 		Editing:  r.URL.Query().Has("edit"),
 		AllUsers: allUsers,
 	}
+	log.Println("Rendering list")
 	views.Templates.RenderList(w, listArgs)
 }
 
@@ -171,21 +172,21 @@ func postListsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func putListSaveHandler(w http.ResponseWriter, r *http.Request) {
-    listId, err := strconv.ParseInt(r.PathValue("listId"), 10, 64)
-    if err != nil {
-        http.Error(w, "listId path value should be integer", http.StatusBadRequest)
-    }
-    found := liveEditor.GetCurrentList(listId)
-    if found == nil {
-        http.Error(w, "List not found", http.StatusNotFound)
-        return
-    }
-    list, err := listsRepository.Update(found.List)
-    // TODO: send changes to all users
+	listId, err := strconv.ParseInt(r.PathValue("listId"), 10, 64)
+	if err != nil {
+		http.Error(w, "listId path value should be integer", http.StatusBadRequest)
+	}
+	found := liveEditor.GetCurrentList(listId)
+	if found == nil {
+		http.Error(w, "List not found", http.StatusNotFound)
+		return
+	}
+	list, err := listsRepository.Update(found.List)
+	// TODO: send changes to all users
 	views.Templates.RenderSaveList(w, &views.ListArgs{List: *list, IsDirty: false})
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-    }
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func getListEditorHandler(w http.ResponseWriter, r *http.Request) {
@@ -214,6 +215,11 @@ func collectUsers(lists []list.List) []user.User {
 	return users
 }
 
+
+func getSignupHandler(w http.ResponseWriter, r *http.Request) {
+    views.Templates.RenderSignup(w)
+}
+
 func main() {
 	err := session.RestoreSessionsFromDb()
 	if err != nil {
@@ -225,6 +231,7 @@ func main() {
 	http.HandleFunc("GET /login", getLoginHandler)
 	http.HandleFunc("POST /login", postLoginHandler)
 	http.HandleFunc("GET /logout", getLogoutHandler)
+	http.HandleFunc("GET /signup", getSignupHandler)
 	http.HandleFunc("POST /sign-up", postSignupHandler)
 	http.HandleFunc("GET /", getIndexHandler)
 	http.HandleFunc("GET /lists", getListsHandler)
@@ -238,11 +245,11 @@ func main() {
 
 	listenAddress := flag.String("listen", ":8080", "Listen address.")
 	httpServer := http.Server{
-		Addr: *listenAddress,
-        ReadHeaderTimeout: 3 * time.Second,
-        ReadTimeout: 5 * time.Second,
-        IdleTimeout: 10 * time.Second,
-        WriteTimeout: 10 * time.Second,
+		Addr:              *listenAddress,
+		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       5 * time.Second,
+		IdleTimeout:       10 * time.Second,
+		WriteTimeout:      10 * time.Second,
 	}
 	go func() {
 		sigint := make(chan os.Signal, 1)

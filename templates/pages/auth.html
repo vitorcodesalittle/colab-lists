@@ -1,0 +1,44 @@
+{{ define "bodylogin" }}
+<div class="flex flex-col items-center">
+    <div class="text-lg">Welcome back, <a class="font-display text-4xl mr-2 ml-2 cursor-pointer" href="/"> market list
+        </a> maker!</div>
+    <div class="w-full border-t-brand-600 h-1 border mb-5"></div>
+    <form action="/login" method="post" class="flex flex-col space-y-1 justify-center">
+        <label for="username">Username:</label>
+        <input type="text" id="loginusername" name="username" required value="asdasdaa">
+        <label for="loginpassword">Password:</label>
+        <input type="password" id="loginpassword" name="password" required value="asdasdaa">
+        <div class="h-10 mx-auto my-4">
+            <button type="submit"
+                class="bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:z-10 hover:font-bold mt-4">Login</button>
+        </div>
+    </form>
+    <a class="mt-5 cursor-pointer border-transparent border hover:border-b-brand-500 transition">Forgot my
+        password</a>
+    <a href="/signup" class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">Create an account</a>
+</div>
+{{ end }}
+
+{{ define "bodysignup" }}
+<div class="flex flex-col items-center">
+    <div class="text-lg">Welcome to <a class="font-display text-4xl mr-2 ml-2 cursor-pointer" href="/"> market list
+        </a></div>
+    <div class="w-full border-t-brand-600 h-1 border mb-5"></div>
+    <form action="/sign-up" method="post" class="flex flex-col space-y-1">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required value="asdasdaa">
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required value="asdasdaa">
+        <label for="password">Confirm Password:</label>
+        <input type="password" required value="asdasdaa">
+        <button
+            class="bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold mx-auto mt-4"
+            type="submit" class="mx-auto">Sign Up</button>
+    </form>
+    <div>
+        Already have an account ?
+        <a class="my-1 cursor-pointer border-transparent border hover:border-b-brand-500 transition" href="/login">Click
+            here to login</a>
+    </div>
+</div>
+{{ end }}
