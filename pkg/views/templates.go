@@ -1,6 +1,7 @@
 package views
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	textTemplate "text/template"
@@ -14,6 +15,7 @@ type templates struct {
 	List  *textTemplate.Template
 	Lists *textTemplate.Template
 	Login *textTemplate.Template
+	Base  *textTemplate.Template
 }
 
 type IndexArgs struct {
@@ -36,7 +38,14 @@ func (t *templates) RenderIndex(w io.Writer, args *IndexArgs) {
 }
 
 func (t *templates) RenderList(w io.Writer, args *ListArgs) {
-	t.List.Execute(w, args)
+	t.RenderBase(w, &BaseArgs{ExtraHead: t.RenderListString(w, "extrahead", args), Body: t.RenderListString(w, "body", args)})
+    
+}
+
+func (t *templates) RenderListString(w io.Writer, templateName string, args *ListArgs) string {
+	b := bytes.NewBufferString("")
+	t.List.ExecuteTemplate(b, templateName, args)
+	return b.String()
 }
 
 func (t *templates) RenderLists(w io.Writer, args *ListsArgs) {
@@ -79,6 +88,18 @@ func (t *templates) RenderSaveList(w io.Writer, args *ListArgs) {
 	t.List.ExecuteTemplate(w, "save", args)
 }
 
+type BaseArgs struct {
+	ExtraHead string
+	Body      string
+}
+
+func (t *templates) RenderBase(w io.Writer, args *BaseArgs) {
+	err := t.Base.ExecuteTemplate(w, "base", args)
+	if err != nil {
+		panic(err)
+	}
+}
+
 type IndexedItem struct {
 	ActionType int       `json:"actionType"`
 	GroupIndex int       `json:"groupIndex"`
@@ -102,8 +123,11 @@ func NewIndexedItem(groupIndex int, itemIndex int, item *list.Item, color string
 	return &IndexedItem{GroupIndex: groupIndex, ItemIndex: itemIndex, Item: *item, Color: color, HxSwapOob: hxSwapOob}
 }
 
+
+
 func newTemplates() *templates {
 	templates := &templates{}
+	templates.Base = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/base.html"))
 	templates.Index = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/index.html"))
 	templates.Login = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/login.html"))
 	templates.Lists = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/lists.html"))
