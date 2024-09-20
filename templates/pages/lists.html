@@ -27,25 +27,7 @@
 </head>
 
 <body class="text-brand-800">
-    {{ block "authnav" . }}
-    <div class=" bg-brand-800 px-4 py-2 mt-2 relative rounded-md text-neutral-100 shadow-md">
-        <div class="group/menu absolute t-0 z-50 flex flex-col justify-center items-start">
-            <div class="group-hover/menu:visible invisible flex flex-row justify-start space-x-2">
-                <a href="/lists">Lists</a>
-                <a href="/login">Login</a>
-                <a href="/logout">Logout</a>
-            </div>
-            <div class="cursor-pointer border-brand-300">
-                Menu
-            </div>
-        </div>
-        <div class="w-full flex flex-row items-center justify-center">
-            <h1 class="callout-font">
-                Market Lists
-            </h1>
-        </div>
-    </div>
-    {{ end }}
+    {{ template "authnav" }}
     <div class="px-4">
         <h2>Lists</h2>
         <ul>

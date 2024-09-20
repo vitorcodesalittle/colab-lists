@@ -135,8 +135,8 @@ func newTemplates() *templates {
 	templates := &templates{}
 	templates.Base = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/_base.html"))
 	templates.Index = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/index.html"))
-	templates.Auth = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/auth.html"))
-	templates.Lists = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/lists.html"))
+	templates.Auth = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/auth.html", "./templates/pages/_base.html"))
+	templates.Lists = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/lists.html", "./templates/pages/_base.html"))
 	templates.List = textTemplate.Must(textTemplate.New("list.html").Funcs(textTemplate.FuncMap{
 		"indexeditem": func(groupIndex int, itemIndex int, item *list.Item, color string) *IndexedItem {
 			return NewIndexedItem(groupIndex, itemIndex, item, color, "")
@@ -144,7 +144,7 @@ func newTemplates() *templates {
 		"indexedgroup": func(groupIndex int, group *list.Group) *IndexedGroup {
 			return NewGroupIndex(groupIndex, group, "")
 		},
-	}).ParseFiles("./templates/pages/list.html", "./templates/pages/lists.html"))
+	}).ParseFiles("./templates/pages/list.html", "./templates/pages/lists.html", "./templates/pages/_base.html"))
 	return templates
 }
 
