@@ -49,7 +49,7 @@ func (t *templates) ExecuteTemplateString(template *textTemplate.Template, templ
 }
 
 func (t *templates) RenderLists(w io.Writer, args *ListsArgs) {
-	t.Lists.Execute(w, args)
+    t.RenderBase(w, &BaseArgs{Body: t.ExecuteTemplateString(t.Lists, "body", args)})
 }
 
 type LoginArgs struct{}

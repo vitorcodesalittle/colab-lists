@@ -1,32 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <meta content="IE=edge" http-equiv="X-UA-Compatible">
-
-    <title>Lists</title>
-    <meta name="description" content="Manage lists">
-    <link href="/static/output.css" rel="stylesheet">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kolker+Brush&display=swap" rel="stylesheet">
-
-    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/htmx.org@2.0.2"
-        integrity="sha384-Y7hw+L/jvKeWIRRkqWYfPcvVxHzVzn5REgzbawhxAuQGwX1XWe70vji+VSeHOThJ"
-        crossorigin="anonymous"></script>
-    <script src="https://unpkg.com/htmx-ext-ws@2.0.1/ws.js"></script>
-    <script>
-        document.addEventListener('htmx:wsBeforeSend', (event) => {
-            console.log(event);
-            // Add the event 
-        })
-    </script>
-</head>
-
-<body class="text-brand-800">
+{{ define "body" }}
     {{ template "authnav" }}
     <div class="px-4">
         <h2>Lists</h2>
@@ -51,6 +23,4 @@
         </form>
     </div>
 
-</body>
-
-</html>
+{{ end }}
