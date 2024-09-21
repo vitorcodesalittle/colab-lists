@@ -127,16 +127,17 @@ func getListDetailHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	list2 := liveEditor.GetCurrentList(int64(id))
-	if list2 != nil {
-		list = *list2.List
-	}
+	list2 := liveEditor.GetCurrentListState(int64(id))
 	listArgs := &views.ListArgs{
 		List:     list,
 		Editing:  r.URL.Query().Has("edit"),
 		AllUsers: allUsers,
+        IsDirty:  false,
 	}
-	log.Println("Rendering list")
+	if list2 != nil {
+		listArgs.List = *list2.Ui.List
+        listArgs.IsDirty = list2.Dirty
+	}
 	views.Templates.RenderList(w, listArgs)
 }
 
@@ -176,7 +177,7 @@ func putListSaveHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "listId path value should be integer", http.StatusBadRequest)
 	}
-	found := liveEditor.GetCurrentList(listId)
+	found := liveEditor.GetCurrentListUi(listId)
 	if found == nil {
 		http.Error(w, "List not found", http.StatusNotFound)
 		return

@@ -1,5 +1,7 @@
 package htmx
 
+import "fmt"
+
 type HtmxMessage struct {
 	CurrentUrl  *string `json:"HX-Current-URL"`
 	Request     *string `json:"HX-Request"`
@@ -15,5 +17,5 @@ type HtmxMessageI struct {
 }
 
 func (h *HtmxMessage) String() string {
-	return fmt.Sprintf("CurrentUrl: %s, Request: %s, Target: %s, Trigger: %s, TriggerName: %s, ActionType: %d\n", h.CurrentUrl, h.Request, h.Target, h.Trigger, h.TriggerName, h.ActionType)
+    return fmt.Sprintf("CurrentUrl: %s, Request: %s, Target: %s, Trigger: %s, TriggerName: %s, ActionType: %d\n", h.CurrentUrl, h.Request, h.Target, h.Trigger, h.TriggerName, h.ActionType)
 }

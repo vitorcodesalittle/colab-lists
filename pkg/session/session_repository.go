@@ -17,11 +17,11 @@ func SaveSessionsInDb() error {
 	if err != nil {
 		return err
 	}
-    println("Deleting all sessions")
-    _, err = tx.Exec(`DELETE FROM luser_session`)
-	if err != nil {
-		return infra.ErrorRollback(err, tx)
-	}
+    ///println("Deleting all sessions")
+    ///_, err = tx.Exec(`DELETE FROM luser_session`)
+	///if err != nil {
+	///	return infra.ErrorRollback(err, tx)
+	///}
 	for _, session := range SessionsMap {
         println("Inserting session " + session.SessionId)
 		_, err := tx.Exec(`INSERT INTO luser_session (sessionId, luserId, lastUsed) VALUES (?, ?, ?)`, session.SessionId, session.User.Id, session.LastUsed)

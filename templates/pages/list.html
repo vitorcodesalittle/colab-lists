@@ -75,7 +75,7 @@
             {{end}}
 
             {{ block "save" . }}
-            <div hx-swap-oob="true" id="save">
+            <div hx-swap-oob="true" id="save" class="sticky">
                 {{ if .IsDirty }}
                 <button hx-put="/lists/{{ .List.Id }}/save" hx-indicator="save-indicator">Save</button>
                 <p id="save-indicator" class="htmx-indicator">Saving list...</p>
@@ -84,24 +84,26 @@
             {{ end }}
             <div id="groups">
                 {{ range $gidx, $group := .List.Groups }}
-                {{ block "group" (indexedgroup $gidx $group) }}
+                {{ block "group" (indexedgroup $group.GroupId $group) }}
                 <div hx-swap-oob="{{ .HxSwapOob }}">
                     <div id="{{.Id}}">
                         <div class="flex flex-row space-x-2">
+                            <div class="p-2 flex items-center justify-center">
+                            <button ws-send hx-vals='{"actionType": 7, "groupIndex": {{ .GroupIndex }}}' class="hover:bg-neutral-300 hover:shadow-sm hover:font-semibold transition-all rounded-full w-fit h-fit">
+                                <span class="i-mdi-close text-brand-800 text-lg border"></span>
+                            </button>
+                            </div>
                             <label>
                                 Group
                                 <input value="{{ .Group.Name }}" hx-trigger="change changed throttle:400ms" name="text"
                                     hx-vals='{"actionType": 5, "groupIndex": {{ .GroupIndex }}}' ws-send />
                             </label>
-                            <button ws-send hx-vals='{"actionType": 7, "groupIndex": {{ .GroupIndex }}}'>
-                                <span class="i-mdi-close border text-brand-800 text-lg"></span>
-                            </button>
 
                         </div>
                         <p>Items ({{ .Group.Items | len }}):</p>
                         <div id="items-{{.GroupIndex}}">
                             {{ range $iidx, $item := .Group.Items }}
-                            {{ block "item" (indexeditem $.GroupIndex $iidx $item "") }}
+                            {{ block "item" (indexeditem $.GroupIndex $item.Id $item "") }}
                             <div hx-swap-oob="{{ .HxSwapOob }}">
                                 <div class="{{ if (ne "" .Color) }}border-{{.Color}}-500 {{ else }} border-transparent {{ end }} border flex flex-row"
                                     id="desc-{{.GroupIndex}}-{{.ItemIndex}}" class='flex-row flex space-x-2'>
@@ -120,7 +122,7 @@
                                                 hx-vals='{"actionType": 9, "quantity": "{{ .Item.Quantity }}"}'
                                                 name="description" id="desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                                 value="{{ .Item.Description }}" />
-                                            <input ws-send hx-trigger="change changed throttle:400ms"
+                                            <input class="w-16" ws-send hx-trigger="change changed throttle:400ms"
                                                 hx-vals='{"actionType": 9, "description": "{{ .Item.Description }}"}'
                                                 value="{{ .Item.Quantity }}" name="quantity" type="number"
                                                 id="qty-{{.GroupIndex}}-{{.ItemIndex}}-input" />
