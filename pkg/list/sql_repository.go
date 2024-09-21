@@ -125,19 +125,19 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
     `)
 	if err != nil {
 		log.Println("Failed to query luser")
-		return List{}, infra.ErrorRollback(err, tx)
+		return List{}, err
 	}
 	rscolaborators, err := stmt.Query(resultlis.Creator.Id)
 	if err != nil {
 		println("error at colab query")
-		return List{}, infra.ErrorRollback(err, tx)
+		return List{}, err
 	}
 	defer rscolaborators.Close()
 	colaborators := make([]user.User, 0)
 	for rscolaborators.Next() {
 		u, err := user.ScanUser(rscolaborators)
 		if err != nil {
-			return List{}, infra.ErrorRollback(err, tx)
+			return List{}, err
 		}
 		colaborators = append(colaborators, u)
 	}
@@ -150,7 +150,7 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 	rs2, err := stmt.Query(id)
 	if err != nil {
 		println("error at group query")
-		return List{}, infra.ErrorRollback(err, tx)
+		return List{}, err
 	}
 	defer rs2.Close()
 	groups := make([]*Group, 0)
@@ -158,7 +158,7 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 		g := &Group{Items: make([]*Item, 0)}
 		err := rs2.Scan(&g.GroupId, &g.ListId, &g.CreatedAt, &g.Name)
 		if err != nil {
-			return List{}, infra.ErrorRollback(err, tx)
+			return List{}, err
 		}
 		stmt, err = tx.Prepare(`
         SELECT *
@@ -167,18 +167,18 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
         `)
 		if err != nil {
 			println("error at item query")
-			return List{}, infra.ErrorRollback(err, tx)
+			return List{}, err
 		}
 		rsg, err := stmt.Query(g.GroupId)
 		if err != nil {
-			return List{}, infra.ErrorRollback(err, tx)
+			return List{}, err
 		}
 		defer rsg.Close()
 		for rsg.Next() {
 			i := Item{}
 			err := rsg.Scan(&i.Id, &i.GroupId, &i.Description, &i.Quantity, &i.Order)
 			if err != nil {
-				return List{}, infra.ErrorRollback(err, tx)
+				return List{}, err
 			}
 			g.Items = append(g.Items, &i)
 		}

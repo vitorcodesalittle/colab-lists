@@ -7,7 +7,6 @@ import (
 )
 
 func SaveSessionsInDb() error {
-    println("Saving Sessions in DB")
 	sql, err := infra.CreateConnection()
 	if err != nil {
 		return err
@@ -17,19 +16,18 @@ func SaveSessionsInDb() error {
 	if err != nil {
 		return err
 	}
+    defer tx.Rollback()
     ///println("Deleting all sessions")
     ///_, err = tx.Exec(`DELETE FROM luser_session`)
 	///if err != nil {
 	///	return infra.ErrorRollback(err, tx)
 	///}
 	for _, session := range SessionsMap {
-        println("Inserting session " + session.SessionId)
 		_, err := tx.Exec(`INSERT INTO luser_session (sessionId, luserId, lastUsed) VALUES (?, ?, ?)`, session.SessionId, session.User.Id, session.LastUsed)
 		if err != nil {
-			return infra.ErrorRollback(err, tx)
+			return err
 		}
 	}
-    println("Done inserting sessions. Commiting")
 	if err = tx.Commit(); err != nil {
 		return err
 	}
@@ -37,7 +35,6 @@ func SaveSessionsInDb() error {
 }
 
 func RestoreSessionsFromDb() error {
-    println("Restoring Sessions from DB")
 	sql, err := infra.CreateConnection()
 	defer sql.Close()
 	if err != nil {
