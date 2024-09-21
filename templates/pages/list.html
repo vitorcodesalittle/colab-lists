@@ -34,7 +34,7 @@
 {{ template "authnav" }}
 <div class="p-2">
     {{ if .Editing }}
-    <form action="/lists/{{ .List.Id }}" method="POST" class="flex-col space-y-1 flex">
+    <form hx-put="/lists/{{ .List.Id }}" hx-vals='{"colaborators": js(Array.from(document.querySelectorAll("select option")).map(opt => opt.value))}' class="flex-col space-y-1 flex">
         <input class="input-h3" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
         <input name="description" value="{{ .List.Description }}" placeholder="Describe your list" />
         <label>Colaborators {{ .AllUsers | len }}</label>
@@ -51,12 +51,13 @@
         <div>
             <div class="flex flex-row justify-between items-center" hx-on:htmx:wsAfterMessage="console.log(event)">
                 <h3>{{ .List.Title }}</h3>
-                <a class="group/edit p-2 rounded-full bg-brand-600 w-8 h-8 flex items-center justify-center" href="/lists/{{ .List.Id }}?edit">
-                    <span class="group-hover/edit:text-2xl transition-all i-mdi-edit text-neutral-200 text-xl "></span>
+                <a class="group/edit p-2 rounded-full bg-brand-600 w-8 h-8 flex items-center justify-center mr-14"
+                    href="/lists/{{ .List.Id }}?edit">
+                    <span class="group-hover/edit:text-2xl transition-all i-mdi-edit text-neutral-200 text-xl"></span>
                 </a>
             </div>
             <p><i name="description">{{ .List.Description }}</i></p>
-            {{block "colaborators" .List.Colaborators}}
+            {{block "colaborators" .List.ColaboratorsOnline}}
             <div id="colaborators" hx-swap-oob="outerHTML">
                 <p>Colaborators {{ . | len }}:</p>
                 <div>
@@ -74,15 +75,6 @@
             </div>
             {{end}}
 
-            {{ block "save" . }}
-            <div hx-swap-oob="true" id="save" class="fixed -bottom-4 right-4">
-                {{ if .IsDirty }}
-                <button hx-put="/lists/{{ .List.Id }}/save" hx-indicator="save-indicator"
-                    class="rounded px-2 py-1 bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold">Save</button>
-                <p id="save-indicator" class="htmx-indicator">Saving list...</p>
-                {{ end }}
-            </div>
-            {{ end }}
             <div id="groups">
                 {{ range $gidx, $group := .List.Groups }}
                 {{ block "group" (indexedgroup $group.GroupId $group) }}
@@ -96,7 +88,8 @@
                                 </button>
                             </div>
                             <label>
-                                <input class="font-semibold" value="{{ .Group.Name }}" hx-trigger="change changed throttle:400ms" name="text"
+                                <input class="font-semibold" value="{{ .Group.Name }}"
+                                    hx-trigger="change changed throttle:400ms" name="text"
                                     hx-vals='{"actionType": 5, "groupIndex": {{ .GroupIndex }}}' ws-send />
                             </label>
                         </div>
@@ -105,7 +98,8 @@
                             {{ range $iidx, $item := .Group.Items }}
                             {{ block "item" (indexeditem $.GroupIndex $item.Id $item "") }}
                             <div hx-swap-oob="{{ .HxSwapOob }}">
-                                <div id="desc-{{.GroupIndex}}-{{.ItemIndex}}" class='flex-row flex items-center border-transparent border'>
+                                <div id="desc-{{.GroupIndex}}-{{.ItemIndex}}"
+                                    class='flex-row flex items-center border-transparent border'>
                                     <button ws-send
                                         hx-vals='{"actionType": 8, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }}}'>
                                         <span class="i-mdi-close border text-brand-800 text-lg"></span>
@@ -116,15 +110,18 @@
                                         hx-vals='{"actionType": 1, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }'>
                                         <div hx-trigger="blur from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input, blur from:#qty-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                             hx-vals='{"actionType": 2, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }'
-                                            id="desc-{{.GroupIndex}}-{{.ItemIndex}}-div" ws-send class="w-full flex-row flex">
+                                            id="desc-{{.GroupIndex}}-{{.ItemIndex}}-div" ws-send
+                                            class="w-full flex-row flex">
                                             {{ block "itemdescription" . }}
-                                            <input class="flex flex-grow w-4/5" ws-send hx-trigger="change changed throttle:400ms"
+                                            <input class="flex flex-grow w-4/5" ws-send
+                                                hx-trigger="change changed throttle:400ms"
                                                 hx-vals='{"actionType": 9, "field": "description", "quantity": "{{ .Item.Quantity }}"}'
                                                 name="description" id="desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                                 value="{{ .Item.Description }}" />
                                             {{ end }}
                                             {{ block "itemquantity" . }}
-                                            <input class="flex-shrink flex w-1/5" ws-send hx-trigger="change changed throttle:400ms"
+                                            <input class="flex-shrink flex w-1/5" ws-send
+                                                hx-trigger="change changed throttle:400ms"
                                                 hx-vals='{"actionType": 9, "field": "quantity", "description": "{{ .Item.Description }}"}'
                                                 value="{{ .Item.Quantity }}" name="quantity" type="number"
                                                 id="qty-{{.GroupIndex}}-{{.ItemIndex}}-input" />
@@ -145,10 +142,22 @@
                 {{ end }}
                 {{ end }}
             </div>
+            <button ws-send hx-vals='{"actionType": 4}'
+                class="group/add-group px-2 py-1 rounded bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold mx-auto mt-2 flex-row flex items-center">Add
+                group <span
+                    class="i-mdi-plus text-xl group-hover/add-group:translate-x-1 transition-all"></span></button>
         </div>
-        <button ws-send hx-vals='{"actionType": 4}'
-            class="group/add-group px-2 py-1 rounded bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold mx-auto mt-2 flex-row flex items-center">Add
-            group <span class="i-mdi-plus text-xl group-hover/add-group:translate-x-1 transition-all"></span></button>
+    </div>
+    {{ end }}
+
+    {{ block "save" . }}
+    <div hx-swap-oob="true" id="save" class="fixed -bottom-4 right-4">
+        {{ if .IsDirty }}
+        <button hx-put="/lists/{{ .List.Id }}/save" hx-indicator="save-indicator"
+            class="rounded px-2 py-1 bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold">Save
+            <span class="i-mdi-save m-auto text-lg"></span></button>
+        <p id="save-indicator" class="htmx-indicator">Saving list...</p>
+        {{ end }}
     </div>
     {{ end }}
 </div>

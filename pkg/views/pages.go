@@ -14,7 +14,7 @@ func (t *templates) RenderIndex(w io.Writer, args *IndexArgs) {
 }
 
 type ListArgs struct {
-	List     list.List
+	List     ListUi
 	Editing  bool
 	AllUsers []user.User
 	IsDirty  bool

@@ -3,6 +3,7 @@ package list
 import (
 	"errors"
 	"log"
+	"time"
 
 	infra "vilmasoftware.com/colablists/pkg/infra"
 	"vilmasoftware.com/colablists/pkg/user"
@@ -46,7 +47,6 @@ func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
     INSERT INTO list_colaborators (listId, luserId)
     VALUES (?, ?)
   `, listId, list.CreatorId)
-
 	if err != nil {
 		return List{}, err
 	}
@@ -83,7 +83,7 @@ func scanList(row Scanner) (List, error) {
 	l := &List{
 		Creator: user.User{},
 	}
-	err := row.Scan(&l.Id, &l.Title, &l.Description, &l.Creator.Id)
+	err := row.Scan(&l.Id, &l.Title, &l.Description, &l.Creator.Id, &l.UpdatedAt)
 	if err != nil {
 		return List{}, err
 	}
@@ -100,19 +100,20 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 	if err != nil {
 		return List{}, err
 	}
+	defer tx.Rollback()
 	stmt, err := tx.Prepare(`
     SELECT *
     FROM list
     Where listId = ?
     `)
 	if err != nil {
-        tx.Rollback()
+		println("error at scan")
 		panic(err)
 	}
 	rs := stmt.QueryRow(id)
 	resultlis, err := scanList(rs)
 	if err != nil {
-        tx.Rollback()
+		println("error at scan list")
 		return List{}, err
 	}
 
@@ -128,9 +129,10 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 	}
 	rscolaborators, err := stmt.Query(resultlis.Creator.Id)
 	if err != nil {
+		println("error at colab query")
 		return List{}, infra.ErrorRollback(err, tx)
 	}
-    defer rscolaborators.Close()
+	defer rscolaborators.Close()
 	colaborators := make([]user.User, 0)
 	for rscolaborators.Next() {
 		u, err := user.ScanUser(rscolaborators)
@@ -146,10 +148,11 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
     WHERE listId = ?
     `)
 	rs2, err := stmt.Query(id)
-    if err != nil {
-        return List{}, infra.ErrorRollback(err, tx)
-    }
-    defer rs2.Close()
+	if err != nil {
+		println("error at group query")
+		return List{}, infra.ErrorRollback(err, tx)
+	}
+	defer rs2.Close()
 	groups := make([]*Group, 0)
 	for rs2.Next() {
 		g := &Group{Items: make([]*Item, 0)}
@@ -163,13 +166,14 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
         WHERE groupId = ?
         `)
 		if err != nil {
+			println("error at item query")
 			return List{}, infra.ErrorRollback(err, tx)
 		}
 		rsg, err := stmt.Query(g.GroupId)
 		if err != nil {
 			return List{}, infra.ErrorRollback(err, tx)
 		}
-        defer rsg.Close()
+		defer rsg.Close()
 		for rsg.Next() {
 			i := Item{}
 			err := rsg.Scan(&i.Id, &i.GroupId, &i.Description, &i.Quantity, &i.Order)
@@ -180,28 +184,32 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 		}
 		groups = append(groups, g)
 	}
-    err = tx.Commit()
-    if err != nil {
-        return List{}, err
-    }
+	err = tx.Commit()
+	if err != nil {
+		return List{}, err
+	}
 	resultlis.Groups = groups
 	return resultlis, nil
 }
 
 // GetAll implements ListsRepository.
-func (s *SqlListRepository) GetAll() ([]List, error) {
+func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
 	sql, err := infra.CreateConnection()
 	if err != nil {
 		panic(err)
 	}
 	rs, err := sql.Query(`
-  SELECT *
-  FROM list
-  `)
+  SELECT l.*
+  FROM list l
+  INNER JOIN list_colaborators lc ON l.listId = lc.listId
+  INNER JOIN luser lu ON lc.luserId = lu.luserId
+  WHERE lu.luserId = ?
+  OR l.creatorLuserId = ?
+  `, userId, userId)
 	if err != nil {
 		panic(err)
 	}
-    defer rs.Close()
+	defer rs.Close()
 	ls := make([]List, 0)
 	for rs.Next() {
 		l, err := scanList(rs)
@@ -215,55 +223,77 @@ func (s *SqlListRepository) GetAll() ([]List, error) {
 
 // Update implements ListsRepository.
 func (s *SqlListRepository) Update(list *List) (*List, error) {
-    if list == nil || list.Id <= 0 {
-        return nil, errors.New("list.Id must be a positive integer")
-    }
-    sql, err := infra.CreateConnection()
-    if err != nil {
-        return nil, err
-    }
-    defer sql.Close()
+	if list == nil || list.Id <= 0 {
+		return nil, errors.New("list.Id must be a positive integer")
+	}
+	sql, err := infra.CreateConnection()
+	if err != nil {
+		return nil, err
+	}
+	defer sql.Close()
 
-    tx, err := sql.Begin()
-    defer tx.Rollback()
+	tx, err := sql.Begin()
+	defer tx.Rollback()
 
-    _, err = tx.Exec(`
+	list.UpdatedAt = time.Now()
+	_, err = tx.Exec(`
         UPDATE list
         SET title = ?,
-        description = ?
+        description = ?,
+        updatedAt = ?
         WHERE listId = ?
-    `, list.Title, list.Description, list.Id)
-    if err != nil {
-        return nil, err
-    }
-    _, err = tx.Exec(`
+    `, list.Title, list.Description, list.UpdatedAt, list.Id)
+	if err != nil {
+		return nil, err
+	}
+	_, err = tx.Exec(`
         DELETE FROM list_groups
         WHERE listId = ?
     `, list.Id)
-    if err != nil {
-        return nil, err
-    }
-    for _, group := range list.Groups {
-        result, err := tx.Exec(`
+	if err != nil {
+		return nil, err
+	}
+	_, err = tx.Exec(`
+        DELETE FROM list_colaborators
+        WHERE listId = ?
+    `, list.Id)
+	if err != nil {
+		return nil, err
+	}
+	for _, group := range list.Groups {
+		result, err := tx.Exec(`
             INSERT INTO list_groups (listId, name)
             VALUES (?, ?)
         `, list.Id, group.Name)
-        if err != nil {
-            return nil, err
-        }
-        groupId, err := result.LastInsertId()
-        if err != nil {
-            return nil, err
-        }
-        for itemindex, item := range group.Items {
-            _, err = tx.Exec(`
+		if err != nil {
+			return nil, err
+		}
+		groupId, err := result.LastInsertId()
+		if err != nil {
+			return nil, err
+		}
+		for itemindex, item := range group.Items {
+			_, err = tx.Exec(`
                 INSERT INTO list_group_items (groupId, description, quantity, order_)
                 VALUES (?, ?, ?, ?)
             `, groupId, item.Description, item.Quantity, itemindex)
-            if err != nil {
-                return nil, err
-            }
-        }
-    }
-    return list, tx.Commit()
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	for _, user := range list.Colaborators {
+		_, err = tx.Exec(`
+                INSERT INTO list_colaborators (listId, luserId)
+                VALUES (?, ?)
+            `, list.Id, user.Id)
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+	return list, nil
 }

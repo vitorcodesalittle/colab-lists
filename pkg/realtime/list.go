@@ -15,12 +15,12 @@ import (
 
 type connection struct {
 	ListId int64
-	UserId int64
+    User *user.User
 	Conn   *websocket.Conn
 }
 
 func (c *connection) String() string {
-	return fmt.Sprintf("Connection{ListId: %d, UserId: %d, Conn: %v}", c.ListId, c.UserId, c.Conn)
+	return fmt.Sprintf("Connection{ListId: %d, UserId: %d, Conn: %v}", c.ListId, c.User, c.Conn)
 }
 
 type LiveEditor struct {
@@ -125,7 +125,7 @@ func (l *LiveEditor) HandleWebsocketConn(conn *connection) {
 				}
 				l.HandleUpdateColor(&updateColorAction, conn)
 			case ACTION_ADD_GROUP:
-				l.HandleAddGroup(conn.ListId, "New Group")
+				l.HandleAddGroup("New Group", conn)
 			case ACTION_ADD_ITEM:
 				var addItemAction AddItemAction
 				if err := json.Unmarshal(p, &addItemAction); err != nil {
@@ -170,7 +170,7 @@ func (l *LiveEditor) HandleWebsocketConn(conn *connection) {
 func (l *LiveEditor) SetupList(listId int64, user *user.User, conn *websocket.Conn) {
 	defer l.Info()
 	listUi, ok := l.listsById[listId]
-	conn2 := &connection{ListId: listId, UserId: user.Id, Conn: conn}
+	conn2 := &connection{ListId: listId, User: user, Conn: conn}
 	if !ok {
 		list, err := l.listRepository.Get(listId)
 		assertNotNil(err)
@@ -210,7 +210,7 @@ func (l *LiveEditor) HandleFocusItem(action *FocusItemAction, conn *connection) 
 		GroupIndex: action.GroupIndex,
 		ItemIndex:  action.ItemIndex,
 		Item:       item,
-		Color:      l.GetColaboratorOnline(conn.ListId, conn.UserId).Color,
+		Color:      l.GetColaboratorOnline(conn.ListId, conn.User.Id).Color,
 		ActionType: ACTION_FOCUS_ITEM,
 	}
 	conns := l.GetConnectionsOfList(conn.ListId)
@@ -267,8 +267,8 @@ func (l *LiveEditor) HandleUpdateColor(action *UpdateColorAction, conn *connecti
 	}
 }
 
-func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
-	listState := l.GetCurrentListState(listId)
+func (l *LiveEditor) HandleAddGroup(groupText string, conn *connection) {
+	listState := l.GetCurrentListState(conn.ListId)
 	if listState == nil {
 		return
 	}
@@ -280,8 +280,8 @@ func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
 	s := ""
 	buf := bytes.NewBufferString(s)
 	views.Templates.RenderGroup(buf, *views.NewGroupIndex(group.GroupId, group, "beforeend:#groups"))
-	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *editList.List, IsDirty: true})
-	for _, conn := range l.GetConnectionsOfList(listId) {
+	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *views.NewListUi(listState.Ui.List, conn.User), IsDirty: true})
+	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
 }
@@ -299,7 +299,7 @@ func (l *LiveEditor) HandleEditGroup(action *EditGroupAction, conn *connection) 
 	gi := *views.NewGroupIndex(group.GroupId, group, "outerHTML:")
 	gi.HxSwapOob = "outerHTML:#" + gi.Id
 	views.Templates.RenderGroup(buf, gi)
-	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *editList.List, IsDirty: listState.Dirty})
+	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *views.NewListUi(editList.List, conn.User), IsDirty: listState.Dirty})
 
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
@@ -319,10 +319,10 @@ func (l *LiveEditor) HandleAddItem(args *AddItemAction, conn *connection) {
 	editList := listState.Ui
 	s := ""
 	buf := bytes.NewBufferString(s)
-	color := l.GetColaboratorOnline(conn.ListId, conn.UserId).Color
+	color := l.GetColaboratorOnline(conn.ListId, conn.User.Id).Color
 	groupIdStr := strconv.FormatInt(int64(args.GroupIndex), 10)
 	views.Templates.RenderItem(buf, *views.NewIndexedItem(item.GroupId, item.Id, item, color, "beforeend:#items-"+groupIdStr))
-	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *editList.List, IsDirty: true})
+	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *views.NewListUi(editList.List, conn.User), IsDirty: true})
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
@@ -339,7 +339,7 @@ func (l *LiveEditor) HandleDeleteGroup(args *DeleteGroupArgs, conn *connection) 
 	g := *views.NewGroupIndex(args.GroupIndex, &list.Group{}, "delete")
 	g.HxSwapOob = "delete:#" + g.Id
 	views.Templates.RenderGroup(buf, g)
-	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *listState.Ui.List, IsDirty: true})
+	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *views.NewListUi(listState.Ui.List, conn.User), IsDirty: true})
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
@@ -354,10 +354,10 @@ func (l *LiveEditor) HandleDeleteItem(args *DeleteItemArgs, conn *connection) {
 	editList := listState.Ui
 	s := ""
 	buf := bytes.NewBufferString(s)
-	color := l.GetColaboratorOnline(conn.ListId, conn.UserId).Color
+	color := l.GetColaboratorOnline(conn.ListId, conn.User.Id).Color
 	i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, &list.Item{}, color, fmt.Sprintf("delete:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
 	views.Templates.RenderItem(buf, i)
-	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *editList.List, IsDirty: true})
+	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *views.NewListUi(editList.List, conn.User), IsDirty: true})
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
@@ -378,14 +378,14 @@ func (l *LiveEditor) HandleEditItem(args *EditItemArgs, conn *connection) {
 	}
 	s := ""
 	buf := bytes.NewBufferString(s)
-	color := l.GetColaboratorOnline(conn.ListId, conn.UserId).Color
+	color := l.GetColaboratorOnline(conn.ListId, conn.User.Id).Color
 	i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, item, color, fmt.Sprintf("outerHTML:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
 	if args.Field == "description" {
 		views.Templates.RenderItemDescription(buf, i)
 	} else if args.Field != "quantity" {
 		views.Templates.RenderItemQuantity(buf, i)
 	}
-	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *listState.Ui.List, IsDirty: true})
+	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *views.NewListUi(listState.Ui.List, conn.User), IsDirty: true})
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}

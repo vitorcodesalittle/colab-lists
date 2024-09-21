@@ -3,8 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -90,7 +93,12 @@ func getListsHandler(w http.ResponseWriter, r *http.Request) {
 	if redirectIfNotLoggedIn(w, r) {
 		return
 	}
-	lists, err := listsRepository.GetAll()
+    user, err := session.GetUserFromSession(r)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusUnauthorized)
+        return
+    }
+	lists, err := listsRepository.GetAll(user.Id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -127,16 +135,22 @@ func getListDetailHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	list2 := liveEditor.GetCurrentListState(int64(id))
+    user, err := session.GetUserFromSession(r)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusUnauthorized)
+        return
+    }
+
 	listArgs := &views.ListArgs{
-		List:     list,
+		List:     *views.NewListUi(&list, user ),
 		Editing:  r.URL.Query().Has("edit"),
 		AllUsers: allUsers,
-        IsDirty:  false,
+		IsDirty:  false,
 	}
+	list2 := liveEditor.GetCurrentListState(int64(id))
 	if list2 != nil {
-		listArgs.List = *list2.Ui.List
-        listArgs.IsDirty = list2.Dirty
+		listArgs.List = *list2.Ui
+		listArgs.IsDirty = list2.Dirty
 	}
 	views.Templates.RenderList(w, listArgs)
 }
@@ -183,11 +197,66 @@ func putListSaveHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	list, err := listsRepository.Update(found.List)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+    user, err := session.GetUserFromSession(r)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusUnauthorized)
+        return
+    }
 	// TODO: send changes to all users
-	views.Templates.RenderSaveList(w, &views.ListArgs{List: *list, IsDirty: false})
+	views.Templates.RenderSaveList(w, &views.ListArgs{List: *views.NewListUi(list, user), IsDirty: false})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+}
+
+func putListHandler(w http.ResponseWriter, r *http.Request) {
+	listId, err := strconv.ParseInt(r.PathValue("listId"), 10, 64)
+	if err != nil {
+		http.Error(w, "listId path value should be integer", http.StatusBadRequest)
+	}
+	list, err := listsRepository.Get(listId)
+	formBody, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	urlParsed, err := url.Parse("http://localhost:8080?" + string(formBody))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	colaborators := urlParsed.Query()["colaborators"]
+	list.Title = urlParsed.Query().Get("title")
+	list.Description = urlParsed.Query().Get("description")
+    list.Colaborators = []user.User{}
+    for _, colaborator := range colaborators {
+        colaboratorId, err := strconv.Atoi(colaborator)
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusBadRequest)
+        }
+        user, err := usersRepository.Get(int64(colaboratorId))
+        if err != nil {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+            return
+        }
+        list.Colaborators = append(list.Colaborators, user)
+    }
+    fmt.Printf("Salvando lista %v\n", list)
+	listv, err := listsRepository.Update(&list)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	liveEditor.GetCurrentListState(listId).Ui.List = listv
+
+	w.Header().Add("HX-Redirect", fmt.Sprintf("/lists/%d", listId))
+	// http.Redirect(w, r, "/lists", http.StatusSeeOther)
 }
 
 func getListEditorHandler(w http.ResponseWriter, r *http.Request) {
@@ -216,9 +285,8 @@ func collectUsers(lists []list.List) []user.User {
 	return users
 }
 
-
 func getSignupHandler(w http.ResponseWriter, r *http.Request) {
-    views.Templates.RenderSignup(w)
+	views.Templates.RenderSignup(w)
 }
 
 func main() {
@@ -241,6 +309,7 @@ func main() {
 	http.HandleFunc("GET /api/users/{userId}", getUserHandler)
 	http.HandleFunc("GET /ws/list-editor", getListEditorHandler)
 	http.HandleFunc("PUT /lists/{listId}/save", putListSaveHandler)
+	http.HandleFunc("PUT /lists/{listId}", putListHandler)
 
 	log.Printf("Server started at http://localhost:8080\n")
 

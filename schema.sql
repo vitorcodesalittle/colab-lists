@@ -10,6 +10,7 @@ CREATE TABLE list (
     title VARCHAR(255),
     description TEXT,
     creatorLuserId INT,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (creatorLuserId) REFERENCES user(luserId)
 );
 

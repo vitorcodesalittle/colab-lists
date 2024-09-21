@@ -8,6 +8,7 @@ import (
 	"vilmasoftware.com/colablists/pkg/list"
 	"vilmasoftware.com/colablists/pkg/user"
 )
+
 var Templates *templates = newTemplates()
 
 type templates struct {
@@ -32,17 +33,22 @@ type UserUi struct {
 	//*Action
 }
 
-
 type IndexArgs struct {
 	Title       string
 	Description string
 }
 
-
 type Colaborator struct {
 	user.User
 }
 type ColaboratorsListArgs = []Colaborator
+
+func NewListUi(list *list.List, user *user.User) *ListUi {
+	return &ListUi{
+		List:               list,
+		ColaboratorsOnline: []*UserUi{{User: user, Color: "#18d825"}},
+	}
+}
 
 func (t *templates) RenderCollaboratorsList(w io.Writer, args []*UserUi) {
 	t.List.ExecuteTemplate(w, "colaborators", args)
@@ -56,50 +62,52 @@ func (t *templates) RenderCollaboratorsList(w io.Writer, args []*UserUi) {
 type ItemArgs = IndexedItem
 
 func (t *templates) RenderItemDescription(w io.Writer, args ItemArgs) {
-    err := t.List.ExecuteTemplate(w, "itemdescription", args)
-    if err != nil {
-        panic (err)
-    }
+	err := t.List.ExecuteTemplate(w, "itemdescription", args)
+	if err != nil {
+		panic(err)
+	}
 }
+
 func (t *templates) RenderItemQuantity(w io.Writer, args ItemArgs) {
-    err := t.List.ExecuteTemplate(w, "itemquantity", args)
-    if err != nil {
-        panic (err)
-    }
+	err := t.List.ExecuteTemplate(w, "itemquantity", args)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (t *templates) RenderItem(w io.Writer, args ItemArgs) {
-    err := t.List.ExecuteTemplate(w, "item", args)
-    if err != nil {
-        panic (err)
-    }
+	err := t.List.ExecuteTemplate(w, "item", args)
+	if err != nil {
+		panic(err)
+	}
 }
+
 type GroupArgs = IndexedGroup
 
 func (t *templates) RenderGroup(w io.Writer, args GroupArgs) {
-    err := t.List.ExecuteTemplate(w, "group", args)
-    if err != nil {
-        panic(err)
-    }
+	err := t.List.ExecuteTemplate(w, "group", args)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (t *templates) RenderSaveList(w io.Writer, args *ListArgs) {
-    err := t.List.ExecuteTemplate(w, "save", args)
-    if err != nil {
-        panic(err)
-    }
+	err := t.List.ExecuteTemplate(w, "save", args)
+	if err != nil {
+		panic(err)
+	}
 }
 
 type IndexedItem struct {
-	ActionType int       `json:"actionType"`
-	GroupIndex int64       `json:"groupIndex"`
-	ItemIndex  int64       `json:"itemIndex"`
+	ActionType int        `json:"actionType"`
+	GroupIndex int64      `json:"groupIndex"`
+	ItemIndex  int64      `json:"itemIndex"`
 	Item       *list.Item `json:"item"`
-	Color      string    `json:"color"`
+	Color      string     `json:"color"`
 	HxSwapOob  string
 }
 type IndexedGroup struct {
-	GroupIndex int64        `json:"groupIndex"`
+	GroupIndex int64       `json:"groupIndex"`
 	Group      *list.Group `json:"group"`
 	Id         string
 	HxSwapOob  string
