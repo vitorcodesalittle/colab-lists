@@ -83,7 +83,7 @@ func getLogoutHandler(w http.ResponseWriter, r *http.Request) {
 func postSignupHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Redirect(w, r, "/signup?error=" + err.Error(), http.StatusSeeOther)
 	} else {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 	}
@@ -286,7 +286,7 @@ func collectUsers(lists []list.List) []user.User {
 }
 
 func getSignupHandler(w http.ResponseWriter, r *http.Request) {
-	views.Templates.RenderSignup(w)
+    views.Templates.RenderSignup(w, &views.SignupArgs{Error: r.URL.Query().Get("error")})
 }
 
 func main() {

@@ -35,6 +35,11 @@
         <button
             class="rounded p-2 bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold mx-auto mt-4"
             type="submit" class="mx-auto">Sign Up</button>
+        {{ if .Error }}
+        <div class="rounded p-4 mx-auto border-red-800 border bg-red-200">
+            {{ .Error }}
+        </div>
+        {{ end }}
     </form>
     <div>
         Already have an account ?

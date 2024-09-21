@@ -36,8 +36,11 @@ func (t *templates) RenderLogin(w io.Writer) {
 	t.renderBase(w, &baseArgs{Body: t.ExecuteTemplateString(t.Auth, "bodylogin", nil)})
 }
 
-func (t *templates) RenderSignup(w io.Writer) {
-	t.renderBase(w, &baseArgs{Body: t.ExecuteTemplateString(t.Auth, "bodysignup", nil)})
+type SignupArgs struct {
+    Error string
+}
+func (t *templates) RenderSignup(w io.Writer, args *SignupArgs) {
+	t.renderBase(w, &baseArgs{Body: t.ExecuteTemplateString(t.Auth, "bodysignup", args)})
 }
 
 type baseArgs struct {

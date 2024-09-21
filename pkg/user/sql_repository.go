@@ -2,6 +2,7 @@ package user
 
 import (
 	"database/sql"
+	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 	"vilmasoftware.com/colablists/pkg/infra"
@@ -16,6 +17,12 @@ func (s *SqlUsersRepository) CreateUser(username string, password string) (User,
 		return User{}, err
 	}
 	defer conn.Close()
+
+    if conn.QueryRow(`SELECT * FROM luser WHERE username = ?`, username).Err() != sql.ErrNoRows {
+        return User{}, fmt.Errorf("Username \"%s\" already registered. Please choose another one.", username)
+    }
+
+
 	passwordHash, err := hashPassword([]byte(password))
 	if err != nil {
 		return User{}, err
