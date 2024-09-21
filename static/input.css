@@ -24,7 +24,6 @@ White
 
 
 html {
-  padding: 0 1em;
   font-size: 20px;
   @apply bg-brand-100 text-neutral-900
 }
@@ -68,9 +67,7 @@ input:focus, select:focus {
 
 button,
 .button {
-  padding: 0.5em 1em;
   width: fit-content;
-  border-radius: 0.5em;
 }
 
 a {
