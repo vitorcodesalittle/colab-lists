@@ -55,13 +55,25 @@ func (t *templates) RenderCollaboratorsList(w io.Writer, args []*UserUi) {
 
 type ItemArgs = IndexedItem
 
+func (t *templates) RenderItemDescription(w io.Writer, args ItemArgs) {
+    err := t.List.ExecuteTemplate(w, "itemdescription", args)
+    if err != nil {
+        panic (err)
+    }
+}
+func (t *templates) RenderItemQuantity(w io.Writer, args ItemArgs) {
+    err := t.List.ExecuteTemplate(w, "itemquantity", args)
+    if err != nil {
+        panic (err)
+    }
+}
+
 func (t *templates) RenderItem(w io.Writer, args ItemArgs) {
     err := t.List.ExecuteTemplate(w, "item", args)
     if err != nil {
         panic (err)
     }
 }
-
 type GroupArgs = IndexedGroup
 
 func (t *templates) RenderGroup(w io.Writer, args GroupArgs) {

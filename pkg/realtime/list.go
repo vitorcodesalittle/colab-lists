@@ -23,7 +23,6 @@ func (c *connection) String() string {
 	return fmt.Sprintf("Connection{ListId: %d, UserId: %d, Conn: %v}", c.ListId, c.UserId, c.Conn)
 }
 
-
 type LiveEditor struct {
 	listsById      map[int64]*ListState
 	listRepository list.ListsRepository
@@ -36,7 +35,6 @@ func (l *LiveEditor) Info() {
 		println("List ", k, " has ", len(v.connections), " connections")
 	}
 }
-
 
 func NewLiveEditor(repository list.ListsRepository) *LiveEditor {
 	return &LiveEditor{
@@ -169,7 +167,6 @@ func (l *LiveEditor) HandleWebsocketConn(conn *connection) {
 	}
 }
 
-
 func (l *LiveEditor) SetupList(listId int64, user *user.User, conn *websocket.Conn) {
 	defer l.Info()
 	listUi, ok := l.listsById[listId]
@@ -271,11 +268,11 @@ func (l *LiveEditor) HandleUpdateColor(action *UpdateColorAction, conn *connecti
 }
 
 func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
-    listState := l.GetCurrentListState(listId)
-    if listState == nil {
-        return
-    }
-    group := listState.AddGroup(groupText)
+	listState := l.GetCurrentListState(listId)
+	if listState == nil {
+		return
+	}
+	group := listState.AddGroup(groupText)
 	editList := listState.Ui
 	if editList == nil {
 		return
@@ -290,11 +287,11 @@ func (l *LiveEditor) HandleAddGroup(listId int64, groupText string) {
 }
 
 func (l *LiveEditor) HandleEditGroup(action *EditGroupAction, conn *connection) {
-    listState := l.GetCurrentListState(conn.ListId)
-    if listState == nil {
-        return
-    }
-    group := listState.EditGroup(action)
+	listState := l.GetCurrentListState(conn.ListId)
+	if listState == nil {
+		return
+	}
+	group := listState.EditGroup(action)
 	editList := listState.Ui
 	l.SetDirty(conn.ListId)
 	s := ""
@@ -311,19 +308,19 @@ func (l *LiveEditor) HandleEditGroup(action *EditGroupAction, conn *connection) 
 
 func (l *LiveEditor) HandleAddItem(args *AddItemAction, conn *connection) {
 	listState := l.GetCurrentListState(conn.ListId)
-    if listState == nil {
-        return
-    }
-    item := listState.AddItem(int64(args.GroupIndex), "New Item")
+	if listState == nil {
+		return
+	}
+	item := listState.AddItem(int64(args.GroupIndex), "New Item")
 
-    if item == nil {
-        return
-    }
+	if item == nil {
+		return
+	}
 	editList := listState.Ui
 	s := ""
 	buf := bytes.NewBufferString(s)
 	color := l.GetColaboratorOnline(conn.ListId, conn.UserId).Color
-    groupIdStr := strconv.FormatInt(int64(args.GroupIndex), 10)
+	groupIdStr := strconv.FormatInt(int64(args.GroupIndex), 10)
 	views.Templates.RenderItem(buf, *views.NewIndexedItem(item.GroupId, item.Id, item, color, "beforeend:#items-"+groupIdStr))
 	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *editList.List, IsDirty: true})
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
@@ -332,11 +329,11 @@ func (l *LiveEditor) HandleAddItem(args *AddItemAction, conn *connection) {
 }
 
 func (l *LiveEditor) HandleDeleteGroup(args *DeleteGroupArgs, conn *connection) {
-    listState := l.GetCurrentListState(conn.ListId)
-    if listState == nil {
-        return
-    }
-    listState.DeleteGroup(args.GroupIndex)
+	listState := l.GetCurrentListState(conn.ListId)
+	if listState == nil {
+		return
+	}
+	listState.DeleteGroup(args.GroupIndex)
 	s := ""
 	buf := bytes.NewBufferString(s)
 	g := *views.NewGroupIndex(args.GroupIndex, &list.Group{}, "delete")
@@ -349,18 +346,18 @@ func (l *LiveEditor) HandleDeleteGroup(args *DeleteGroupArgs, conn *connection) 
 }
 
 func (l *LiveEditor) HandleDeleteItem(args *DeleteItemArgs, conn *connection) {
-    listState := l.GetCurrentListState(conn.ListId)
-    if listState == nil {
-        return
-    }
-    listState.DeleteItem(args.GroupIndex, args.ItemIndex)
+	listState := l.GetCurrentListState(conn.ListId)
+	if listState == nil {
+		return
+	}
+	listState.DeleteItem(args.GroupIndex, args.ItemIndex)
 	editList := listState.Ui
 	s := ""
 	buf := bytes.NewBufferString(s)
 	color := l.GetColaboratorOnline(conn.ListId, conn.UserId).Color
 	i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, &list.Item{}, color, fmt.Sprintf("delete:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
 	views.Templates.RenderItem(buf, i)
-    views.Templates.RenderSaveList(buf, &views.ListArgs{List: *editList.List, IsDirty: true})
+	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *editList.List, IsDirty: true})
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
@@ -368,20 +365,27 @@ func (l *LiveEditor) HandleDeleteItem(args *DeleteItemArgs, conn *connection) {
 
 func (l *LiveEditor) HandleEditItem(args *EditItemArgs, conn *connection) {
 	listState := l.GetCurrentListState(conn.ListId)
-    if listState == nil {
-        return
-    }
-    item := listState.EditItem(args)
-    if item == nil {
-        return
-    }
-    println("Item edited: ", item)
+	if listState == nil {
+		return
+	}
+	oldItem := listState.FindItemById(args.GroupIndex, args.ItemIndex)
+	if oldItem == nil {
+		return
+	}
+	item := listState.EditItem(args)
+	if item == nil {
+		return
+	}
 	s := ""
 	buf := bytes.NewBufferString(s)
 	color := l.GetColaboratorOnline(conn.ListId, conn.UserId).Color
 	i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, item, color, fmt.Sprintf("outerHTML:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
-	views.Templates.RenderItem(buf, i)
-    views.Templates.RenderSaveList(buf, &views.ListArgs{List: *listState.Ui.List, IsDirty: true})
+	if args.Field == "description" {
+		views.Templates.RenderItemDescription(buf, i)
+	} else if args.Field != "quantity" {
+		views.Templates.RenderItemQuantity(buf, i)
+	}
+	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *listState.Ui.List, IsDirty: true})
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
 	}
@@ -420,7 +424,6 @@ func assertNotNil(err error) {
 		panic(err)
 	}
 }
-
 
 // type AddGroupAction struct {
 // 	Action

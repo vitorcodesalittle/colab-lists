@@ -117,14 +117,18 @@
                                         <div hx-trigger="blur from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input, blur from:#qty-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                             hx-vals='{"actionType": 2, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }} }'
                                             id="desc-{{.GroupIndex}}-{{.ItemIndex}}-div" ws-send class="w-full flex-row flex">
+                                            {{ block "itemdescription" . }}
                                             <input class="flex flex-grow w-4/5" ws-send hx-trigger="change changed throttle:400ms"
-                                                hx-vals='{"actionType": 9, "quantity": "{{ .Item.Quantity }}"}'
+                                                hx-vals='{"actionType": 9, "field": "description", "quantity": "{{ .Item.Quantity }}"}'
                                                 name="description" id="desc-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                                 value="{{ .Item.Description }}" />
+                                            {{ end }}
+                                            {{ block "itemquantity" . }}
                                             <input class="flex-shrink flex w-1/5" ws-send hx-trigger="change changed throttle:400ms"
-                                                hx-vals='{"actionType": 9, "description": "{{ .Item.Description }}"}'
+                                                hx-vals='{"actionType": 9, "field": "quantity", "description": "{{ .Item.Description }}"}'
                                                 value="{{ .Item.Quantity }}" name="quantity" type="number"
                                                 id="qty-{{.GroupIndex}}-{{.ItemIndex}}-input" />
+                                            {{ end }}
                                         </div>
                                     </div>
                                 </div>

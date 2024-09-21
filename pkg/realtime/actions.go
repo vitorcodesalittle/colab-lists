@@ -1,6 +1,5 @@
 package realtime
 
-
 // Must match actionType in html
 const (
 	ACTION_NOOP         = iota
@@ -14,6 +13,7 @@ const (
 	ACTION_DELETE_ITEM  = iota
 	ACTION_EDIT_ITEM    = iota
 )
+
 type Action struct {
 	Type *int `json:"actionType"`
 	Msg  interface{}
@@ -32,11 +32,11 @@ type UnfocusItemAction struct {
 type UpdateColorAction struct {
 	Color      string `json:"color"`
 	UserId     int64  `json:"userId"`
-	GroupIndex int64    `json:"groupIndex"`
+	GroupIndex int64  `json:"groupIndex"`
 }
 
 type EditGroupAction struct {
-	GroupIndex int64    `json:"groupIndex"`
+	GroupIndex int64  `json:"groupIndex"`
 	Text       string `json:"text"`
 }
 
@@ -58,8 +58,9 @@ type DeleteGroupArgs struct {
 }
 
 type EditItemArgs struct {
-	GroupIndex  int64    `json:"groupIndex"`
-	ItemIndex   int64    `json:"itemIndex"`
+	GroupIndex  int64  `json:"groupIndex"`
+	ItemIndex   int64  `json:"itemIndex"`
 	Description string `json:"description"`
 	Quantity    string `json:"quantity"`
+	Field       string `json:"field"`
 }
