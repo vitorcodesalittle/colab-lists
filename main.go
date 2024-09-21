@@ -35,10 +35,10 @@ var (
 )
 
 func getIndexHandler(w http.ResponseWriter, r *http.Request) {
-	views.Templates.RenderIndex(w, &views.IndexArgs{
-		Title:       "Lists app!!",
-		Description: "Awesome lists app",
-	})
+    if redirectIfNotLoggedIn(w, r) {
+        return
+    }
+    http.Redirect(w, r, "/lists", http.StatusSeeOther)
 }
 
 func getLoginHandler(w http.ResponseWriter, r *http.Request) {
