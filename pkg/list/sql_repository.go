@@ -205,6 +205,7 @@ func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
   INNER JOIN luser lu ON lc.luserId = lu.luserId
   WHERE lu.luserId = ?
   OR l.creatorLuserId = ?
+  ORDER BY l.updatedAt DESC
   `, userId, userId)
 	if err != nil {
 		panic(err)
