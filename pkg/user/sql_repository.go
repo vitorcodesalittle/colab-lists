@@ -18,12 +18,13 @@ func (s *SqlUsersRepository) CreateUser(username string, password string) (User,
 	}
 	defer conn.Close()
 
-	err = conn.QueryRow(`SELECT * FROM luser WHERE username = ?`, username).Err()
-	if err == nil {
-		return User{}, fmt.Errorf("Username \"%s\" already registered. Please choose another one.", username)
-	} else if err != sql.ErrNoRows {
+    userId := int64(0)
+    err = conn.QueryRow(`SELECT luserId FROM luser WHERE username = ?`, username).Scan(&userId)
+	if err != nil && err != sql.ErrNoRows {
 		return User{}, err
-	}
+	} else if err == nil {
+        return User{}, fmt.Errorf("User with username %s already exists", username)
+    }
 
 	passwordHash, err := hashPassword([]byte(password))
 	if err != nil {
@@ -33,7 +34,7 @@ func (s *SqlUsersRepository) CreateUser(username string, password string) (User,
 	if err != nil {
 		return User{}, err
 	}
-	userId, err := rs.LastInsertId()
+	userId, err = rs.LastInsertId()
 	if err != nil {
 		return User{}, err
 	}
