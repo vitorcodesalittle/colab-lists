@@ -311,9 +311,10 @@ func main() {
 	http.HandleFunc("PUT /lists/{listId}/save", putListSaveHandler)
 	http.HandleFunc("PUT /lists/{listId}", putListHandler)
 
-	log.Printf("Server started at http://localhost:8080\n")
 
 	listenAddress := flag.String("listen", ":8080", "Listen address.")
+    flag.Parse()
+	log.Printf("Server started at %s\n", *listenAddress)
 	httpServer := http.Server{
 		Addr:              *listenAddress,
 		ReadHeaderTimeout: 3 * time.Second,
