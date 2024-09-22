@@ -198,11 +198,12 @@ func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
 	if err != nil {
 		panic(err)
 	}
+    defer sql.Close()
 	rs, err := sql.Query(`
   SELECT l.*
   FROM list l
   LEFT JOIN list_colaborators lc ON l.listId = lc.listId
-  INNER JOIN luser lu ON lc.luserId = lu.luserId
+  LEFT JOIN luser lu ON lc.luserId = lu.luserId
   WHERE lu.luserId = ?
   OR l.creatorLuserId = ?
   ORDER BY l.updatedAt DESC
