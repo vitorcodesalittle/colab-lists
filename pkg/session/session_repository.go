@@ -42,6 +42,9 @@ func RestoreSessionsFromDb() error {
 	}
 
 	rows, err := sql.Query("SELECT session.*, lu.username FROM luser_session session LEFT JOIN luser lu ON session.luserId = lu.luserId")
+    if err != nil {
+        return err
+    }
     defer rows.Close()
 	for rows.Next() {
         user := user.User{}
