@@ -337,6 +337,6 @@ func main() {
 	err = session.SaveSessionsInDb()
 	if err != nil {
 		log.Println("Failed to save current sessions map to DB")
-		log.Println(err.Error())
+        log.Fatal(err)
 	}
 }
