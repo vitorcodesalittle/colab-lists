@@ -201,7 +201,7 @@ func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
 	rs, err := sql.Query(`
   SELECT l.*
   FROM list l
-  INNER JOIN list_colaborators lc ON l.listId = lc.listId
+  LEFT JOIN list_colaborators lc ON l.listId = lc.listId
   INNER JOIN luser lu ON lc.luserId = lu.luserId
   WHERE lu.luserId = ?
   OR l.creatorLuserId = ?
