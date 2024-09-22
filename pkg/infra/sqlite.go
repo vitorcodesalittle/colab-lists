@@ -2,12 +2,16 @@ package infra
 
 import (
 	sql "database/sql"
+	"os"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 func CreateConnection() (*sql.DB, error) {
-	return sql.Open("sqlite3", "colablist.db")
+    if os.Getenv("DATABASE_URL") == "" {
+        panic("DATABASE_URL environment variable is not set")
+    }
+	return sql.Open("sqlite3", os.Getenv("DATABASE_URL"))
 }
 
 func UseConnection[T *any](do func(*sql.DB) (T, error)) (T, error) {
