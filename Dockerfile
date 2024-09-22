@@ -10,6 +10,7 @@ RUN CGO_ENABLED=1 go build -o /app/main .
 
 FROM alpine:3.19
 ENV 'DATABASE_URL' 'sqlite3:///app/colablist.db'
+ENV 'LISTEN' ':8080'
 WORKDIR /app
 RUN apk update && apk upgrade
 RUN apk add --no-cache sqlite
@@ -18,7 +19,7 @@ COPY --from=builder /app/templates /app/templates
 COPY --from=builder /app/migrations /app/migrations
 COPY --from=builder /app/static /app/static
 RUN sqlite3 -init /app/migrations/0001-schema.sql /app/colablist.db .quit
-CMD ["/app/main"]
+CMD ["sh" ,"-c" , "/app/main -listen $LISTEN"]
 
 
 
