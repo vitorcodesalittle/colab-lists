@@ -38,7 +38,6 @@ func GetSessionId() string {
 			return sessionId
 		}
 	}
-	return ""
 }
 
 func GetUserFromSession(r *http.Request) (*user.User, error) {

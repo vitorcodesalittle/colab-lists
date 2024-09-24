@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -36,14 +38,22 @@ var (
 )
 
 func getIndexHandler(w http.ResponseWriter, r *http.Request) {
-	if redirectIfNotLoggedIn(w, r) {
-		return
+	dir := http.Dir("./static")
+	handler := http.FileServer(dir)
+	accept := r.Header.Get("Accept")
+	if strings.HasPrefix(accept, "text/html") {
+		if redirectIfNotLoggedIn(w, r) {
+			return
+		}
+		http.Redirect(w, r, "/lists", http.StatusSeeOther)
+	} else {
+		log.Println("Handling as static folder server")
+		handler.ServeHTTP(w, r)
 	}
-	http.Redirect(w, r, "/lists", http.StatusSeeOther)
 }
 
 func getLoginHandler(w http.ResponseWriter, r *http.Request) {
-	views.Templates.RenderLogin(w)
+	views.Templates.RenderLogin(w, &views.SignupArgs{FormError: r.URL.Query().Get("formError")})
 }
 
 type Session struct {
@@ -54,8 +64,15 @@ type Session struct {
 
 func postLoginHandler(w http.ResponseWriter, r *http.Request) {
 	user, err := usersRepository.GetByUsername(r.FormValue("username"))
+	if err == sql.ErrNoRows {
+		http.Redirect(w, r, "/login?formError="+"No user named "+r.FormValue("username"), http.StatusSeeOther)
+		return
+	}
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("Error when logging in %v", err)
+		http.Redirect(w, r, "/login?formError="+err.Error(), http.StatusSeeOther)
+		return
+
 	}
 	if usersRepository.ComparePassword([]byte(r.FormValue("password")), []byte(user.PasswordHash)) {
 		sessionId := session.GetSessionId()
@@ -67,7 +84,7 @@ func postLoginHandler(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Set-Cookie", "SESSION="+sessionId)
 		http.Redirect(w, r, "/lists", http.StatusSeeOther)
 	} else {
-		http.Error(w, "", http.StatusUnauthorized)
+		http.Redirect(w, r, "/login?formError="+"Unauthorized", http.StatusSeeOther)
 	}
 }
 
@@ -84,7 +101,7 @@ func getLogoutHandler(w http.ResponseWriter, r *http.Request) {
 func postSignupHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"), r.FormValue("email"))
 	if err != nil {
-		http.Redirect(w, r, "/signup?error="+err.Error(), http.StatusSeeOther)
+		http.Redirect(w, r, "/signup?formError="+err.Error(), http.StatusSeeOther)
 	} else {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 	}
@@ -221,9 +238,9 @@ func putListHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "listId path value should be integer", http.StatusBadRequest)
 	}
 	list, err := listsRepository.Get(listId)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-    }
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	formBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -275,14 +292,14 @@ func getListEditorHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	listId, err := strconv.Atoi(r.URL.Query().Get("listId"))
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-    }
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 	liveEditor.SetupList(int64(listId), user, conn)
 }
 
 func getSignupHandler(w http.ResponseWriter, r *http.Request) {
-	views.Templates.RenderSignup(w, &views.SignupArgs{Error: r.URL.Query().Get("error")})
+	views.Templates.RenderSignup(w, &views.SignupArgs{FormError: r.URL.Query().Get("formError")})
 }
 
 func main() {
@@ -304,8 +321,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dir := http.Dir(".")
-	http.Handle("GET /static/", http.FileServer(dir))
 	http.HandleFunc("GET /login", getLoginHandler)
 	http.HandleFunc("POST /login", postLoginHandler)
 	http.HandleFunc("GET /logout", getLogoutHandler)

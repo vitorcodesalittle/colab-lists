@@ -33,19 +33,19 @@ func NewMigrationResultError(err error, filename string) MigrationResult {
 }
 
 func IsFirstMigration() bool {
-    info, err := os.Stat(infra.GetDatabaseUrl())
-    if os.IsNotExist(err) {
-        return true
-    }
-    return info.Size() == 0
+	info, err := os.Stat(infra.GetDatabaseUrl())
+	if os.IsNotExist(err) {
+		return true
+	}
+	return info.Size() == 0
 }
 func MigrateDb() MigrationResult {
-    var appliedMigrations []string
-    if IsFirstMigration() {
-	    appliedMigrations = make([]string, 0)
-    } else {
-        appliedMigrations = listAppliedMigrations()
-    }
+	var appliedMigrations []string
+	if IsFirstMigration() {
+		appliedMigrations = make([]string, 0)
+	} else {
+		appliedMigrations = listAppliedMigrations()
+	}
 	migrations := listMigrations()
 	slices.Sort(appliedMigrations)
 	log.Printf("Applied migrations: %v", appliedMigrations)

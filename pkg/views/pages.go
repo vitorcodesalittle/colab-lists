@@ -21,7 +21,7 @@ type ListArgs struct {
 }
 
 func (t *templates) RenderList(w io.Writer, args *ListArgs) {
-	t.renderBase(w, &baseArgs{ExtraHead: t.ExecuteTemplateString(t.List, "extrahead", args), Body: t.ExecuteTemplateString(t.List, "body", args)})
+	t.renderBase(w, &baseArgs{ExtraHead: t.ExecuteTemplateString(t.List, "extrahead", args), Body: t.ExecuteTemplateString(t.List, "body", args), Title: args.List.Title, Description: GetDescription("")})
 }
 
 type ListsArgs struct {
@@ -29,24 +29,26 @@ type ListsArgs struct {
 }
 
 func (t *templates) RenderLists(w io.Writer, args *ListsArgs) {
-	t.renderBase(w, &baseArgs{Body: t.ExecuteTemplateString(t.Lists, "body", args)})
+	t.renderBase(w, &baseArgs{Body: t.ExecuteTemplateString(t.Lists, "body", args), Title: "your marketlists", Description: GetDescription("")})
 }
 
-func (t *templates) RenderLogin(w io.Writer) {
-	t.renderBase(w, &baseArgs{Body: t.ExecuteTemplateString(t.Auth, "bodylogin", nil)})
+func (t *templates) RenderLogin(w io.Writer, args *SignupArgs) {
+	t.renderBase(w, &baseArgs{Body: t.ExecuteTemplateString(t.Auth, "bodylogin", args), Title: "Login", Description: GetDescription("")})
 }
 
 type SignupArgs struct {
-	Error string
+	FormError string
 }
 
 func (t *templates) RenderSignup(w io.Writer, args *SignupArgs) {
-	t.renderBase(w, &baseArgs{Body: t.ExecuteTemplateString(t.Auth, "bodysignup", args)})
+	t.renderBase(w, &baseArgs{Body: t.ExecuteTemplateString(t.Auth, "bodysignup", args), Title: "Sign up", Description: GetDescription("Sign up here. Create an account. Fully manage your groceries lists with your family.")})
 }
 
 type baseArgs struct {
-	ExtraHead string
-	Body      string
+	ExtraHead   string
+	Body        string
+	Title       string
+	Description string
 }
 
 func (t *templates) renderBase(w io.Writer, args *baseArgs) {
@@ -63,4 +65,8 @@ func (t *templates) ExecuteTemplateString(template *textTemplate.Template, templ
 		panic(err)
 	}
 	return b.String()
+}
+
+func GetDescription(msg string) string {
+	return `marketlist is an application to manage lists colaboratively.` + msg
 }
