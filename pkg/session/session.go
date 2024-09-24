@@ -10,7 +10,6 @@ import (
 	"vilmasoftware.com/colablists/pkg/user"
 )
 
-
 var SessionsMap map[string]*Session = make(map[string]*Session)
 
 type Session struct {
@@ -53,4 +52,3 @@ func GetUserFromSession(r *http.Request) (*user.User, error) {
 	}
 	return session.User, nil
 }
-

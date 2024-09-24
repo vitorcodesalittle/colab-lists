@@ -15,7 +15,7 @@ import (
 
 type connection struct {
 	ListId int64
-    User *user.User
+	User   *user.User
 	Conn   *websocket.Conn
 }
 

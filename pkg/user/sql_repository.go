@@ -44,8 +44,8 @@ func (s *SqlUsersRepository) CreateUser(username, password, email string) (User,
 }
 
 func getGravatarUrl(email string) string {
-    emailSha256 := sha256.New().Sum([]byte(email))
-    return fmt.Sprintf("https://gravatar.com/avatar/%x", emailSha256)
+	emailSha256 := sha256.New().Sum([]byte(email))
+	return fmt.Sprintf("https://gravatar.com/avatar/%x", emailSha256)
 }
 
 func (s *SqlUsersRepository) GetWithConnection(conn *sql.DB, id int64) (User, error) {

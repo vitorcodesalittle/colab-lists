@@ -7,15 +7,13 @@ import (
 	"vilmasoftware.com/colablists/pkg/config"
 )
 
-
 func CreateConnection() (*sql.DB, error) {
 	return sql.Open("sqlite3", config.GetConfig().DatabaseUrl)
 }
 
 func GetDatabaseUrl() string {
-    return config.GetConfig().DatabaseUrl
+	return config.GetConfig().DatabaseUrl
 }
-
 
 func UseConnection[T *any](do func(*sql.DB) (T, error)) (T, error) {
 	db, err := CreateConnection()

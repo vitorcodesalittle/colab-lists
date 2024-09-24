@@ -37,8 +37,9 @@ func (t *templates) RenderLogin(w io.Writer) {
 }
 
 type SignupArgs struct {
-    Error string
+	Error string
 }
+
 func (t *templates) RenderSignup(w io.Writer, args *SignupArgs) {
 	t.renderBase(w, &baseArgs{Body: t.ExecuteTemplateString(t.Auth, "bodysignup", args)})
 }
@@ -57,9 +58,9 @@ func (t *templates) renderBase(w io.Writer, args *baseArgs) {
 
 func (t *templates) ExecuteTemplateString(template *textTemplate.Template, templateName string, args interface{}) string {
 	b := bytes.NewBufferString("")
-    err := template.ExecuteTemplate(b, templateName, args)
-    if err != nil {
-        panic(err)
-    }
+	err := template.ExecuteTemplate(b, templateName, args)
+	if err != nil {
+		panic(err)
+	}
 	return b.String()
 }

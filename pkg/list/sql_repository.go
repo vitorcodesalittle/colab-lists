@@ -54,9 +54,9 @@ func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
 	}
 
 	groupId, err := result.LastInsertId()
-    if err != nil {
-        return List{}, err
-    }
+	if err != nil {
+		return List{}, err
+	}
 	_, err = tx.Exec("INSERT INTO list_group_items (groupId, description, quantity, order_) VALUES (?, ?, ?, ?)", groupId, "default", 1, 1)
 	if err != nil {
 		return List{}, err
@@ -141,16 +141,16 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 		}
 		colaborators = append(colaborators, u)
 	}
-    resultlis.Colaborators = colaborators
+	resultlis.Colaborators = colaborators
 
 	stmt, err = tx.Prepare(`
     SELECT *
     FROM list_groups
     WHERE listId = ?
     `)
-    if err != nil {
-        return List{}, err
-    }
+	if err != nil {
+		return List{}, err
+	}
 	rs2, err := stmt.Query(id)
 	if err != nil {
 		println("error at group query")
@@ -202,7 +202,7 @@ func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
 	if err != nil {
 		panic(err)
 	}
-    defer db.Close()
+	defer db.Close()
 	rs, err := db.Query(`
   SELECT l.*
   FROM list l
@@ -212,9 +212,9 @@ func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
   OR l.creatorLuserId = ?
   ORDER BY l.updatedAt DESC
   `, userId, userId)
-    if err == sql.ErrNoRows {
-        return make([]List, 0), nil
-    } else if err != nil {
+	if err == sql.ErrNoRows {
+		return make([]List, 0), nil
+	} else if err != nil {
 		panic(err)
 	}
 	defer rs.Close()
@@ -241,9 +241,9 @@ func (s *SqlListRepository) Update(list *List) (*List, error) {
 	defer sql.Close()
 
 	tx, err := sql.Begin()
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	defer tx.Rollback()
 
 	list.UpdatedAt = time.Now()

@@ -1,7 +1,6 @@
 package session
 
 import (
-
 	"vilmasoftware.com/colablists/pkg/infra"
 	"vilmasoftware.com/colablists/pkg/user"
 )
@@ -16,9 +15,9 @@ func SaveSessionsInDb() error {
 	if err != nil {
 		return err
 	}
-    defer tx.Rollback()
-    ///println("Deleting all sessions")
-    ///_, err = tx.Exec(`DELETE FROM luser_session`)
+	defer tx.Rollback()
+	///println("Deleting all sessions")
+	///_, err = tx.Exec(`DELETE FROM luser_session`)
 	///if err != nil {
 	///	return infra.ErrorRollback(err, tx)
 	///}
@@ -36,21 +35,21 @@ func SaveSessionsInDb() error {
 
 func RestoreSessionsFromDb() error {
 	sql, err := infra.CreateConnection()
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 	defer sql.Close()
 	if err != nil {
 		return err
 	}
 
 	rows, err := sql.Query("SELECT session.*, lu.username FROM luser_session session LEFT JOIN luser lu ON session.luserId = lu.luserId")
-    if err != nil {
-        return err
-    }
-    defer rows.Close()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
 	for rows.Next() {
-        user := user.User{}
+		user := user.User{}
 		session := &Session{User: &user}
 		err := rows.Scan(&session.SessionId, &session.User.Id, &session.LastUsed, &session.User.Username)
 		if err != nil {

@@ -17,5 +17,5 @@ type HtmxMessageI struct {
 }
 
 func (h *HtmxMessage) String() string {
-    return fmt.Sprintf("CurrentUrl: %v, Request: %v, Target: %v, Trigger: %v, TriggerName: %v, ActionType: %d\n", h.CurrentUrl, h.Request, h.Target, h.Trigger, h.TriggerName, h.ActionType)
+	return fmt.Sprintf("CurrentUrl: %v, Request: %v, Target: %v, Trigger: %v, TriggerName: %v, ActionType: %d\n", h.CurrentUrl, h.Request, h.Target, h.Trigger, h.TriggerName, h.ActionType)
 }

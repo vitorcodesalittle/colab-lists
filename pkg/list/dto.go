@@ -20,4 +20,3 @@ type ItemUpdateParams struct {
 	GroupName   string
 	Operation   int
 }
-
