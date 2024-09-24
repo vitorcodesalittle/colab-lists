@@ -36,15 +36,10 @@ var (
 )
 
 func getIndexHandler(w http.ResponseWriter, r *http.Request) {
-    log.Printf("Headers: %v\n", r.Header)
-    //if redirectIfNotLoggedIn(w, r) {
-    //    return
-    //}
-    // http.Redirect(w, r, "/lists", http.StatusSeeOther)
-    views.Templates.RenderIndex(w, &views.IndexArgs{
-        Title: "Lists!",
-        Description: "Website for lists",
-    })
+	if redirectIfNotLoggedIn(w, r) {
+		return
+	}
+	http.Redirect(w, r, "/lists", http.StatusSeeOther)
 }
 
 func getLoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +84,7 @@ func getLogoutHandler(w http.ResponseWriter, r *http.Request) {
 func postSignupHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
 	if err != nil {
-		http.Redirect(w, r, "/signup?error=" + err.Error(), http.StatusSeeOther)
+		http.Redirect(w, r, "/signup?error="+err.Error(), http.StatusSeeOther)
 	} else {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 	}
@@ -99,11 +94,11 @@ func getListsHandler(w http.ResponseWriter, r *http.Request) {
 	if redirectIfNotLoggedIn(w, r) {
 		return
 	}
-    user, err := session.GetUserFromSession(r)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusUnauthorized)
-        return
-    }
+	user, err := session.GetUserFromSession(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 	lists, err := listsRepository.GetAll(user.Id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -141,14 +136,14 @@ func getListDetailHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-    user, err := session.GetUserFromSession(r)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusUnauthorized)
-        return
-    }
+	user, err := session.GetUserFromSession(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 
 	listArgs := &views.ListArgs{
-		List:     *views.NewListUi(&list, user ),
+		List:     *views.NewListUi(&list, user),
 		Editing:  r.URL.Query().Has("edit"),
 		AllUsers: allUsers,
 		IsDirty:  false,
@@ -208,11 +203,11 @@ func putListSaveHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-    user, err := session.GetUserFromSession(r)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusUnauthorized)
-        return
-    }
+	user, err := session.GetUserFromSession(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 	// TODO: send changes to all users
 	views.Templates.RenderSaveList(w, &views.ListArgs{List: *views.NewListUi(list, user), IsDirty: false})
 	if err != nil {
@@ -239,20 +234,20 @@ func putListHandler(w http.ResponseWriter, r *http.Request) {
 	colaborators := urlParsed.Query()["colaborators"]
 	list.Title = urlParsed.Query().Get("title")
 	list.Description = urlParsed.Query().Get("description")
-    list.Colaborators = []user.User{}
-    for _, colaborator := range colaborators {
-        colaboratorId, err := strconv.Atoi(colaborator)
-        if err != nil {
-            http.Error(w, err.Error(), http.StatusBadRequest)
-        }
-        user, err := usersRepository.Get(int64(colaboratorId))
-        if err != nil {
-            http.Error(w, err.Error(), http.StatusInternalServerError)
-            return
-        }
-        list.Colaborators = append(list.Colaborators, user)
-    }
-    fmt.Printf("Salvando lista %v\n", list)
+	list.Colaborators = []user.User{}
+	for _, colaborator := range colaborators {
+		colaboratorId, err := strconv.Atoi(colaborator)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		user, err := usersRepository.Get(int64(colaboratorId))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		list.Colaborators = append(list.Colaborators, user)
+	}
+	fmt.Printf("Salvando lista %v\n", list)
 	listv, err := listsRepository.Update(&list)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -292,24 +287,24 @@ func collectUsers(lists []list.List) []user.User {
 }
 
 func getSignupHandler(w http.ResponseWriter, r *http.Request) {
-    views.Templates.RenderSignup(w, &views.SignupArgs{Error: r.URL.Query().Get("error")})
+	views.Templates.RenderSignup(w, &views.SignupArgs{Error: r.URL.Query().Get("error")})
 }
 
 func main() {
-    config := config.GetConfig()
+	config := config.GetConfig()
 
-    log.Println("Starting migrations")
-    result := migrate.MigrateDb()
+	log.Println("Starting migrations")
+	result := migrate.MigrateDb()
 
-    if result.Error != nil {
-        log.Println("Failed to migrate DB")
-        if result.MigrationError != "" {
-            log.Println("Migration error: ", result.MigrationError)
-        }
-        log.Fatal(result.Error)
-    }
-    log.Printf("Migrations done: %v\n", result.RanMigrations)
-    err := session.RestoreSessionsFromDb()
+	if result.Error != nil {
+		log.Println("Failed to migrate DB")
+		if result.MigrationError != "" {
+			log.Println("Migration error: ", result.MigrationError)
+		}
+		log.Fatal(result.Error)
+	}
+	log.Printf("Migrations done: %v\n", result.RanMigrations)
+	err := session.RestoreSessionsFromDb()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -330,10 +325,10 @@ func main() {
 	http.HandleFunc("PUT /lists/{listId}/save", putListSaveHandler)
 	http.HandleFunc("PUT /lists/{listId}", putListHandler)
 
-    log.Printf("Server config = %v\n", config)
+	log.Printf("Server config = %v\n", config)
 	log.Printf("Server started at %s\n", config.Listen)
 	httpServer := http.Server{
-		Addr:             config.Listen, 
+		Addr:              config.Listen,
 		ReadHeaderTimeout: 3 * time.Second,
 		ReadTimeout:       5 * time.Second,
 		IdleTimeout:       10 * time.Second,
@@ -348,13 +343,19 @@ func main() {
 		}
 	}()
 
-	if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
-		log.Fatal(err)
+	if config.UseTls {
+		if err := httpServer.ListenAndServeTLS(config.Certificate, config.PrivateKey); err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	} else {
+		if err := httpServer.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
 	}
 
 	err = session.SaveSessionsInDb()
 	if err != nil {
 		log.Println("Failed to save current sessions map to DB")
-        log.Fatal(err)
+		log.Fatal(err)
 	}
 }
