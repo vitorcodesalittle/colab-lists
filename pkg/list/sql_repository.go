@@ -82,7 +82,7 @@ func scanList(row Scanner) (List, error) {
 	l := &List{
 		Creator: user.User{},
 	}
-	err := row.Scan(&l.Id, &l.Title, &l.Description, &l.Creator.Id, &l.UpdatedAt)
+	err := row.Scan(&l.Id, &l.Title, &l.Description, &l.Creator.Id, &l.UpdatedAt, &l.HouseId)
 	if err != nil {
 		return List{}, err
 	}

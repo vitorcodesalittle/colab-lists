@@ -1,6 +1,7 @@
 package user
 
 import (
+	"crypto/sha256"
 	"database/sql"
 	"fmt"
 
@@ -11,26 +12,26 @@ import (
 type SqlUsersRepository struct{}
 
 // CreateUser implements UsersRepository.
-func (s *SqlUsersRepository) CreateUser(username string, password string) (User, error) {
+func (s *SqlUsersRepository) CreateUser(username, password, email string) (User, error) {
 	conn, err := infra.CreateConnection()
 	if err != nil {
 		return User{}, err
 	}
 	defer conn.Close()
 
-    userId := int64(0)
-    err = conn.QueryRow(`SELECT luserId FROM luser WHERE username = ?`, username).Scan(&userId)
+	userId := int64(0)
+	err = conn.QueryRow(`SELECT luserId FROM luser WHERE username = ?`, username).Scan(&userId)
 	if err != nil && err != sql.ErrNoRows {
 		return User{}, err
 	} else if err == nil {
-        return User{}, fmt.Errorf("User with username %s already exists", username)
-    }
+		return User{}, fmt.Errorf("User with username %s already exists", username)
+	}
 
 	passwordHash, err := hashPassword([]byte(password))
 	if err != nil {
 		return User{}, err
 	}
-	rs, err := conn.Exec(`INSERT INTO luser (username, passwordHash, passwordSalt) VALUES (?, ?, ?)`, username, passwordHash, "")
+	rs, err := conn.Exec(`INSERT INTO luser (username, passwordHash, passwordSalt, email, avatarUrl) VALUES (?, ?, ?,  ?, ?)`, username, passwordHash, "", email, getGravatarUrl(email))
 	if err != nil {
 		return User{}, err
 	}
@@ -42,11 +43,16 @@ func (s *SqlUsersRepository) CreateUser(username string, password string) (User,
 	return user, err
 }
 
+func getGravatarUrl(email string) string {
+    emailSha256 := sha256.New().Sum([]byte(email))
+    return fmt.Sprintf("https://gravatar.com/avatar/%x", emailSha256)
+}
+
 func (s *SqlUsersRepository) GetWithConnection(conn *sql.DB, id int64) (User, error) {
 	stmt, err := conn.Prepare(`SELECT * FROM luser WHERE luserId = ?`)
-    if err != nil {
-        return User{}, err
-    }
+	if err != nil {
+		return User{}, err
+	}
 	defer stmt.Close()
 	if err != nil {
 		panic(err)
@@ -65,9 +71,9 @@ func (s *SqlUsersRepository) Get(id int64) (User, error) {
 		return User{}, err
 	}
 	stmt, err := conn.Prepare(`SELECT * FROM luser WHERE luserId = ?`)
-    if err != nil {
-        return User{}, err
-    }
+	if err != nil {
+		return User{}, err
+	}
 	defer stmt.Close()
 	if err != nil {
 		panic(err)
@@ -89,9 +95,9 @@ type Scanner interface {
 // GetAll implements UsersRepository.
 func (s *SqlUsersRepository) GetAll() ([]User, error) {
 	conn, err := infra.CreateConnection()
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	defer conn.Close()
 	if err != nil {
 		return nil, err
@@ -115,17 +121,17 @@ func (s *SqlUsersRepository) GetAll() ([]User, error) {
 // GetByUsername implements UsersRepository.
 func (s *SqlUsersRepository) GetByUsername(username string) (*User, error) {
 	conn, err := infra.CreateConnection()
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	defer conn.Close()
 	if err != nil {
 		return nil, err
 	}
 	stmt, err := conn.Prepare(`SELECT * FROM luser WHERE username = ?`)
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 	defer stmt.Close()
 	if err != nil {
 		return nil, err

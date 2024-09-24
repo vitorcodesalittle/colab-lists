@@ -20,8 +20,8 @@ func ParseConfig() *Config {
     flag.StringVar(&config.DatabaseUrl, "database-url", "./data/colablist.db", "Database URL")
     flag.StringVar(&config.Listen, "listen", ":8080", "Listen")
     flag.BoolVar(&config.UseTls, "tls", false, "Listen")
-    flag.StringVar(&config.PrivateKey, "private-key", "./data/live/lists.vilmasoftware.com.br/privkey.pem", "Path to file with private key")
-    flag.StringVar(&config.Certificate, "certificate", "./data/live/lists.vilmasoftware.com.br/fullchain.pem", "Path to file with certificate")
+    flag.StringVar(&config.PrivateKey, "private-key", "", "Path to file with private key")
+    flag.StringVar(&config.Certificate, "certificate", "", "Path to file with certificate")
     flag.Parse()
     if config.DatabaseUrl == "" {
         panic("Database URL is required")

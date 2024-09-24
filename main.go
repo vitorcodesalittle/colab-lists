@@ -82,7 +82,7 @@ func getLogoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postSignupHandler(w http.ResponseWriter, r *http.Request) {
-	_, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"))
+	_, err := usersRepository.CreateUser(r.FormValue("username"), r.FormValue("password"), r.FormValue("email"))
 	if err != nil {
 		http.Redirect(w, r, "/signup?error="+err.Error(), http.StatusSeeOther)
 	} else {
@@ -250,7 +250,6 @@ func putListHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		list.Colaborators = append(list.Colaborators, user)
 	}
-	fmt.Printf("Salvando lista %v\n", list)
 	listv, err := listsRepository.Update(&list)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

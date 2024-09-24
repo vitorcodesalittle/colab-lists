@@ -168,7 +168,6 @@ func (l *LiveEditor) HandleWebsocketConn(conn *connection) {
 }
 
 func (l *LiveEditor) SetupList(listId int64, user *user.User, conn *websocket.Conn) {
-	defer l.Info()
 	listUi, ok := l.listsById[listId]
 	conn2 := &connection{ListId: listId, User: user, Conn: conn}
 	if !ok {

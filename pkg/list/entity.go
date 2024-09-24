@@ -17,6 +17,7 @@ type List struct {
 	Groups       []*Group
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	HouseId      *int64
 }
 
 type Group struct {
