@@ -2,20 +2,18 @@ package infra
 
 import (
 	sql "database/sql"
-	"os"
 
 	_ "github.com/mattn/go-sqlite3"
+	"vilmasoftware.com/colablists/pkg/config"
 )
 
+
 func CreateConnection() (*sql.DB, error) {
-	if os.Getenv("DATABASE_URL") == "" {
-		panic("DATABASE_URL environment variable is not set")
-	}
-	return sql.Open("sqlite3", os.Getenv("DATABASE_URL"))
+	return sql.Open("sqlite3", config.GetConfig().DatabaseUrl)
 }
 
 func GetDatabaseUrl() string {
-	return os.Getenv("DATABASE_URL")
+    return config.GetConfig().DatabaseUrl
 }
 
 

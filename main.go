@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	migrate "vilmasoftware.com/colablists/cmd"
+	"vilmasoftware.com/colablists/pkg/config"
 	"vilmasoftware.com/colablists/pkg/list"
 	"vilmasoftware.com/colablists/pkg/realtime"
 	"vilmasoftware.com/colablists/pkg/session"
@@ -296,6 +296,8 @@ func getSignupHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+    config := config.GetConfig()
+
     log.Println("Starting migrations")
     result := migrate.MigrateDb()
 
@@ -328,12 +330,10 @@ func main() {
 	http.HandleFunc("PUT /lists/{listId}/save", putListSaveHandler)
 	http.HandleFunc("PUT /lists/{listId}", putListHandler)
 
-
-	listenAddress := flag.String("listen", ":8080", "Listen address.")
-    flag.Parse()
-	log.Printf("Server started at %s\n", *listenAddress)
+    log.Printf("Server config = %v\n", config)
+	log.Printf("Server started at %s\n", config.Listen)
 	httpServer := http.Server{
-		Addr:              *listenAddress,
+		Addr:             config.Listen, 
 		ReadHeaderTimeout: 3 * time.Second,
 		ReadTimeout:       5 * time.Second,
 		IdleTimeout:       10 * time.Second,
