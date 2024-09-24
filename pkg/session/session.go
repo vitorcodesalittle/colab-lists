@@ -32,7 +32,7 @@ func GenerateRandomBytes(n int) []byte {
 }
 
 func GetSessionId() string {
-	for true {
+	for {
 		sessionIdBytes := base64.RawStdEncoding.EncodeToString(GenerateRandomBytes(128))
 		sessionId := string(sessionIdBytes)
 		if _, ok := SessionsMap[sessionId]; !ok {

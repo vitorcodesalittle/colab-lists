@@ -60,7 +60,7 @@ func MigrateDb() MigrationResult {
 		} else {
 			if appliedMigrationsIdx < len(appliedMigrations) {
 				return MigrationResult{
-					Error:          fmt.Errorf("Migration history does not match migration files. Missing %v", appliedMigrations[appliedMigrationsIdx]),
+					Error:          fmt.Errorf("migration history does not match migration files. Missing %v", appliedMigrations[appliedMigrationsIdx]),
 					MigrationError: appliedMigrations[appliedMigrationsIdx],
 				}
 			}
@@ -70,7 +70,7 @@ func MigrateDb() MigrationResult {
 	}
 	if len(appliedMigrations) != 0 && appliedMigrationsIdx < len(appliedMigrations) {
 		return MigrationResult{
-			Error:          fmt.Errorf("Folder %v is missing applied migration %v", migrationsFolder, appliedMigrations[appliedMigrationsIdx]),
+			Error:          fmt.Errorf("folder %v is missing applied migration %v", migrationsFolder, appliedMigrations[appliedMigrationsIdx]),
 			MigrationError: appliedMigrations[appliedMigrationsIdx],
 		}
 	}

@@ -11,10 +11,6 @@ import (
 
 type SqlListRepository struct{}
 
-type scannable interface {
-	Scan(dest ...interface{}) error
-}
-
 // Create implements ListsRepository.
 func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
 	sql, err := infra.CreateConnection()
@@ -57,6 +53,9 @@ func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
 	}
 
 	groupId, err := result.LastInsertId()
+    if err != nil {
+        return List{}, err
+    }
 	_, err = tx.Exec("INSERT INTO list_group_items (groupId, description, quantity, order_) VALUES (?, ?, ?, ?)", groupId, "default", 1, 1)
 	if err != nil {
 		return List{}, err
@@ -141,12 +140,16 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 		}
 		colaborators = append(colaborators, u)
 	}
+    resultlis.Colaborators = colaborators
 
 	stmt, err = tx.Prepare(`
     SELECT *
     FROM list_groups
     WHERE listId = ?
     `)
+    if err != nil {
+        return List{}, err
+    }
 	rs2, err := stmt.Query(id)
 	if err != nil {
 		println("error at group query")
@@ -235,6 +238,9 @@ func (s *SqlListRepository) Update(list *List) (*List, error) {
 	defer sql.Close()
 
 	tx, err := sql.Begin()
+    if err != nil {
+        return nil, err
+    }
 	defer tx.Rollback()
 
 	list.UpdatedAt = time.Now()

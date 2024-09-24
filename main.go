@@ -221,6 +221,9 @@ func putListHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "listId path value should be integer", http.StatusBadRequest)
 	}
 	list, err := listsRepository.Get(listId)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
 	formBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -273,17 +276,10 @@ func getListEditorHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	listId, err := strconv.Atoi(r.URL.Query().Get("listId"))
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+    }
 	liveEditor.SetupList(int64(listId), user, conn)
-}
-
-func collectUsers(lists []list.List) []user.User {
-	var users []user.User
-	for _, list := range lists {
-		for _, colaborator := range list.Colaborators {
-			users = append(users, colaborator)
-		}
-	}
-	return users
 }
 
 func getSignupHandler(w http.ResponseWriter, r *http.Request) {

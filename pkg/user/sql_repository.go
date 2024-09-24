@@ -44,6 +44,9 @@ func (s *SqlUsersRepository) CreateUser(username string, password string) (User,
 
 func (s *SqlUsersRepository) GetWithConnection(conn *sql.DB, id int64) (User, error) {
 	stmt, err := conn.Prepare(`SELECT * FROM luser WHERE luserId = ?`)
+    if err != nil {
+        return User{}, err
+    }
 	defer stmt.Close()
 	if err != nil {
 		panic(err)
@@ -62,6 +65,9 @@ func (s *SqlUsersRepository) Get(id int64) (User, error) {
 		return User{}, err
 	}
 	stmt, err := conn.Prepare(`SELECT * FROM luser WHERE luserId = ?`)
+    if err != nil {
+        return User{}, err
+    }
 	defer stmt.Close()
 	if err != nil {
 		panic(err)
@@ -83,6 +89,9 @@ type Scanner interface {
 // GetAll implements UsersRepository.
 func (s *SqlUsersRepository) GetAll() ([]User, error) {
 	conn, err := infra.CreateConnection()
+    if err != nil {
+        return nil, err
+    }
 	defer conn.Close()
 	if err != nil {
 		return nil, err
@@ -106,11 +115,17 @@ func (s *SqlUsersRepository) GetAll() ([]User, error) {
 // GetByUsername implements UsersRepository.
 func (s *SqlUsersRepository) GetByUsername(username string) (*User, error) {
 	conn, err := infra.CreateConnection()
+    if err != nil {
+        return nil, err
+    }
 	defer conn.Close()
 	if err != nil {
 		return nil, err
 	}
 	stmt, err := conn.Prepare(`SELECT * FROM luser WHERE username = ?`)
+    if err != nil {
+        return nil, err
+    }
 	defer stmt.Close()
 	if err != nil {
 		return nil, err

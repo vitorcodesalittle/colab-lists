@@ -36,6 +36,9 @@ func SaveSessionsInDb() error {
 
 func RestoreSessionsFromDb() error {
 	sql, err := infra.CreateConnection()
+    if err != nil {
+        return err
+    }
 	defer sql.Close()
 	if err != nil {
 		return err
