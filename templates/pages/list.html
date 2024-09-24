@@ -34,13 +34,17 @@
 {{ template "authnav" }}
 <div class="p-2">
     {{ if .Editing }}
-    <form hx-put="/lists/{{ .List.Id }}" hx-vals='{"colaborators": js(Array.from(document.querySelectorAll("select option")).map(opt => opt.value))}' class="flex-col space-y-1 flex">
+    <form hx-put="/lists/{{ .List.Id }}"
+        hx-vals='{"colaborators": js(Array.from(document.querySelectorAll("select option")).map(opt => opt.value))}'
+        class="flex-col space-y-1 flex">
         <input class="input-h3" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
         <input name="description" value="{{ .List.Description }}" placeholder="Describe your list" />
         <label>Colaborators {{ .AllUsers | len }}</label>
         <select multiple name="colaborators">
             {{ range .AllUsers }}
-            <option value="{{ .Id }}">{{ .Username }}</option>
+            <option value="{{ .Id }}">
+                {{ .Username }}
+            </option>
             {{ end }}
         </select>
         <button type="submit">Save</button>
@@ -62,13 +66,13 @@
                 <p>Colaborators {{ . | len }}:</p>
                 <div>
                     {{ range . }}
-                    <div>
+                    <div class="flex flex-row space-x-2 items-center">
+                        <img src="{{ .AvatarUrl }}" alt="{{ .Username }}" class="w-8 h-8 rounded-full" />
                         <span class="text-nowrap" style='color: {{ .Color }}'>{{ .Username }} {{ if .Online -}}
                             (online)
                             {{- end }}</span>
                         <input ws-send hx-vals='{"userId": {{ .Id }}, "actionType": 3 }' type="color" id="color-{{.Id}}"
                             name="color" value="{{ .Color }}" />
-                        <label for="head">Color</label>
                     </div>
                     {{ end }}
                 </div>
