@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	migrate "vilmasoftware.com/colablists/cmd"
 	"vilmasoftware.com/colablists/pkg/list"
 	"vilmasoftware.com/colablists/pkg/realtime"
 	"vilmasoftware.com/colablists/pkg/session"
@@ -35,10 +36,15 @@ var (
 )
 
 func getIndexHandler(w http.ResponseWriter, r *http.Request) {
-    if redirectIfNotLoggedIn(w, r) {
-        return
-    }
-    http.Redirect(w, r, "/lists", http.StatusSeeOther)
+    log.Printf("Headers: %v\n", r.Header)
+    //if redirectIfNotLoggedIn(w, r) {
+    //    return
+    //}
+    // http.Redirect(w, r, "/lists", http.StatusSeeOther)
+    views.Templates.RenderIndex(w, &views.IndexArgs{
+        Title: "Lists!",
+        Description: "Website for lists",
+    })
 }
 
 func getLoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -290,7 +296,18 @@ func getSignupHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	err := session.RestoreSessionsFromDb()
+    log.Println("Starting migrations")
+    result := migrate.MigrateDb()
+
+    if result.Error != nil {
+        log.Println("Failed to migrate DB")
+        if result.MigrationError != "" {
+            log.Println("Migration error: ", result.MigrationError)
+        }
+        log.Fatal(result.Error)
+    }
+    log.Printf("Migrations done: %v\n", result.RanMigrations)
+    err := session.RestoreSessionsFromDb()
 	if err != nil {
 		log.Fatal(err)
 	}

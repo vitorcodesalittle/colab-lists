@@ -46,3 +46,8 @@ CREATE TABLE luser_session (
     lastUsed TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     -- FOREIGN KEY (luserId) REFERENCES luser(luserId)
 );
+
+CREATE TABLE migrations (
+    filename TEXT PRIMARY KEY,
+    appliedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
