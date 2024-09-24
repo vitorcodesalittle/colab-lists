@@ -2,6 +2,7 @@ package list
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"vilmasoftware.com/colablists/pkg/user"
@@ -29,9 +30,9 @@ type Group struct {
 func (l *List) String() string {
 	return fmt.Sprintf(`List {
         Id: %d,
-        Title: %s,
-        Description: %s,
-        Creator: %s,
+        Title: %v,
+        Description: %v,
+        Creator: %v,
         Colaborators: %v,
         Groups: %v
     }`, l.Id, l.Title, l.Description, l.Creator, l.Colaborators, l.Groups)
@@ -46,5 +47,5 @@ type Item struct {
 }
 
 func (i *Item) String() string {
-	return "Item " + string(i.Id) + ": " + i.Description
+	return "Item " + strconv.FormatInt(i.Id, 10) + ": " + i.Description
 }

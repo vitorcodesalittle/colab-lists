@@ -20,7 +20,7 @@ type connection struct {
 }
 
 func (c *connection) String() string {
-	return fmt.Sprintf("Connection{ListId: %d, UserId: %d, Conn: %v}", c.ListId, c.User, c.Conn)
+	return fmt.Sprintf("Connection{ListId: %d, UserId: %v, Conn: %v}", c.ListId, c.User, c.Conn)
 }
 
 type LiveEditor struct {
