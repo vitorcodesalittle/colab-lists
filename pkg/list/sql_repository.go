@@ -14,12 +14,12 @@ type SqlListRepository struct{}
 
 // Create implements ListsRepository.
 func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
-	sql, err := infra.CreateConnection()
+	db, err := infra.CreateConnection()
 	if err != nil {
-		sql.Close()
+		db.Close()
 		return List{}, err
 	}
-	tx, err := sql.Begin()
+	tx, err := db.Begin()
 	if err != nil {
 		return List{}, err
 	}
@@ -66,7 +66,7 @@ func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
 		return List{}, err
 	}
 
-	sql.Close()
+	db.Close()
 	return s.Get(listId)
 }
 
@@ -180,7 +180,7 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 		defer rsg.Close()
 		for rsg.Next() {
 			i := Item{}
-			err := rsg.Scan(&i.Id, &i.GroupId, &i.Description, &i.Quantity, &i.Order)
+			err := rsg.Scan(&i.Id, &i.GroupId, &i.Description, &i.Quantity, &i.Order, &i.Checked)
 			if err != nil {
 				return List{}, err
 			}
@@ -285,9 +285,9 @@ func (s *SqlListRepository) Update(list *List) (*List, error) {
 		}
 		for itemindex, item := range group.Items {
 			_, err = tx.Exec(`
-                INSERT INTO list_group_items (groupId, description, quantity, order_)
-                VALUES (?, ?, ?, ?)
-            `, groupId, item.Description, item.Quantity, itemindex)
+                INSERT INTO list_group_items (groupId, description, quantity, order_, checked)
+                VALUES (?, ?, ?, ?, ?)
+            `, groupId, item.Description, item.Quantity, itemindex, item.Checked)
 			if err != nil {
 				return nil, err
 			}

@@ -45,6 +45,7 @@ type Item struct {
 	Description string
 	Quantity    int
 	Order       int64
+	Checked     int8
 }
 
 func (i *Item) String() string {
