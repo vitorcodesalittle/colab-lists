@@ -54,7 +54,7 @@
     <div class="flex-col space-y-1 flex" hx-ext="ws" ws-connect="/ws/list-editor?listId={{.List.Id}}">
         <div>
             <div class="flex flex-row justify-between items-center" hx-on:htmx:wsAfterMessage="console.log(event)">
-                <h3>{{ .List.Title }}</h3>
+                <h3 class="truncate max-w-2/3">{{ .List.Title }}</h3>
                 <a class="group/edit p-2 rounded-full bg-brand-600 w-8 h-8 flex items-center justify-center mr-14"
                     href="/lists/{{ .List.Id }}?edit">
                     <span class="group-hover/edit:text-2xl transition-all i-mdi-edit text-neutral-200 text-xl"></span>
@@ -91,11 +91,9 @@
                                     <span class="i-mdi-close text-brand-800 text-lg border m-auto"></span>
                                 </button>
                             </div>
-                            <label>
-                                <input class="font-semibold" value="{{ .Group.Name }}"
-                                    hx-trigger="change changed throttle:400ms" name="text"
-                                    hx-vals='{"actionType": 5, "groupIndex": {{ .GroupIndex }}}' ws-send />
-                            </label>
+                            <input class="font-semibold max-w-32" value="{{ .Group.Name }}"
+                                hx-trigger="change changed throttle:400ms" name="text"
+                                hx-vals='{"actionType": 5, "groupIndex": {{ .GroupIndex }}}' ws-send />
                         </div>
                         <div class="h-1 border border-t-brand-700 w-full my-2"></div>
                         <div id="items-{{.GroupIndex}}">
