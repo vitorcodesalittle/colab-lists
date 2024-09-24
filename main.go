@@ -47,7 +47,6 @@ func getIndexHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		http.Redirect(w, r, "/lists", http.StatusSeeOther)
 	} else {
-		log.Println("Handling as static folder server")
 		handler.ServeHTTP(w, r)
 	}
 }

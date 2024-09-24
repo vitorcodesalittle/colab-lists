@@ -32,7 +32,7 @@
 {{ define "body" }}
 
 {{ template "authnav" }}
-<div class="p-2">
+<div class="p-4">
     {{ if .Editing }}
     <form hx-put="/lists/{{ .List.Id }}"
         hx-vals='{"colaborators": js(Array.from(document.querySelectorAll("select option")).map(opt => opt.value))}'
