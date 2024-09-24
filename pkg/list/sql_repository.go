@@ -1,6 +1,7 @@
 package list
 
 import (
+	"database/sql"
 	"errors"
 	"log"
 	"time"
@@ -197,12 +198,12 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 
 // GetAll implements ListsRepository.
 func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
-	sql, err := infra.CreateConnection()
+	db, err := infra.CreateConnection()
 	if err != nil {
 		panic(err)
 	}
-    defer sql.Close()
-	rs, err := sql.Query(`
+    defer db.Close()
+	rs, err := db.Query(`
   SELECT l.*
   FROM list l
   LEFT JOIN list_colaborators lc ON l.listId = lc.listId
@@ -211,7 +212,9 @@ func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
   OR l.creatorLuserId = ?
   ORDER BY l.updatedAt DESC
   `, userId, userId)
-	if err != nil {
+    if err == sql.ErrNoRows {
+        return make([]List, 0), nil
+    } else if err != nil {
 		panic(err)
 	}
 	defer rs.Close()
