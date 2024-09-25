@@ -41,23 +41,23 @@ func (h *HouseRepository) Save(house *Community) (*Community, error) {
 	}
 
 	for _, member := range house.Members {
-		result, err = tx.Exec(`INSERT INTO community_members (communityId, memberId)
+		_, err = tx.Exec(`INSERT INTO community_members (communityId, memberId)
         VALUES (?, ?)`, house.CommunityId, member.Id)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-    err = tx.Commit()
+	err = tx.Commit()
 
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    return h.Get(house.CommunityId)
+	return h.Get(house.CommunityId)
 }
 
 func (h *HouseRepository) FindMyHouses(userId int64) ([]*Community, error) {
-    result := make([]*Community, 0)
+	result := make([]*Community, 0)
 	return result, nil
 }

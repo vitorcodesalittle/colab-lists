@@ -73,19 +73,20 @@ func GetDescription(msg string) string {
 }
 
 type CommunitiesQuery struct {
-    SelectedId int64
-    New bool
-    EditingId int64
+	SelectedId int64
+	New        bool
+	EditingId  int64
 }
 type CommunitiesArgs struct {
-    Query CommunitiesQuery
-    Communities []*community.Community
-    SelectedCommunity *community.Community
+	Query             CommunitiesQuery
+	Communities       []*community.Community
+	SelectedCommunity *community.Community
 }
+
 func (t *templates) RenderCommunities(w io.Writer, args *CommunitiesArgs) {
-    t.renderBase(w, &baseArgs{
-        Title: "Communities",
-        Description: GetDescription("Communities"),
-        Body: t.ExecuteTemplateString(t.Communities, "communitiesbody", args),
-    })
+	t.renderBase(w, &baseArgs{
+		Title:       "Communities",
+		Description: GetDescription("Communities"),
+		Body:        t.ExecuteTemplateString(t.Communities, "communitiesbody", args),
+	})
 }

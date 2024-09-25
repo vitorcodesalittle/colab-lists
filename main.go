@@ -391,32 +391,32 @@ func getHotReloadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	allconns = append(allconns, conn)
-    go handleHotReload(conn)
+	go handleHotReload(conn)
 }
 
 type HotReloadMessage struct {
-    ServerRunId string `json:"serverRunId"`
+	ServerRunId string `json:"serverRunId"`
 }
 
 var ServerRunID string
 
 func handleHotReload(conn *websocket.Conn) {
-    defer conn.Close()
-    for {
-	hotReloadMessage := &HotReloadMessage{}
-	err := conn.ReadJSON(hotReloadMessage)
+	defer conn.Close()
+	for {
+		hotReloadMessage := &HotReloadMessage{}
+		err := conn.ReadJSON(hotReloadMessage)
 
-	if err != nil {
-		log.Println("Error reading message")
-		log.Println(err)
-        return
+		if err != nil {
+			log.Println("Error reading message")
+			log.Println(err)
+			return
+		}
+		conn.WriteJSON(&HotReloadMessage{ServerRunId: ServerRunID})
 	}
-	conn.WriteJSON(&HotReloadMessage{ServerRunId: ServerRunID})
-    }
 }
 
 func main() {
-    ServerRunID = fmt.Sprintf("%x", sha256.New().Sum([]byte(time.Now().String())))
+	ServerRunID = fmt.Sprintf("%x", sha256.New().Sum([]byte(time.Now().String())))
 	config := config.GetConfig()
 
 	log.Println("Starting migrations")

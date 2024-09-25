@@ -23,7 +23,7 @@ func SaveSessionsInDb() error {
 	///if err != nil {
 	///	return infra.ErrorRollback(err, tx)
 	///}
-    fmt.Printf("Saving users %v\n", SessionsMap)
+	fmt.Printf("Saving users %v\n", SessionsMap)
 	for _, session := range SessionsMap {
 		_, err := tx.Exec(`INSERT INTO luser_session (sessionId, luserId, lastUsed) VALUES (?, ?, ?)`, session.SessionId, session.User.Id, session.LastUsed)
 		if err != nil {

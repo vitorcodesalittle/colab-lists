@@ -12,12 +12,12 @@ import (
 var Templates *templates = newTemplates()
 
 type templates struct {
-	Index  *textTemplate.Template
-	List   *textTemplate.Template
-	Lists  *textTemplate.Template
-	Auth   *textTemplate.Template
-	Signup *textTemplate.Template
-	Base   *textTemplate.Template
+	Index       *textTemplate.Template
+	List        *textTemplate.Template
+	Lists       *textTemplate.Template
+	Auth        *textTemplate.Template
+	Signup      *textTemplate.Template
+	Base        *textTemplate.Template
 	Communities *textTemplate.Template
 }
 
@@ -98,7 +98,6 @@ func (t *templates) RenderSaveList(w io.Writer, args *ListArgs) {
 		panic(err)
 	}
 }
-
 
 type IndexedItem struct {
 	ActionType int        `json:"actionType"`

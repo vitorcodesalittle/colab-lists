@@ -160,23 +160,23 @@ func (s *SqlUsersRepository) ComparePassword(password []byte, hashedPasswowrd []
 }
 
 func (s *SqlUsersRepository) Search(query string) ([]*User, error) {
-    conn, err := infra.CreateConnection()
-    if err != nil {
-        return nil, err
-    }
-    defer conn.Close()
-    rs, err := conn.Query(`SELECT * FROM luser WHERE username LIKE CONCAT(?, '%') OR email LIKE CONCAT(?, '%')`, query, query)
-    if err != nil {
-        return nil, err
-    }
-    defer rs.Close()
-    users := make([]*User, 0)
-    for rs.Next() {
-        var user *User = &User{}
-        if err = ScanUser(rs, user); err != nil {
-            return nil, err
-        }
-        users = append(users, user)
-    }
-    return users, nil
+	conn, err := infra.CreateConnection()
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close()
+	rs, err := conn.Query(`SELECT * FROM luser WHERE username LIKE CONCAT(?, '%') OR email LIKE CONCAT(?, '%')`, query, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rs.Close()
+	users := make([]*User, 0)
+	for rs.Next() {
+		var user *User = &User{}
+		if err = ScanUser(rs, user); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
 }

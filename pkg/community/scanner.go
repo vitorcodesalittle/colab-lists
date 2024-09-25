@@ -13,10 +13,10 @@ func Scan(scannable Scannable, c *Community) error {
 	err := scannable.Scan(
 		&c.CommunityId,
 		&c.CommunityName,
-        &c.CreatedBy.Id,
-        &c.CreatedAt,
-        &c.UpdatedAt,
-        &c.Default,
+		&c.CreatedBy.Id,
+		&c.CreatedAt,
+		&c.UpdatedAt,
+		&c.Default,
 	)
 	if err != nil {
 		return err

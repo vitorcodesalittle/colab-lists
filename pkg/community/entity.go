@@ -9,11 +9,11 @@ import (
 type Community struct {
 	CommunityId   int64
 	CommunityName string
-	CreatedBy *user.User
-	Members   []*Member
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Default   bool
+	CreatedBy     *user.User
+	Members       []*Member
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	Default       bool
 }
 
 type Member struct {
