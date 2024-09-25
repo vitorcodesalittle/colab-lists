@@ -18,6 +18,7 @@ type templates struct {
 	Auth   *textTemplate.Template
 	Signup *textTemplate.Template
 	Base   *textTemplate.Template
+	Communities *textTemplate.Template
 }
 
 type ListUi struct {
@@ -98,6 +99,7 @@ func (t *templates) RenderSaveList(w io.Writer, args *ListArgs) {
 	}
 }
 
+
 type IndexedItem struct {
 	ActionType int        `json:"actionType"`
 	GroupIndex int64      `json:"groupIndex"`
@@ -127,6 +129,7 @@ func newTemplates() *templates {
 	templates.Index = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/index.html"))
 	templates.Auth = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/auth.html", "./templates/pages/_base.html"))
 	templates.Lists = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/lists.html", "./templates/pages/_base.html"))
+	templates.Communities = textTemplate.Must(textTemplate.ParseFiles("./templates/pages/communities.html", "./templates/pages/_base.html"))
 	templates.List = textTemplate.Must(textTemplate.New("list.html").Funcs(textTemplate.FuncMap{
 		"indexeditem": func(groupIndex int64, itemIndex int64, item *list.Item, color string) *IndexedItem {
 			return NewIndexedItem(groupIndex, itemIndex, item, color, "")

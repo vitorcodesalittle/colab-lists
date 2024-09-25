@@ -7,17 +7,19 @@ CREATE TABLE luser (
   avatarUrl TEXT NOT NULL -- pass gravatar url as default using https://gravatar.com/avatar/$(sha256 email)
 );
 
-CREATE TABLE house (
-  houseId INTEGER PRIMARY KEY AUTOINCREMENT,
-  houseName TEXT NOT NULL,
-  createdByLuserId INTEGER,
-  FOREIGN KEY (createdByLuserId) REFERENCES luser(luserId)
+CREATE TABLE community (
+  communityId INTEGER PRIMARY KEY AUTOINCREMENT,
+  communityName TEXT NOT NULL,
+  createdByLuserId INTEGER REFERENCES luser(luserId),
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  default_ INTEGER DEFAULT 0
 );
 
-CREATE TABLE house_members (
-  houseId INTEGER,
+CREATE TABLE community_members (
+  communityId INTEGER,
   memberId INTEGER,
-  FOREIGN KEY (houseId) REFERENCES house(houseId)
+  FOREIGN KEY (communityId) REFERENCES community(communityId)
   FOREIGN KEY (memberId) REFERENCES luser(luserId)
 );
 
@@ -27,7 +29,7 @@ CREATE TABLE list (
   description TEXT,
   creatorLuserId INTEGER REFERENCES user(luserId),
   updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  houseId INTEGER REFERENCES house(houseId)
+  communityId INTEGER REFERENCES community(communityId)
 );
 
 CREATE TABLE list_colaborators (

@@ -3,13 +3,13 @@ package user
 import "fmt"
 
 type User struct {
-	Id           int64
-	Username     string
-	PasswordHash string
-	PasswordSalt string
-	Online       bool
-	Email        string
-	AvatarUrl    string
+	Id           int64  `json:"id"`
+	Username     string `json:"username"`
+	PasswordHash string `json:"passwordHash"`
+	PasswordSalt string `json:"passwordSalt"`
+	Online       bool   `json:"online"`
+	Email        string `json:"email"`
+	AvatarUrl    string `json:"avatarUrl"`
 }
 
 func (user *User) String() string {

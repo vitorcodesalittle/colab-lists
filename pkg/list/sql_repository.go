@@ -135,7 +135,7 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 	defer rscolaborators.Close()
 	colaborators := make([]user.User, 0)
 	for rscolaborators.Next() {
-		u, err := user.ScanUser(rscolaborators)
+		u, err := user.UnsafeScanUser(rscolaborators)
 		if err != nil {
 			return List{}, err
 		}

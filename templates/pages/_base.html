@@ -31,6 +31,39 @@
         });
     </script>
 
+    <script src="//unpkg.com/alpinejs" defer></script>
+    <script>
+        var _hrWebsSocket;
+        const createWebSocket = () => {
+            _hrWebsSocket = new WebSocket("ws://localhost:8080/ws/hot-reload");
+            _hrWebsSocket.onmessage = function (event) {
+                if (event.type === 'message') {
+                    const serverRun = JSON.parse(event.data)
+                    //console.log(`[HotReload]: Got ${serverRun.serverRunId}`)
+                    if (_localServerRun?.serverRunId === undefined) {
+                        _localServerRun = serverRun
+                        _localServerRunStr = JSON.stringify(serverRun)
+                    } else if (_localServerRun?.serverRunId !== serverRun.serverRunId) {
+                        //console.log("[HotReload]: Server run id changed. reloading!...")
+                        window.location.reload();
+                    }
+                }
+            }
+        }
+        createWebSocket()
+        var _hrChanged = false
+        var _localServerRun = {};
+        var _localServerRunStr = "{}"
+        //console.log(`[HotReload]: Starting...`)
+        setInterval(() => {
+            if (_hrWebsSocket.readyState === WebSocket.OPEN) _hrWebsSocket.send(_localServerRunStr)
+            else if (_hrWebsSocket.readyState === WebSocket.CLOSED) {
+                //console.log(`[HotReload]: Connection closed, trying to reconnect....`)
+                createWebSocket()
+            }
+        }, 500)
+    </script>
+
     {{ .ExtraHead }}
 </head>
 
@@ -51,10 +84,10 @@
             class="group-hover/menu:visible absolute invisible flex flex-row flex-grow justify-start space-x-2 -top-4 group-hover/menu:-left-4 -left-96 transition-all duration-500">
             <div
                 class="bg-neutral-100 rounded shadow-2xl z-50 text-brand-800 flex flex-col w-72 h-screen p-4 pl-8 space-y-2">
+                <a href="/communities"
+                    class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">Communities</a>
                 <a href="/lists"
                     class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">Lists</a>
-                <a href="/login"
-                    class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">Login</a>
                 <a href="/logout"
                     class="mt-auto cursor-pointer border-transparent border hover:border-b-brand-500 transition">Logout</a>
             </div>
@@ -72,4 +105,37 @@
     <div class="flex flex-grow">
     </div>
 </div>
+{{ end }}
+
+
+{{ define "usercard" }}
+<div class="flex flex-row space-x-2 items-center">
+    <img src="{{ .AvatarUrl }}" alt="{{ .Username }}" class="w-8 h-8 rounded-full" />
+    <span class="text-nowrap" style='color: {{ .Color }}'>{{ .Username }} {{ if .Online -}}
+        (online)
+        {{- end }}</span>
+    <input ws-send hx-vals='{"userId": {{ .Id }}, "actionType": 3 }' type="color" id="color-{{.Id}}" name="color"
+        value="{{ .Color }}" />
+</div>
+{{ end }}
+
+
+{{ define "selectuser" }}
+
+<div
+    x-data="{ searchResult: [], async fetchResults (event) { const users = await fetch('/api/users?q='+event.target.value); this.searchResult = await users.json(); }}">
+
+    <p x-text="'Total result ' + searchResult.length "></p>
+    <input id="search-user" type="text" placeholder="Search for a user"
+        class="border border-neutral-300 rounded p-2 w-full" @input.debounce="fetchResults" />
+    <div class="mt-2">
+        <template x-for="user in searchResult" :key="user.id">
+            <div class="flex flex-row space-x-2 items-center">
+                <img :src="user.avatarUrl" x-bind:alt="user.username" class="w-8 h-8 rounded-full" />
+                <span x-text="user.username" class="text-nowrap"></span>
+            </div>
+        </template>
+    </div>
+</div>
+
 {{ end }}

@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -16,6 +18,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	migrate "vilmasoftware.com/colablists/cmd"
+	"vilmasoftware.com/colablists/pkg/community"
 	"vilmasoftware.com/colablists/pkg/config"
 	"vilmasoftware.com/colablists/pkg/list"
 	"vilmasoftware.com/colablists/pkg/realtime"
@@ -25,8 +28,9 @@ import (
 )
 
 var (
-	listsRepository list.ListsRepository = &list.SqlListRepository{}
-	usersRepository user.UsersRepository = &user.SqlUsersRepository{}
+	listsRepository     list.ListsRepository       = &list.SqlListRepository{}
+	usersRepository     user.UsersRepository       = &user.SqlUsersRepository{}
+	communityRepository *community.HouseRepository = &community.HouseRepository{}
 )
 
 var (
@@ -62,7 +66,7 @@ type Session struct {
 }
 
 func postLoginHandler(w http.ResponseWriter, r *http.Request) {
-	user, err := usersRepository.GetByUsername(r.FormValue("username"))
+	user, err := usersRepository.UnsafeGetByUsername(r.FormValue("username"))
 	if err == sql.ErrNoRows {
 		http.Redirect(w, r, "/login?formError="+"No user named "+r.FormValue("username"), http.StatusSeeOther)
 		return
@@ -75,6 +79,7 @@ func postLoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if usersRepository.ComparePassword([]byte(r.FormValue("password")), []byte(user.PasswordHash)) {
 		sessionId := session.GetSessionId()
+		user.PasswordHash = ""
 		session.SessionsMap[sessionId] = &session.Session{
 			User:      user,
 			SessionId: sessionId,
@@ -183,6 +188,24 @@ func getUserHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 	w.Write([]byte(user.Username))
+}
+
+func getUsersHandler(w http.ResponseWriter, r *http.Request) {
+	// Get id from path parameter
+	query := r.URL.Query().Get("q")
+	if len(query) < 3 {
+		http.Error(w, "Query should be at least 3 characters long", http.StatusBadRequest)
+		return
+	}
+	users, err := usersRepository.Search(query)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	err = json.NewEncoder(w).Encode(users)
+	if err != nil {
+		log.Println("Error encoding users")
+		log.Println(err)
+	}
 }
 
 func postListsHandler(w http.ResponseWriter, r *http.Request) {
@@ -301,7 +324,99 @@ func getSignupHandler(w http.ResponseWriter, r *http.Request) {
 	views.Templates.RenderSignup(w, &views.SignupArgs{FormError: r.URL.Query().Get("formError")})
 }
 
+func getCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
+	if redirectIfNotLoggedIn(w, r) {
+		return
+	}
+	comunityPageArgs := &views.CommunitiesArgs{}
+	query, err := getCommunitiesQuery(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	comunityPageArgs.Query = *query
+	if query.SelectedId > 0 {
+		comunityPageArgs.SelectedCommunity, err = communityRepository.Get(query.SelectedId)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
+
+	user, err := session.GetUserFromSession(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	comunityPageArgs.Communities, err = communityRepository.FindMyHouses(user.Id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	views.Templates.RenderCommunities(w, comunityPageArgs)
+}
+
+func getCommunitiesQuery(r *http.Request) (*views.CommunitiesQuery, error) {
+	var err error
+	result := &views.CommunitiesQuery{}
+
+	selectedIdString := r.URL.Query().Get("selectedId")
+	if selectedIdString != "" {
+		result.EditingId, err = strconv.ParseInt(selectedIdString, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+	}
+	newString := r.URL.Query().Get("new")
+	if newString != "" {
+		result.New, err = strconv.ParseBool(newString)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	editingIdString := r.URL.Query().Get("editingId")
+	if editingIdString != "" {
+		result.EditingId, err = strconv.ParseInt(editingIdString, 10, 64)
+	}
+	return result, nil
+}
+
+var allconns []*websocket.Conn = make([]*websocket.Conn, 0)
+
+func getHotReloadHandler(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		// Return Internal Error
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	allconns = append(allconns, conn)
+    go handleHotReload(conn)
+}
+
+type HotReloadMessage struct {
+    ServerRunId string `json:"serverRunId"`
+}
+
+var ServerRunID string
+
+func handleHotReload(conn *websocket.Conn) {
+    defer conn.Close()
+    for {
+	hotReloadMessage := &HotReloadMessage{}
+	err := conn.ReadJSON(hotReloadMessage)
+
+	if err != nil {
+		log.Println("Error reading message")
+		log.Println(err)
+        return
+	}
+	conn.WriteJSON(&HotReloadMessage{ServerRunId: ServerRunID})
+    }
+}
+
 func main() {
+    ServerRunID = fmt.Sprintf("%x", sha256.New().Sum([]byte(time.Now().String())))
 	config := config.GetConfig()
 
 	log.Println("Starting migrations")
@@ -330,9 +445,14 @@ func main() {
 	http.HandleFunc("POST /lists", postListsHandler)
 	http.HandleFunc("GET /lists/{listId}", getListDetailHandler)
 	http.HandleFunc("GET /api/users/{userId}", getUserHandler)
+	http.HandleFunc("GET /api/users", getUsersHandler)
 	http.HandleFunc("GET /ws/list-editor", getListEditorHandler)
 	http.HandleFunc("PUT /lists/{listId}/save", putListSaveHandler)
 	http.HandleFunc("PUT /lists/{listId}", putListHandler)
+	http.HandleFunc("GET /communities", getCommunitiesHandler)
+
+	// For development purposes only:
+	http.HandleFunc("GET /ws/hot-reload", getHotReloadHandler)
 
 	log.Printf("Server config = %v\n", config)
 	log.Printf("Server started at %s\n", config.Listen)

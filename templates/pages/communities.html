@@ -1,0 +1,52 @@
+{{ define "communitiesbody" }}
+{{ template "authnav" }}
+
+<div class="p-4">••••••••••••••
+    <div class="flex-col space-y-1 flex">
+        <div>
+            <h2>houses</h2>
+            <a href="/communities?new=true">New</a>
+        </div>
+
+        {{ block "selectedcommunity" .SelectedCommunity }}
+        {{ if . }}
+        <section id="selected-house">
+            <h3>{{ .CommunityName }}</h3>
+            <label>Members:</label>
+            {{ range .Members }}
+            {{ template "usercard" .User }}
+            {{ end }}
+        </section>
+        {{ end }}
+        {{ end }}
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {{ range .Communities }}
+            <div class="border p-4 rounded shadow-md">
+                <h3>{{ .Title }}</h3>
+                <p>{{ .Description }}</p>
+                <p>{{ .Price }}</p>
+                <p>{{ .CreatedAt }}</p>
+                <a href="/houses/{{ .Id }}">View</a>
+            </div>
+            {{ end }}
+        </div>
+
+        {{ if .Query.New }}
+        <div class="absolute top-0 left-0 w-screen h-screen bg-gray-200 flex flex-col justify-center items-center"
+            style="background-color: rgba(0, 0, 0, 0.5)">
+            <div class="bg-neutral-100 p-4 rounded">
+                <form>
+                    <label>Name
+                        <input name="communityName" />
+                    </label>
+                    <div>
+                        {{ template "selectuser" . }}
+                    </div>
+                </form>
+            </div>
+        </div>
+        {{ end }}
+
+    </div>
+    {{ end }}

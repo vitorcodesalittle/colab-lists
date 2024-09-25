@@ -5,6 +5,7 @@ import (
 	"io"
 	textTemplate "text/template"
 
+	"vilmasoftware.com/colablists/pkg/community"
 	"vilmasoftware.com/colablists/pkg/list"
 	"vilmasoftware.com/colablists/pkg/user"
 )
@@ -69,4 +70,22 @@ func (t *templates) ExecuteTemplateString(template *textTemplate.Template, templ
 
 func GetDescription(msg string) string {
 	return `marketlist is an application to manage lists colaboratively.` + msg
+}
+
+type CommunitiesQuery struct {
+    SelectedId int64
+    New bool
+    EditingId int64
+}
+type CommunitiesArgs struct {
+    Query CommunitiesQuery
+    Communities []*community.Community
+    SelectedCommunity *community.Community
+}
+func (t *templates) RenderCommunities(w io.Writer, args *CommunitiesArgs) {
+    t.renderBase(w, &baseArgs{
+        Title: "Communities",
+        Description: GetDescription("Communities"),
+        Body: t.ExecuteTemplateString(t.Communities, "communitiesbody", args),
+    })
 }

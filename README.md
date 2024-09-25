@@ -1,11 +1,18 @@
 # Colablists
 
-!! TODO:
+4. Create a house and add users to it
+    - Users share all lists in house.
+5. Allow copying list in text format
+6. Allow to import a list from text format
 1. Add form validation
-2. Add Favicon
-3. Add title
+7. Move create a new list component to a modal, shown when user selects add list, +, or whatevs
+2. Add checks to list items
+3. Improve list detail edition 
+    - User select with search and better UI
+    - Allow to select a house on list [ house stuff ]
 
 An open-source list manager website to help people doing groceries together.
+
 
 Features:
 

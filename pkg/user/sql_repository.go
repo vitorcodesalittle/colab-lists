@@ -61,7 +61,7 @@ func (s *SqlUsersRepository) GetWithConnection(conn *sql.DB, id int64) (User, er
 	if row.Err() != nil {
 		return User{}, row.Err()
 	}
-	result, err := ScanUser(row)
+	result, err := UnsafeScanUser(row)
 	return result, err
 }
 
@@ -82,7 +82,7 @@ func (s *SqlUsersRepository) Get(id int64) (User, error) {
 	if row.Err() != nil {
 		return User{}, row.Err()
 	}
-	result, err := ScanUser(row)
+	result, err := UnsafeScanUser(row)
 
 	conn.Close()
 	return result, err
@@ -109,7 +109,7 @@ func (s *SqlUsersRepository) GetAll() ([]User, error) {
 	defer rs.Close()
 	users := make([]User, 0)
 	for rs.Next() {
-		user, err := ScanUser(rs)
+		user, err := UnsafeScanUser(rs)
 		if err != nil {
 			return nil, err
 		}
@@ -118,8 +118,7 @@ func (s *SqlUsersRepository) GetAll() ([]User, error) {
 	return users, nil
 }
 
-// GetByUsername implements UsersRepository.
-func (s *SqlUsersRepository) GetByUsername(username string) (*User, error) {
+func (s *SqlUsersRepository) UnsafeGetByUsername(username string) (*User, error) {
 	conn, err := infra.CreateConnection()
 	if err != nil {
 		return nil, err
@@ -140,7 +139,7 @@ func (s *SqlUsersRepository) GetByUsername(username string) (*User, error) {
 	if row.Err() != nil {
 		return nil, row.Err()
 	}
-	user, err := ScanUser(row)
+	user, err := UnsafeScanUser(row)
 	if err != nil {
 		return nil, err
 	}
@@ -158,4 +157,26 @@ func hashPassword(password []byte) ([]byte, error) {
 func (s *SqlUsersRepository) ComparePassword(password []byte, hashedPasswowrd []byte) bool {
 	err := bcrypt.CompareHashAndPassword(hashedPasswowrd, password)
 	return err == nil
+}
+
+func (s *SqlUsersRepository) Search(query string) ([]*User, error) {
+    conn, err := infra.CreateConnection()
+    if err != nil {
+        return nil, err
+    }
+    defer conn.Close()
+    rs, err := conn.Query(`SELECT * FROM luser WHERE username LIKE CONCAT(?, '%') OR email LIKE CONCAT(?, '%')`, query, query)
+    if err != nil {
+        return nil, err
+    }
+    defer rs.Close()
+    users := make([]*User, 0)
+    for rs.Next() {
+        var user *User = &User{}
+        if err = ScanUser(rs, user); err != nil {
+            return nil, err
+        }
+        users = append(users, user)
+    }
+    return users, nil
 }

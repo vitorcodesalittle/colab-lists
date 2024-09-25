@@ -66,14 +66,7 @@
                 <p>Colaborators {{ . | len }}:</p>
                 <div>
                     {{ range . }}
-                    <div class="flex flex-row space-x-2 items-center">
-                        <img src="{{ .AvatarUrl }}" alt="{{ .Username }}" class="w-8 h-8 rounded-full" />
-                        <span class="text-nowrap" style='color: {{ .Color }}'>{{ .Username }} {{ if .Online -}}
-                            (online)
-                            {{- end }}</span>
-                        <input ws-send hx-vals='{"userId": {{ .Id }}, "actionType": 3 }' type="color" id="color-{{.Id}}"
-                            name="color" value="{{ .Color }}" />
-                    </div>
+                    {{ template "usercard" . }}
                     {{ end }}
                 </div>
             </div>
