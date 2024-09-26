@@ -132,7 +132,13 @@
 {{ define "selectuser" }}
 
 <div
-    x-data="{ searchResult: [], value: [], async fetchResults (event) { const users = await fetch('/api/users?q='+event.target.value); this.searchResult = await users.json(); }, toggleUserFromValue (user) { const userIds = this.value.map(user => user.id); const index = userIds.indexOf(user.id); if (index === -1) this.value.push(user); else this.value = this.value.filter(user2 => user2.id !== user.id); console.log(this.value)  }}">
+    x-data="{ searchResult: [], value: [
+            {{ if . }}
+            {{ range . }}
+            { id: {{ .Id }}, username: '{{ .Username }}' }
+            {{end}}
+            {{end}}
+    ], async fetchResults (event) { const users = await fetch('/api/users?q='+event.target.value); this.searchResult = await users.json(); }, toggleUserFromValue (user) { const userIds = this.value.map(user => user.id); const index = userIds.indexOf(user.id); if (index === -1) this.value.push(user); else this.value = this.value.filter(user2 => user2.id !== user.id); console.log(this.value)  }}">
 
     <p x-text="'Total result ' + searchResult.length "></p>
     <input id="search-user" type="text" placeholder="Search for a user"
