@@ -138,7 +138,11 @@
             { id: {{ .Id }}, username: '{{ .Username }}' }
             {{end}}
             {{end}}
-    ], async fetchResults (event) { const users = await fetch('/api/users?q='+event.target.value); this.searchResult = await users.json(); }, toggleUserFromValue (user) { const userIds = this.value.map(user => user.id); const index = userIds.indexOf(user.id); if (index === -1) this.value.push(user); else this.value = this.value.filter(user2 => user2.id !== user.id); console.log(this.value)  }}">
+    ], async fetchResults (event) { const users = await fetch('/api/users?q='+event.target.value); this.searchResult = await users.json(); }, toggleUserFromValue (user) { const userIds = this.value.map(user => user.id); const index = userIds.indexOf(user.id); if (index === -1) this.value.push(user); else this.value = this.value.filter(user2 => user2.id !== user.id); console.log(this.value)  }, 
+        removeUser(user) {
+            this.value = this.value.filter(user2 => user2.id !== user.id);
+        }
+    }">
 
     <p x-text="'Total result ' + searchResult.length "></p>
     <input id="search-user" type="text" placeholder="Search for a user"
@@ -146,8 +150,9 @@
     <div class="mt-2">
         Selected:
         <template x-for="user in value" :key="user.id">
-            <div>
+            <div class="flex flex-row items-center space-x-2">
                 <div x-text="user.username"></div>
+                <button @click="removeUser(user)">x</button>
                 <input class="hidden" name="userId" :value="user.id" />
             </div>
         </template>
