@@ -379,6 +379,9 @@ func getCommunitiesQuery(r *http.Request) (*views.CommunitiesQuery, error) {
 	editingIdString := r.URL.Query().Get("editingId")
 	if editingIdString != "" {
 		result.EditingId, err = strconv.ParseInt(editingIdString, 10, 64)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return result, nil
 }

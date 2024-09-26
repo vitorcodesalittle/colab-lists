@@ -60,20 +60,18 @@ func GetUserFromSession(r *http.Request) (*user.User, error) {
 func SessionPeriodicallyCleaner() {
 	ticker := time.NewTicker(CleanerInterval)
 	for {
-		select {
-		case <-ticker.C:
-			for sessionId, session := range SessionsMap {
-				if time.Since(session.LastUsed) > config.GetConfig().SessionTimeout {
-					db, err := infra.CreateConnection()
-					if err != nil {
-						println("Failed to delete session " + sessionId + " because of database connection error " + err.Error())
-					}
-					err = deleteSessionById(sessionId, db)
-					if err != nil {
-						println("Failed to delete session! " + sessionId)
-					}
-					delete(SessionsMap, sessionId)
+		<-ticker.C
+		for sessionId, session := range SessionsMap {
+			if time.Since(session.LastUsed) > config.GetConfig().SessionTimeout {
+				db, err := infra.CreateConnection()
+				if err != nil {
+					println("Failed to delete session " + sessionId + " because of database connection error " + err.Error())
 				}
+				err = deleteSessionById(sessionId, db)
+				if err != nil {
+					println("Failed to delete session! " + sessionId)
+				}
+				delete(SessionsMap, sessionId)
 			}
 		}
 	}
