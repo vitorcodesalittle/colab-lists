@@ -8,6 +8,12 @@ import (
 	"vilmasoftware.com/colablists/pkg/config"
 )
 
+type Queryable interface {
+	Query(query string, args ...interface{}) (*sql.Rows, error)
+	QueryRow(query string, args ...interface{}) *sql.Row
+	Exec(query string, args ...interface{}) (sql.Result, error)
+}
+
 func CreateConnection() (*sql.DB, error) {
 	databaseUrl := config.GetConfig().DatabaseUrl
 	if _, err := os.Stat(databaseUrl); os.IsNotExist(err) {

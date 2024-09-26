@@ -22,7 +22,7 @@ type ListArgs struct {
 }
 
 func (t *templates) RenderList(w io.Writer, args *ListArgs) {
-	t.renderBase(w, &baseArgs{ExtraHead: t.ExecuteTemplateString(t.List, "extrahead", args), Body: t.ExecuteTemplateString(t.List, "body", args), Title: args.List.Title, Description: GetDescription("")})
+	t.renderBase(w, &baseArgs{ExtraHead: t.ExecuteTemplateString(t.List, "extrahead", args), Body: t.ExecuteTemplateString(t.List, "body", args), Title: "!!!!" + args.List.Title, Description: GetDescription("")})
 }
 
 type ListsArgs struct {

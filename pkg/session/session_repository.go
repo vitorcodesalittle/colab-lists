@@ -19,21 +19,29 @@ func SaveSessionsInDb() error {
 	}
 	defer tx.Rollback()
 	///println("Deleting all sessions")
-	///_, err = tx.Exec(`DELETE FROM luser_session`)
-	///if err != nil {
-	///	return infra.ErrorRollback(err, tx)
-	///}
-	fmt.Printf("Saving users %v\n", SessionsMap)
+	_, err = tx.Exec(`DELETE FROM luser_session`)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Saving sessions %v\n", SessionsMap)
 	for _, session := range SessionsMap {
-		_, err := tx.Exec(`INSERT INTO luser_session (sessionId, luserId, lastUsed) VALUES (?, ?, ?)`, session.SessionId, session.User.Id, session.LastUsed)
-		if err != nil {
-			return err
-		}
+		insertSession(session, tx)
 	}
 	if err = tx.Commit(); err != nil {
 		return err
 	}
 	return nil
+}
+
+func SaveSessionInDb(sesh *Session) error {
+	conn, err := infra.CreateConnection()
+	if err != nil {
+		return err
+	}
+	SessionsMap[sesh.SessionId] = sesh
+	defer conn.Close()
+	return insertSession(sesh, conn)
+
 }
 
 func RestoreSessionsFromDb() error {
@@ -54,12 +62,28 @@ func RestoreSessionsFromDb() error {
 	for rows.Next() {
 		user := user.User{}
 		session := &Session{User: &user}
-		err := rows.Scan(&session.SessionId, &session.User.Id, &session.LastUsed, &session.User.Username)
+		err := rows.Scan(&session.SessionId, &session.User.Id, &session.LastUsed, &session.CreatedAt, &session.User.Username)
 		if err != nil {
 			return err
 		}
 		SessionsMap[session.SessionId] = session
 	}
+	fmt.Printf("Restored sessions! %v\n", SessionsMap)
+	return nil
+}
 
+func insertSession(session *Session, quueryable infra.Queryable) error {
+	_, err := quueryable.Exec(`INSERT INTO luser_session (sessionId, luserId, lastUsed) VALUES (?, ?, ?)`, session.SessionId, session.User.Id, session.LastUsed)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func deleteSessionById(sessionId string, quueryable infra.Queryable) error {
+	_, err := quueryable.Exec(`DELETE FROM luser_session WHERE sessionId = ?`, sessionId)
+	if err != nil {
+		return err
+	}
 	return nil
 }

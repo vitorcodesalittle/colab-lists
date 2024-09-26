@@ -75,16 +75,18 @@ func postLoginHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error when logging in %v", err)
 		http.Redirect(w, r, "/login?formError="+err.Error(), http.StatusSeeOther)
 		return
-
 	}
 	if usersRepository.ComparePassword([]byte(r.FormValue("password")), []byte(user.PasswordHash)) {
 		sessionId := session.GetSessionId()
 		user.PasswordHash = ""
-		session.SessionsMap[sessionId] = &session.Session{
+		if err := session.SaveSessionInDb(&session.Session{
 			User:      user,
 			SessionId: sessionId,
 			LastUsed:  time.Now(),
+		}); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
+
 		w.Header().Add("Set-Cookie", "SESSION="+sessionId)
 		http.Redirect(w, r, "/lists", http.StatusSeeOther)
 	} else {
@@ -434,6 +436,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	//
+	fmt.Printf("SessionMap: %v\n", session.SessionsMap)
 
 	http.HandleFunc("GET /login", getLoginHandler)
 	http.HandleFunc("POST /login", postLoginHandler)
@@ -487,4 +491,5 @@ func main() {
 		log.Println("Failed to save current sessions map to DB")
 		log.Fatal(err)
 	}
+	log.Println("Server stopped!")
 }
