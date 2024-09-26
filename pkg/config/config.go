@@ -7,6 +7,14 @@ import (
 	"time"
 )
 
+type SmtpConfig struct {
+	Host        string
+	Port        int
+	Username    string
+	Password    string
+	FromNoReply string
+}
+
 type Config struct {
 	DatabaseUrl    string
 	Listen         string
@@ -14,6 +22,7 @@ type Config struct {
 	PrivateKey     string
 	Certificate    string
 	SessionTimeout time.Duration
+	SmtpConfig
 }
 
 func ParseConfig() *Config {
@@ -24,6 +33,12 @@ func ParseConfig() *Config {
 	flag.StringVar(&config.PrivateKey, "private-key", "", "Path to file with private key")
 	flag.StringVar(&config.Certificate, "certificate", "", "Path to file with certificate")
 	flag.DurationVar(&config.SessionTimeout, "session-timeout", 4*time.Hour, "Session timeout")
+	flag.StringVar(&config.Host, "smtp-host", "", "SMTP Host")
+	flag.IntVar(&config.Port, "smtp-port", 0, "SMTP Port")
+	flag.StringVar(&config.Username, "smtp-username", "", "SMTP Username")
+	flag.StringVar(&config.Password, "smtp-password", "", "SMTP Password")
+	flag.StringVar(&config.FromNoReply, "smtp-noreply", "something.something.noreply@domain.com", "SMTP Password")
+
 	flag.Parse()
 	if config.DatabaseUrl == "" {
 		panic("Database URL is required")
@@ -43,6 +58,7 @@ func ParseConfig() *Config {
 			panic(err)
 		}
 	}
+
 	return config
 }
 

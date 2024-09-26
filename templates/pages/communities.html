@@ -1,17 +1,5 @@
 {{ define "communitiesextrahead" }}
-
-<script>
-    function collectPostCommunitiesValues() {
-        const payload = {
-            name: document.querySelector('input[name="communityName"]').value,
-            members: Array.from(document.querySelectorAll('input[name="userId"]')).map(el => el.value).map(str => parseInt(str))
-        }
-        return payload
-    }
-</script>
-
-<script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
-
+<script src="https://cdn.jsdelivr.net/gh/Emtyloc/json-enc-custom@main/json-enc-custom.js"></script>
 {{ end }}
 
 {{ define "communitiesbody" }}
@@ -22,9 +10,11 @@
         <div class="flex-row flex items-center w-full justify-between">
             <h2>Communities</h2>
             <div>
-                <a href="/communities?new=true"><span>New</span></a>
-                {{ if .Query.SelectedId }}
+                {{ if or .Query.SelectedId .Query.EditingId }}
+                <div class="border rounded p-2 cursor-pointer hover:bg-neutral-200" hx-delete="/communities/{{ .SelectedCommunity.CommunityId }}">Remove</div>
                 <a href="/communities?editingId={{ .Query.SelectedId }}"><span>Edit</span></a>
+                {{ else }}
+                <a href="/communities?new=true"><span>New</span></a>
                 {{ end }}
             </div>
         </div>
@@ -55,9 +45,8 @@
             <div class="bg-neutral-100 p-4 rounded"
                  @click.outside="window.history.go(-1)">
                 <h3>New Community</h3>
-                <form hx-ext='json-enc' {{ if .SelectedCommunity }}hx-put="/communities/{{.SelectedCommunity.CommunityId}}"{{else}}hx-post="/communities"{{end}} hx-trigger="submit"
-                    hx-vals="js:{ ...collectPostCommunitiesValues() }">
-                    <label>Namee
+                <form hx-ext='json-enc-custom' {{ if .SelectedCommunity }}hx-put="/communities/{{.SelectedCommunity.CommunityId}}"{{else}}hx-post="/communities"{{end}}>
+                    <label>Name
                         <input name="communityName" value="{{ if .SelectedCommunity }} {{ .SelectedCommunity.CommunityName }} {{ end }}" />
                     </label>
                     <div>

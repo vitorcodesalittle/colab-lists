@@ -430,7 +430,7 @@ func postCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
 	community := &community.Community{}
 	mountCommunityFromRequest(r, user, community)
 	community.CreatedBy = user
-	_, err = communityRepository.Save(community)
+	_, err = communityRepository.Save(community, nil)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -439,8 +439,8 @@ func postCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 type CommunityCreationParams struct {
-	CommunityName string `json:"communityName"`
-	MemberIds     []int  `json:"members"`
+	CommunityName string   `json:"communityName"`
+	MemberIds     []string `json:"members"`
 }
 
 func mountCommunityFromRequest(r *http.Request, u *user.User, c *community.Community) error {
@@ -454,7 +454,11 @@ func mountCommunityFromRequest(r *http.Request, u *user.User, c *community.Commu
 	c.Members = make([]*community.Member, 0)
 	c.Default = false
 	for _, memberId := range params.MemberIds {
-		member, err := usersRepository.Get(int64(memberId))
+		intMemberId, err := strconv.Atoi(memberId)
+		if err != nil {
+			return err
+		}
+		member, err := usersRepository.Get(int64(intMemberId))
 		if err != nil {
 			return err
 		}
@@ -472,12 +476,43 @@ func putCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
 	community := &community.Community{}
 	mountCommunityFromRequest(r, user, community)
 	community.UpdatedAt = time.Now()
-	_, err = communityRepository.Save(community)
+	communityId, err := strconv.Atoi(r.PathValue("communityId"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	community.CommunityId = int64(communityId)
+	_, err = communityRepository.Save(community, &user.Id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Add("HX-Redirect", fmt.Sprintf("/communities?selectedId=%d", community.CommunityId))
+}
+
+func deleteCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
+	user, err := session.GetUserFromSession(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	communityId, err := strconv.ParseInt(r.PathValue("communityId"), 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	err = communityRepository.Delete(communityId, user.Id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Add("HX-Redirect", "/communities")
+}
+
+func getPasswordRecoveryHandler(w http.ResponseWriter, r *http.Request) {
+	views.Templates.RenderPasswordRecovery(w, &views.PasswordRecoveryArgs{
+		Token: r.URL.Query().Get("token"),
+	})
 }
 
 func main() {
@@ -519,6 +554,8 @@ func main() {
 	http.HandleFunc("GET /communities", getCommunitiesHandler)
 	http.HandleFunc("POST /communities", postCommunitiesHandler)
 	http.HandleFunc("PUT /communities/{communityId}", putCommunitiesHandler)
+	http.HandleFunc("DELETE /communities/{communityId}", deleteCommunitiesHandler)
+	http.HandleFunc("GET /password-recovery", getPasswordRecoveryHandler)
 
 	// For development purposes only:
 	http.HandleFunc("GET /ws/hot-reload", getHotReloadHandler)

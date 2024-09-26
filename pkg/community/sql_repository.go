@@ -2,7 +2,7 @@ package community
 
 import (
 	"database/sql"
-	"fmt"
+	"errors"
 
 	"vilmasoftware.com/colablists/pkg/infra"
 )
@@ -53,7 +53,8 @@ func ScanMember(rows *sql.Rows, m *Member) error {
 	return rows.Scan(&m.CommunityId, &m.Id, &m.Username, &m.PasswordHash, &m.PasswordSalt, &m.Email, &m.AvatarUrl)
 }
 
-func (h *HouseRepository) Save(house *Community) (*Community, error) {
+// TODO: validate if user saving is community creator if updating
+func (h *HouseRepository) Save(house *Community, userId *int64) (*Community, error) {
 	db, err := infra.CreateConnection()
 	if err != nil {
 		return nil, err
@@ -63,16 +64,29 @@ func (h *HouseRepository) Save(house *Community) (*Community, error) {
 		return nil, err
 	}
 	defer tx.Rollback()
-	fmt.Printf("house: %v\n", house)
-	result, err := tx.Exec(`INSERT INTO community (communityName, createdByLuserId) VALUES (?, ?)`, house.CommunityName, house.CreatedBy.Id)
-	if err != nil {
-		return nil, err
+	if house.CommunityId == 0 {
+		result, err := tx.Exec(`INSERT INTO community (communityName, createdByLuserId) VALUES (?, ?)`, house.CommunityName, house.CreatedBy.Id)
+		if err != nil {
+			return nil, err
+		}
+		house.CommunityId, err = result.LastInsertId()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		_, err := tx.Exec(`UPDATE community SET communityName = ? WHERE communityId = ?`, house.CommunityName, house.CommunityId)
+		if err != nil {
+			return nil, err
+		}
 	}
-	house.CommunityId, err = result.LastInsertId()
 	if err != nil {
 		return nil, err
 	}
 
+	_, err = tx.Exec(`DELETE FROM community_members WHERE communityId = ?`, house.CommunityId)
+	if err != nil {
+		return nil, err
+	}
 	for _, member := range house.Members {
 		_, err = tx.Exec(`INSERT INTO community_members (communityId, memberId)
         VALUES (?, ?)`, house.CommunityId, member.Id)
@@ -82,7 +96,6 @@ func (h *HouseRepository) Save(house *Community) (*Community, error) {
 	}
 
 	err = tx.Commit()
-
 	if err != nil {
 		return nil, err
 	}
@@ -99,9 +112,8 @@ func (h *HouseRepository) FindMyHouses(userId int64) ([]*Community, error) {
 	defer db.Close()
 	rows, err := db.Query(`SELECT c.*
     FROM community c
-    LEFT JOIN community_members m ON c.communityId = m.memberId
-    WHERE m.memberId = ?
-    OR c.createdByLuserId = ?`, userId, userId)
+    LEFT JOIN community_members m ON c.communityId = m.communityId
+    WHERE m.memberId = ? OR c.createdByLuserId = ?`, userId, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -114,4 +126,37 @@ func (h *HouseRepository) FindMyHouses(userId int64) ([]*Community, error) {
 		result = append(result, community)
 	}
 	return result, nil
+}
+
+func (h *HouseRepository) Delete(communityId, userId int64) error {
+	db, err := infra.CreateConnection()
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	rs := db.QueryRow(`SELECT createdByLuserId FROM community WHERE communityId = ?`, communityId)
+	if rs.Err() != nil {
+		return rs.Err()
+	}
+	var createdByLuserId int64
+	err = rs.Scan(&createdByLuserId)
+	if err != nil {
+		return err
+	}
+	if createdByLuserId != userId {
+		return errors.New("unauthorized: user deleting must be creator of community")
+	}
+
+	deleteResult, err := db.Exec(`DELETE FROM community WHERE communityId = ?`, communityId)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := deleteResult.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return errors.New("no rows deleted")
+	}
+	return nil
 }

@@ -91,3 +91,15 @@ func (t *templates) RenderCommunities(w io.Writer, args *CommunitiesArgs) {
 		ExtraHead:   t.ExecuteTemplateString(t.Communities, "communitiesextrahead", args),
 	})
 }
+
+type PasswordRecoveryArgs struct {
+	Token string
+}
+
+func (t *templates) RenderPasswordRecovery(w io.Writer, args *PasswordRecoveryArgs) {
+	t.renderBase(w, &baseArgs{
+		Title:       "Password Recovery",
+		Description: GetDescription("Password Recovery"),
+		Body:        t.ExecuteTemplateString(t.Auth, "bodypasswordrecovery", args),
+	})
+}

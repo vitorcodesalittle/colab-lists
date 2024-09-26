@@ -18,8 +18,8 @@
             {{ end }}
         </div>
     </form>
-    <a class="mt-5 cursor-pointer border-transparent border hover:border-b-brand-500 transition">Forgot my
-        password</a>
+    <div class="mt-5 cursor-pointer border-transparent border hover:border-b-brand-500 transition">Forgot my
+        password</div>
     <a href="/signup" class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">Create an
         account</a>
 </div>
@@ -54,4 +54,16 @@
             here to login</a>
     </div>
 </div>
+{{ end }}
+
+{{ define "bodypasswordrecovery" }}
+
+<form hx-post="/password-recovery" hx-vals="js:{token: new URL(window.location).searchParams.get('token')}">
+    <label>New password:</label>
+    <input type="password" name="password" />
+    <label>Confirm new password:</label>
+    <input type="password" />
+    <button type="submit">Confirm</button>
+</form>
+
 {{ end }}
