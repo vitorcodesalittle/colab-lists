@@ -108,10 +108,10 @@
 {{ end }}
 
 
-{{ define "usercard" }}
+{{ define "useruicard" }}
 <div class="flex flex-row space-x-2 items-center">
     <img src="{{ .AvatarUrl }}" alt="{{ .Username }}" class="w-8 h-8 rounded-full" />
-    <span class="text-nowrap" style='color: {{ .Color }}'>{{ .Username }} {{ if .Online -}}
+    <span class="text-nowrap">{{ .Username }} {{ if .Online -}}
         (online)
         {{- end }}</span>
     <input ws-send hx-vals='{"userId": {{ .Id }}, "actionType": 3 }' type="color" id="color-{{.Id}}" name="color"
@@ -119,18 +119,37 @@
 </div>
 {{ end }}
 
+{{ define "usercard" }}
+<div class="flex flex-row space-x-2 items-center">
+    <img src="{{ .AvatarUrl }}" alt="{{ .Username }}" class="w-8 h-8 rounded-full" />
+    <span class="text-nowrap">{{ .Username }} {{ if .Online -}}
+        (online)
+        {{- end }}</span>
+</div>
+{{ end }}
+
 
 {{ define "selectuser" }}
 
 <div
-    x-data="{ searchResult: [], async fetchResults (event) { const users = await fetch('/api/users?q='+event.target.value); this.searchResult = await users.json(); }}">
+    x-data="{ searchResult: [], value: [], async fetchResults (event) { const users = await fetch('/api/users?q='+event.target.value); this.searchResult = await users.json(); }, toggleUserFromValue (user) { const userIds = this.value.map(user => user.id); const index = userIds.indexOf(user.id); if (index === -1) this.value.push(user); else this.value = this.value.filter(user2 => user2.id !== user.id); console.log(this.value)  }}">
 
     <p x-text="'Total result ' + searchResult.length "></p>
     <input id="search-user" type="text" placeholder="Search for a user"
         class="border border-neutral-300 rounded p-2 w-full" @input.debounce="fetchResults" />
     <div class="mt-2">
+        Selected:
+        <template x-for="user in value" :key="user.id">
+            <div>
+                <div x-text="user.username"></div>
+                <input class="hidden" name="userId" :value="user.id" />
+            </div>
+        </template>
+    </div>
+    <div class="mt-2">
         <template x-for="user in searchResult" :key="user.id">
-            <div class="flex flex-row space-x-2 items-center">
+            <div :class="'cursor-pointer flex flex-row space-x-2 items-center p-2 rounded ' + (value.map(user => user.id).includes(user.id) ? 'bg-neutral-200' : '')"
+                @click="toggleUserFromValue(user)">
                 <img :src="user.avatarUrl" x-bind:alt="user.username" class="w-8 h-8 rounded-full" />
                 <span x-text="user.username" class="text-nowrap"></span>
             </div>

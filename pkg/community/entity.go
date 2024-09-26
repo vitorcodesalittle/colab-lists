@@ -17,6 +17,6 @@ type Community struct {
 }
 
 type Member struct {
-	HouseId int64
+	CommunityId int64
 	user.User
 }

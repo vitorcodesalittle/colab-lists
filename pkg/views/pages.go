@@ -88,5 +88,6 @@ func (t *templates) RenderCommunities(w io.Writer, args *CommunitiesArgs) {
 		Title:       "Communities",
 		Description: GetDescription("Communities"),
 		Body:        t.ExecuteTemplateString(t.Communities, "communitiesbody", args),
+		ExtraHead:   t.ExecuteTemplateString(t.Communities, "communitiesextrahead", args),
 	})
 }

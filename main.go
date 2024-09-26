@@ -300,7 +300,6 @@ func putListHandler(w http.ResponseWriter, r *http.Request) {
 	liveEditor.GetCurrentListState(listId).Ui.List = listv
 
 	w.Header().Add("HX-Redirect", fmt.Sprintf("/lists/%d", listId))
-	// http.Redirect(w, r, "/lists", http.StatusSeeOther)
 }
 
 func getListEditorHandler(w http.ResponseWriter, r *http.Request) {
@@ -337,12 +336,15 @@ func getCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	comunityPageArgs.Query = *query
-	if query.SelectedId > 0 {
-		comunityPageArgs.SelectedCommunity, err = communityRepository.Get(query.SelectedId)
+	if query.SelectedId > 0 && query.EditingId > 0 {
+		http.Error(w, "Cannot select and edit at the same time", http.StatusBadRequest)
+	} else if query.SelectedId > 0 || query.EditingId > 0 {
+		comunityPageArgs.SelectedCommunity, err = communityRepository.Get(query.SelectedId + query.EditingId)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 	}
+	fmt.Printf("SelectedCommunity: %v\n", comunityPageArgs.SelectedCommunity)
 
 	user, err := session.GetUserFromSession(r)
 	if err != nil {
@@ -363,7 +365,7 @@ func getCommunitiesQuery(r *http.Request) (*views.CommunitiesQuery, error) {
 
 	selectedIdString := r.URL.Query().Get("selectedId")
 	if selectedIdString != "" {
-		result.EditingId, err = strconv.ParseInt(selectedIdString, 10, 64)
+		result.SelectedId, err = strconv.ParseInt(selectedIdString, 10, 64)
 		if err != nil {
 			return nil, err
 		}
@@ -410,7 +412,6 @@ func handleHotReload(conn *websocket.Conn) {
 	for {
 		hotReloadMessage := &HotReloadMessage{}
 		err := conn.ReadJSON(hotReloadMessage)
-
 		if err != nil {
 			log.Println("Error reading message")
 			log.Println(err)
@@ -418,6 +419,65 @@ func handleHotReload(conn *websocket.Conn) {
 		}
 		conn.WriteJSON(&HotReloadMessage{ServerRunId: ServerRunID})
 	}
+}
+
+func postCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
+	user, err := session.GetUserFromSession(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	community := &community.Community{}
+	mountCommunityFromRequest(r, user, community)
+	community.CreatedBy = user
+	_, err = communityRepository.Save(community)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Add("HX-Redirect", "/communities")
+}
+
+type CommunityCreationParams struct {
+	CommunityName string `json:"communityName"`
+	MemberIds     []int  `json:"members"`
+}
+
+func mountCommunityFromRequest(r *http.Request, u *user.User, c *community.Community) error {
+	params := &CommunityCreationParams{}
+	err := json.NewDecoder(r.Body).Decode(params)
+	if err != nil {
+		return err
+	}
+	c.CommunityName = params.CommunityName
+	c.CreatedBy = u
+	c.Members = make([]*community.Member, 0)
+	c.Default = false
+	for _, memberId := range params.MemberIds {
+		member, err := usersRepository.Get(int64(memberId))
+		if err != nil {
+			return err
+		}
+		c.Members = append(c.Members, &community.Member{User: member})
+	}
+	return nil
+}
+
+func putCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
+	user, err := session.GetUserFromSession(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	community := &community.Community{}
+	mountCommunityFromRequest(r, user, community)
+	community.UpdatedAt = time.Now()
+	_, err = communityRepository.Save(community)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Add("HX-Redirect", fmt.Sprintf("/communities?selectedId=%d", community.CommunityId))
 }
 
 func main() {
@@ -457,6 +517,8 @@ func main() {
 	http.HandleFunc("PUT /lists/{listId}/save", putListSaveHandler)
 	http.HandleFunc("PUT /lists/{listId}", putListHandler)
 	http.HandleFunc("GET /communities", getCommunitiesHandler)
+	http.HandleFunc("POST /communities", postCommunitiesHandler)
+	http.HandleFunc("PUT /communities/{communityId}", putCommunitiesHandler)
 
 	// For development purposes only:
 	http.HandleFunc("GET /ws/hot-reload", getHotReloadHandler)

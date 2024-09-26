@@ -1,13 +1,33 @@
+{{ define "communitiesextrahead" }}
+
+<script>
+    function collectPostCommunitiesValues() {
+        const payload = {
+            name: document.querySelector('input[name="communityName"]').value,
+            members: Array.from(document.querySelectorAll('input[name="userId"]')).map(el => el.value).map(str => parseInt(str))
+        }
+        return payload
+    }
+</script>
+
+<script src="https://unpkg.com/htmx-ext-json-enc@2.0.1/json-enc.js"></script>
+
+{{ end }}
+
 {{ define "communitiesbody" }}
 {{ template "authnav" }}
 
-<div class="p-4">••••••••••••••
+<div class="p-4">
     <div class="flex-col space-y-1 flex">
-        <div>
-            <h2>houses</h2>
-            <a href="/communities?new=true">New</a>
+        <div class="flex-row flex items-center w-full justify-between">
+            <h2>Communities</h2>
+            <div>
+                <a href="/communities?new=true"><span>New</span></a>
+                {{ if .Query.SelectedId }}
+                <a href="/communities?editingId={{ .Query.SelectedId }}"><span>Edit</span></a>
+                {{ end }}
+            </div>
         </div>
-
         {{ block "selectedcommunity" .SelectedCommunity }}
         {{ if . }}
         <section id="selected-house">
@@ -22,27 +42,33 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {{ range .Communities }}
-            <div class="border p-4 rounded shadow-md">
-                <h3>{{ .Title }}</h3>
-                <p>{{ .Description }}</p>
-                <p>{{ .Price }}</p>
+            <a href="/communities?selectedId={{ .CommunityId }}">
+                <h3>{{ .CommunityName }}</h3>
                 <p>{{ .CreatedAt }}</p>
-                <a href="/houses/{{ .Id }}">View</a>
-            </div>
+            </a>
             {{ end }}
         </div>
 
-        {{ if .Query.New }}
-        <div class="absolute top-0 left-0 w-screen h-screen bg-gray-200 flex flex-col justify-center items-center"
-            style="background-color: rgba(0, 0, 0, 0.5)">
-            <div class="bg-neutral-100 p-4 rounded">
-                <form>
-                    <label>Name
-                        <input name="communityName" />
+        {{ if or .Query.New .Query.EditingId }}
+        <div class="fixed top-0 left-0 w-screen h-screen bg-gray-200 flex flex-col justify-center items-center"
+             style="background-color: rgba(0, 0, 0, 0.5)" x-data="{}">
+            <div class="bg-neutral-100 p-4 rounded"
+                 @click.outside="window.history.go(-1)">
+                <h3>New Community</h3>
+                <form hx-ext='json-enc' {{ if .SelectedCommunity }}hx-put="/communities/{{.SelectedCommunity.CommunityId}}"{{else}}hx-post="/communities"{{end}} hx-trigger="submit"
+                    hx-vals="js:{ ...collectPostCommunitiesValues() }">
+                    <label>Namee
+                        <input name="communityName" value="{{ if .SelectedCommunity }} {{ .SelectedCommunity.CommunityName }} {{ end }}" />
                     </label>
                     <div>
-                        {{ template "selectuser" . }}
+                        {{ if .SelectedCommunity }}
+                        {{ template "selectuser" .SelectedCommunity.Members }}
+                        {{ else }}
+                        {{ template "selectuser" }}
+                        {{ end }}
+
                     </div>
+                    <button type="submit">{{ if .Query.New -}} Create {{- else }} Update {{- end}}</button>
                 </form>
             </div>
         </div>
