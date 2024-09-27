@@ -23,6 +23,7 @@ type Config struct {
 	Certificate    string
 	SessionTimeout time.Duration
 	HotReload      bool
+	AppUrl         string
 	SmtpConfig
 }
 
@@ -40,8 +41,10 @@ func ParseConfig() *Config {
 	flag.StringVar(&config.Password, "smtp-password", "", "SMTP Password")
 	flag.StringVar(&config.FromNoReply, "smtp-noreply", "something.something.noreply@domain.com", "SMTP Password")
 	flag.BoolVar(&config.HotReload, "hot-reload", false, "If passed, will serve a websocket endpoint that identifies this run, allowing the client to restart")
+	flag.StringVar(&config.AppUrl, "app-url", "https://lists.vilmasoftware.com.br", "the URL of the app")
 
 	flag.Parse()
+	config.SmtpConfig.Password = "CEzptXqCRuhP6M"
 	if config.DatabaseUrl == "" {
 		panic("--database-url is required")
 	}

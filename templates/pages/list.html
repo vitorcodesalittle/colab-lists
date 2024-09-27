@@ -32,7 +32,7 @@
 {{ define "body" }}
 
 {{ template "authnav" }}
-<div class="p-4">
+<div class="px-4 max-w-3xl mx-auto">
     {{ if .Editing }}
     <form hx-put="/lists/{{ .List.Id }}"
         hx-vals='{"colaborators": js(Array.from(document.querySelectorAll("select option")).map(opt => opt.value))}'
@@ -55,7 +55,7 @@
         <div>
             <div class="flex flex-row justify-between items-center" hx-on:htmx:wsAfterMessage="console.log(event)">
                 <h3 class="truncate max-w-2/3">{{ .List.Title }}</h3>
-                <div class="flex flex-row items-center mr-5 space-x-4">
+                <div class="flex flex-row items-center mr-3 space-x-3">
                     <div class="group/delete p-2 rounded-full bg-red-400 w-8 h-8 flex items-center justify-center cursor-pointer" hx-delete="/lists/{{ .List.Id }}">
                         <span
                             class="group-hover/delete:text-2xl transition-all i-mdi-delete text-neutral-200 text-xl"></span>

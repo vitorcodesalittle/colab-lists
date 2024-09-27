@@ -63,7 +63,7 @@
     {{ .ExtraHead }}
 </head>
 
-<body class="group-hover/menu:bg-neutral-400 group-hover/menu:p-10">
+<body>
     {{ .Body }}
 </body>
 
@@ -77,15 +77,15 @@
             <span class="i-mdi-menu border text-xl hover:text-2xl m-auto" </span>
         </div>
         <div
-            class="group-hover/menu:visible absolute invisible flex flex-row flex-grow justify-start space-x-2 -top-4 group-hover/menu:-left-4 -left-96 transition-all duration-500">
+            class="group-hover/menu:visible absolute invisible flex flex-row flex-grow justify-start space-x-2 -top-4 group-hover/menu:-left-4 -left-96 transition-all duration-200">
             <div
-                class="bg-neutral-100 rounded shadow-2xl z-50 text-brand-800 flex flex-col w-72 p-4 pl-8 pt-8 space-y-2">
+                class="bg-neutral-100 min-h-2/3 rounded shadow-2xl z-50 text-brand-800 flex flex-col w-56 p-4 pl-8 pt-8 space-y-2">
                 <a href="/communities"
                     class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">Communities</a>
                 <a href="/lists"
                     class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">Lists</a>
                 <a href="/logout"
-                    class="mt-42 cursor-pointer border-transparent border hover:border-b-brand-500 transition">Logout</a>
+                    class="cursor-pointer border-transparent border hover:border-b-brand-500 transition" style="margin-top: 196px">Logout</a>
             </div>
         </div>
     </div>
@@ -131,7 +131,7 @@
     x-data="{ searchResult: [], value: [
             {{ if . }}
             {{ range . }}
-            { id: {{ .Id }}, username: '{{ .Username }}' },
+            { id: {{ .Id }}, username: '{{ .Username }}', avatarUrl: '{{ .AvatarUrl }}' },
             {{end}}
             {{end}}
     ], async fetchResults (event) { const users = await fetch('/api/users?q='+event.target.value); this.searchResult = await users.json(); }, toggleUserFromValue (user) { const userIds = this.value.map(user => user.id); const index = userIds.indexOf(user.id); if (index === -1) this.value.push(user); else this.value = this.value.filter(user2 => user2.id !== user.id); console.log(this.value)  }, 

@@ -91,13 +91,13 @@ func scanList(row Scanner) (List, error) {
 	l := &List{
 		Creator: user.User{},
 	}
-	var communityId int64
+	var communityId *int64
 	err := row.Scan(&l.Id, &l.Title, &l.Description, &l.Creator.Id, &l.UpdatedAt, &communityId)
 	if err != nil {
 		return List{}, err
 	}
-	if communityId != 0 {
-		l.Community = &community.Community{CommunityId: communityId}
+	if communityId != nil {
+		l.Community = &community.Community{CommunityId: *communityId}
 	}
 	return *l, nil
 }

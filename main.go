@@ -557,8 +557,9 @@ func postPasswordRecoveryRequestHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	if err := recoveryService.CreatePasswordRecoveryRequest(email); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func deleteListHandler(w http.ResponseWriter, r *http.Request) {

@@ -5,16 +5,19 @@
 {{ define "communitiesbody" }}
 {{ template "authnav" }}
 
-<div class="p-4">
+<div class="px-4 max-w-3xl mx-auto">
     <div class="flex-col space-y-1 flex">
         <div class="flex-row flex items-center w-full justify-between">
             <h2>Communities</h2>
             <div class="flex-row flex items-center">
                 {{ if or .Query.SelectedId .Query.EditingId }}
-                <div class="rounded p-2 cursor-pointer hover:bg-neutral-200" hx-delete="/communities/{{ .SelectedCommunity.CommunityId }}">Remove</div>
+                <div class="rounded p-2 cursor-pointer hover:bg-neutral-200"
+                    hx-delete="/communities/{{ .SelectedCommunity.CommunityId }}">Remove</div>
                 <a href="/communities?editingId={{ .Query.SelectedId }}"><span>Edit</span></a>
                 {{ else }}
-                <a href="/communities?new=true"><span>New</span></a>
+                <a href="/communities?new=true" class=" bg-brand-700 p-1 rounded-full flex items-center justify-center">
+                    <span class="i-mdi-plus text-neutral-200 w-5 h-5"></span>
+                </a>
                 {{ end }}
             </div>
         </div>
@@ -40,14 +43,15 @@
         </div>
 
         {{ if or .Query.New .Query.EditingId }}
-        <div class="fixed top-0 left-0 w-screen h-screen bg-gray-200 flex flex-col justify-center items-center"
-             style="background-color: rgba(0, 0, 0, 0.5)" x-data="{}">
-            <div class="bg-neutral-100 p-4 rounded"
-                 @click.outside="window.history.go(-1)">
+        <div class="fixed top-0 left-0 w-screen h-screen bg-gray-200 flex flex-col items-center"
+            style="background-color: rgba(0, 0, 0, 0.5)" x-data="{}">
+            <div class="bg-neutral-100 p-4 rounded mt-16" style="max-width: 90%" @click.outside="window.history.go(-1)">
                 <h3>New Community</h3>
-                <form hx-ext='json-enc-custom' {{ if .SelectedCommunity }}hx-put="/communities/{{.SelectedCommunity.CommunityId}}"{{else}}hx-post="/communities"{{end}}>
+                <form hx-ext='json-enc-custom' {{ if .SelectedCommunity
+                    }}hx-put="/communities/{{.SelectedCommunity.CommunityId}}" {{else}}hx-post="/communities" {{end}}>
                     <label>Name
-                        <input name="communityName" value="{{ if .SelectedCommunity }} {{ .SelectedCommunity.CommunityName }} {{ end }}" />
+                        <input name="communityName"
+                            value="{{ if .SelectedCommunity }} {{ .SelectedCommunity.CommunityName }} {{ end }}" />
                     </label>
                     <div>
                         {{ if .SelectedCommunity }}

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"vilmasoftware.com/colablists/pkg/config"
 	"vilmasoftware.com/colablists/pkg/infra"
 	"vilmasoftware.com/colablists/pkg/user"
 )
@@ -16,7 +17,6 @@ type Recovery struct {
 	UserRepository user.UsersRepository
 }
 
-// TODO: improve this function
 func IsPasswordValid(password string) bool {
 	return len(password) < 5
 }
@@ -29,7 +29,7 @@ func (r *Recovery) CreatePasswordRecoveryRequest(email string) error {
 	if user.Id == 0 {
 		return nil
 	}
-	tokenBytes := make([]byte, 256)
+	tokenBytes := make([]byte, 64)
 	if _, err := rand.Read(tokenBytes); err != nil {
 		return err
 	}
@@ -45,7 +45,10 @@ func (r *Recovery) CreatePasswordRecoveryRequest(email string) error {
 		return err
 	}
 	fmt.Printf("Recovery URL is at /password-recovery?token=%s\n", token)
-	// TODO: send email
+
+	if err := infra.SendEmail([]string{user.Email}, "Password Recovery", fmt.Sprintf("Recovery URL is at %s/password-recovery?token=%s\n", config.GetConfig().AppUrl, token)); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -72,7 +75,7 @@ func (r *Recovery) RecoverPassword(password, token string) error {
 	} else if dbTokenRs.Err() != nil {
 		return dbTokenRs.Err()
 	}
-	dbTokenRs.Scan(&entry.id, &entry.luserId, &entry.issuedAt, entry.consumedAt)
+	dbTokenRs.Scan(&entry.id, &entry.luserId, &entry.issuedAt, &entry.consumedAt)
 
 	if entry.consumedAt != nil {
 		return errors.New("entry already consumed")
