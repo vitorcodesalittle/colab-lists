@@ -561,6 +561,30 @@ func postPasswordRecoveryRequestHandler(w http.ResponseWriter, r *http.Request) 
 
 }
 
+func deleteListHandler(w http.ResponseWriter, r *http.Request) {
+	if redirectIfNotLoggedIn(w, r) {
+		return
+	}
+	lisetId := r.PathValue("listId")
+	id, err := strconv.ParseInt(lisetId, 10, 64)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	user, err := session.GetUserFromSession(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	err = listsRepository.Delete(id, user.Id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Add("HX-Redirect", "/lists")
+}
+
 func main() {
 	ServerRunID = fmt.Sprintf("%x", sha256.New().Sum([]byte(time.Now().String())))
 	config := config.GetConfig()
@@ -590,6 +614,7 @@ func main() {
 	http.HandleFunc("GET /lists", getListsHandler)
 	http.HandleFunc("POST /lists", postListsHandler)
 	http.HandleFunc("GET /lists/{listId}", getListDetailHandler)
+	http.HandleFunc("DELETE /lists/{listId}", deleteListHandler)
 	http.HandleFunc("GET /api/users/{userId}", getUserHandler)
 	http.HandleFunc("GET /api/users", getUsersHandler)
 	http.HandleFunc("GET /ws/list-editor", getListEditorHandler)

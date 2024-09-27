@@ -72,8 +72,15 @@ func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
 }
 
 // Delete implements ListsRepository.
-func (s *SqlListRepository) Delete(id int) error {
-	panic("unimplemented")
+func (s *SqlListRepository) Delete(listId, userId int64) error {
+	db, err := infra.CreateConnection()
+	if err != nil {
+		return err
+	}
+	if _, err := db.Exec(`DELETE FROM list where listId = ? and creatorLuserId = ?`, listId, userId); err != nil {
+		return err
+	}
+	return nil
 }
 
 type Scanner interface {

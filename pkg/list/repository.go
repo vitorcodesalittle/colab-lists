@@ -5,5 +5,5 @@ type ListsRepository interface {
 	Get(id int64) (List, error)
 	Create(list *ListCreationParams) (List, error)
 	Update(list *List) (*List, error)
-	Delete(id int) error
+	Delete(listId int64, userId int64) error
 }

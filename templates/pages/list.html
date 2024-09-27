@@ -55,13 +55,21 @@
         <div>
             <div class="flex flex-row justify-between items-center" hx-on:htmx:wsAfterMessage="console.log(event)">
                 <h3 class="truncate max-w-2/3">{{ .List.Title }}</h3>
-                <a class="group/edit p-2 rounded-full bg-brand-600 w-8 h-8 flex items-center justify-center mr-14"
-                    href="/lists/{{ .List.Id }}?edit">
-                    <span class="group-hover/edit:text-2xl transition-all i-mdi-edit text-neutral-200 text-xl"></span>
-                </a>
+                <div class="flex flex-row items-center ">
+                    <div class="group/delete p-2 rounded-full bg-red-400 w-8 h-8 flex items-center justify-center mr-14 cursor-pointer" hx-delete="/lists/{{ .List.Id }}">
+                        <span
+                            class="group-hover/delete:text-2xl transition-all i-mdi-delete text-neutral-200 text-xl"></span>
+                    </div>
+                    <a class="group/edit p-2 rounded-full bg-brand-600 w-8 h-8 flex items-center justify-center mr-14"
+                        href="/lists/{{ .List.Id }}?edit">
+                        <span
+                            class="group-hover/edit:text-2xl transition-all i-mdi-edit text-neutral-200 text-xl"></span>
+                    </a>
+                </div>
             </div>
             {{ if .List.Community }}
-            <a href="/communities?selectedId={{ .List.Community.CommunityId }}"><span>{{ .List.Community.CommunityName }}</span></a>
+            <a href="/communities?selectedId={{ .List.Community.CommunityId }}"><span>{{ .List.Community.CommunityName
+                    }}</span></a>
             {{ end }}
             <p><i name="description">{{ .List.Description }}</i></p>
             {{block "colaborators" .List.ColaboratorsOnline}}
