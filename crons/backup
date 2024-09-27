@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -e
+
+[ -z "$PRIVATE_KEY" ] && echo "PRIVATE_KEY is required" && exit 1
+[ -z "$SSH_HOST" ] && echo "HOST is required" && exit 1
+[ -z "$BACKUP_ID" ] && echo "BACKUP_ID is required" && exit 1
+
+BACKUP_DIR=${BACKUP_DIR-"../.backups"}
+
+echo BACKUP_DIR=$BACKUP_DIR
+echo BACKUP_ID=$BACKUP_ID
+
+eval "$(ssh-agent -s)"
+ssh-add ~/.ssh/colab-lists.pem
+
+mkdir $BACKUP_DIR/$BACKUP_ID || echo 'Backup directory already exists'
+
+scp -r -i ~/.ssh/colab-lists.pem \
+    ec2-user@$SSH_HOST:/home/ec2-user/data/ "$BACKUP_DIR/$BACKUP_ID/data"
+
+
