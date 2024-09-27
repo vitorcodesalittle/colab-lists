@@ -9,9 +9,9 @@
     <div class="flex-col space-y-1 flex">
         <div class="flex-row flex items-center w-full justify-between">
             <h2>Communities</h2>
-            <div>
+            <div class="flex-row flex items-center">
                 {{ if or .Query.SelectedId .Query.EditingId }}
-                <div class="border rounded p-2 cursor-pointer hover:bg-neutral-200" hx-delete="/communities/{{ .SelectedCommunity.CommunityId }}">Remove</div>
+                <div class="rounded p-2 cursor-pointer hover:bg-neutral-200" hx-delete="/communities/{{ .SelectedCommunity.CommunityId }}">Remove</div>
                 <a href="/communities?editingId={{ .Query.SelectedId }}"><span>Edit</span></a>
                 {{ else }}
                 <a href="/communities?new=true"><span>New</span></a>

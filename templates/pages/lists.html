@@ -1,55 +1,58 @@
 {{ define "body" }}
 {{ template "authnav" }}
-<div class="px-4" x-data="{ section: 'Your lists', creatingList: false }">
+<div class="px-4" x-data="{creatingList: false}" }>
     <div>
-        <p>Current section <span x-text="section"></span></p>
-        <button @click="section = 'Your lists'">Your lists</button>
-        <button @click="section = 'Your houses'">Your houses</button>
-    </div>
-    <template x-if="section === 'Your lists'">
-        <div>
-            <div class="flex flex-col items-center">
-                <div>
-                    <h2>Your Lists</h2>
-                    <button @click="creatingList = true">Create list</button>
-                </div>
-                <ul class="space-y-2">
-                    {{ range .Lists }}
-                    <li class="w-full border">
-                        <a class="flex flex-row space-x-2 items-center border-b-brand-200 border-b transition-all hover:border-b-brand-500"
-                            href="/lists/{{ .Id }}">
-                            <p class="max-w-24 truncate">{{ .Title }}</p>
-                            <div class="flex flex-grow flex-row justify-end items-center space-x-2">
-                                <span>{{ .Description }}</span>
-                                {{ if .Community }}<span>{{ .Community.CommunityName }}</span>{{ else }} <span>Private</span>{{ end }}
-                                <time datetime="{{ .UpdatedAt }}">
-                                    {{ .UpdatedAt.Format "2006-01-02" }}
-                                </time>
-                            </div>
-                        </a>
-                    </li>
-                    {{ end }}
-                </ul>
-                <span>You have a total of {{ .Lists | len }} lists</span>
+        <div class="flex flex-col items-center">
+            <div class="flex flex-row items-center w-full justify-between">
+                <h2>Your Lists</h2>
+                <button @click="creatingList = true" class=" bg-brand-700 p-1 rounded-full flex items-center justify-center">
+                    <span class="i-mdi-plus text-neutral-200 w-5 h-5"></span>
+                </button>
             </div>
-            <div x-show="creatingList" class="border" @click.outside="creatingList = false">
-                <h2>Create a new list</h2>
-                <form method="post" action="/lists" class="flex flex-col space-y-1">
-                    <label for="title">Title</label>
-                    <input type="text" id="title" name="title" required>
-                    <label for="title">Description</label>
-                    <input type="text" id="description" name="description">
-                    <select name="communityId" type="text" id="communityId" value="{{ if .Form.DefaultCommunity -}} .DefaultCommunity.CommunityId {{- end }}">
-                        {{ range .Form.Communities }}
-                        <option value="{{ .CommunityId }}">{{ .CommunityName}}</option>
-                        {{ end }}
-                    </select>
-                    <button type="submit"
-                        class="rounded p-2 mr-auto ml-auto bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold mx-auto mt-4">Create</button>
-                </form>
+            <ul class="w-full space-y-2">
+                {{ range .Lists }}
+                <li>
+                    <a class="flex flex-row flex-grow space-x-2 items-center border-b-brand-200 border-b transition-all hover:border-b-brand-500"
+                        href="/lists/{{ .Id }}">
+                        <p class="truncate">{{ .Title }}</p>
+                        <div class="flex flex-grow flex-row justify-end items-center space-x-2">
+                            <span>{{ .Description }}</span>
+                            {{ if .Community }}<span>{{ .Community.CommunityName }}</span>{{ else }}
+                            <span>Private</span>{{ end }}
+                            <time datetime="{{ .UpdatedAt }}">
+                                {{ .UpdatedAt.Format "2006-01-02" }}
+                            </time>
+                        </div>
+                    </a>
+                </li>
+                {{ end }}
+            </ul>
+            <span>You have a total of {{ .Lists | len }} lists</span>
+        </div>
+        <div x-show="creatingList" class="flex flex-col items-center" @click.outside="creatingList = false">
+
+            <div class="fixed top-0 left-0 w-screen h-screen bg-gray-200 flex flex-col justify-center items-center"
+                style="background-color: rgba(0, 0, 0, 0.5)" x-data="{}">
+                <div class="bg-neutral-100 p-4 rounded mx-8" @click.outside="creatingList = false">
+                    <h2>Create a new list</h2>
+                    <form method="post" action="/lists" class="flex flex-col space-y-1 w-full">
+                        <label for="title">Title</label>
+                        <input type="text" id="title" name="title" required>
+                        <label for="title">Description</label>
+                        <input type="text" id="description" name="description">
+                        <select name="communityId" type="text" id="communityId"
+                            value="{{ if .Form.DefaultCommunity -}} .DefaultCommunity.CommunityId {{- end }}">
+                            {{ range .Form.Communities }}
+                            <option value="{{ .CommunityId }}">{{ .CommunityName}}</option>
+                            {{ end }}
+                        </select>
+                        <button type="submit"
+                            class="rounded p-2 mr-auto ml-auto bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold mx-auto mt-4">Create</button>
+                    </form>
+                </div>
             </div>
         </div>
-    </template>
+    </div>
 </div>
 
 {{ end }}
