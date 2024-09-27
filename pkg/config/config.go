@@ -22,6 +22,7 @@ type Config struct {
 	PrivateKey     string
 	Certificate    string
 	SessionTimeout time.Duration
+	HotReload      bool
 	SmtpConfig
 }
 
@@ -38,13 +39,14 @@ func ParseConfig() *Config {
 	flag.StringVar(&config.Username, "smtp-username", "", "SMTP Username")
 	flag.StringVar(&config.Password, "smtp-password", "", "SMTP Password")
 	flag.StringVar(&config.FromNoReply, "smtp-noreply", "something.something.noreply@domain.com", "SMTP Password")
+	flag.BoolVar(&config.HotReload, "hot-reload", false, "If passed, will serve a websocket endpoint that identifies this run, allowing the client to restart")
 
 	flag.Parse()
 	if config.DatabaseUrl == "" {
-		panic("Database URL is required")
+		panic("--database-url is required")
 	}
 	if config.Listen == "" {
-		panic("Listen is required")
+		panic("-listen is required")
 	}
 	if config.UseTls {
 		_, err := os.Stat(config.PrivateKey)

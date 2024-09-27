@@ -7,4 +7,5 @@ type UsersRepository interface {
 	CreateUser(username, password, email string) (User, error)
 	UnsafeGetByUsername(username string) (*User, error)
 	ComparePassword(password []byte, hashedPasswowrd []byte) bool
+	FindByEmail(email string) (User, error)
 }

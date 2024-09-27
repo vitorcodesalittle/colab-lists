@@ -18,8 +18,8 @@
             {{ end }}
         </div>
     </form>
-    <div class="mt-5 cursor-pointer border-transparent border hover:border-b-brand-500 transition">Forgot my
-        password</div>
+    <a href="/password-recovery-request" class="mt-5 cursor-pointer border-transparent border hover:border-b-brand-500 transition">Forgot my
+        password</a>
     <a href="/signup" class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">Create an
         account</a>
 </div>
@@ -56,8 +56,8 @@
 </div>
 {{ end }}
 
-{{ define "bodypasswordrecovery" }}
 
+{{ define "bodypasswordrecovery-recover" }}
 <form hx-post="/password-recovery" hx-vals="js:{token: new URL(window.location).searchParams.get('token')}">
     <label>New password:</label>
     <input type="password" name="password" />
@@ -65,5 +65,14 @@
     <input type="password" />
     <button type="submit">Confirm</button>
 </form>
-
 {{ end }}
+
+
+{{ define "bodypasswordrecovery-request" }}
+<form hx-post="/password-recovery-request">
+    <label>Email:</label>
+    <input type="email" name="email" />
+    <button type="submit">Confirm</button>
+</form>
+{{ end }}
+

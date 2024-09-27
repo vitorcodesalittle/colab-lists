@@ -1,0 +1,8 @@
+CREATE TABLE password_recovery_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  luserId INTEGER REFERENCES luser(luserId) NOT NULL,
+  email TEXT NOT NULL,
+  token TEXT NOT NULL,
+  issuedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  consumedAt TIMESTAMP
+)

@@ -27,7 +27,7 @@ func (s *SqlUsersRepository) CreateUser(username, password, email string) (User,
 		return User{}, fmt.Errorf("User with username %s already exists", username)
 	}
 
-	passwordHash, err := hashPassword([]byte(password))
+	passwordHash, err := HashPassword([]byte(password))
 	if err != nil {
 		return User{}, err
 	}
@@ -146,7 +146,7 @@ func (s *SqlUsersRepository) UnsafeGetByUsername(username string) (*User, error)
 	return &user, nil
 }
 
-func hashPassword(password []byte) ([]byte, error) {
+func HashPassword(password []byte) ([]byte, error) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -179,4 +179,18 @@ func (s *SqlUsersRepository) Search(query string) ([]*User, error) {
 		users = append(users, user)
 	}
 	return users, nil
+}
+
+func (s *SqlUsersRepository) FindByEmail(email string) (User, error) {
+	conn, err := infra.CreateConnection()
+	if err != nil {
+		return User{}, err
+	}
+	var user User
+	row := conn.QueryRow(`SELECT * FROM luser WHERE email = ?`, email)
+	ScanUser(row, &user)
+	if err != nil && err != sql.ErrNoRows {
+		return User{}, err
+	}
+	return user, nil
 }

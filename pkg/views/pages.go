@@ -100,6 +100,16 @@ func (t *templates) RenderPasswordRecovery(w io.Writer, args *PasswordRecoveryAr
 	t.renderBase(w, &baseArgs{
 		Title:       "Password Recovery",
 		Description: GetDescription("Password Recovery"),
-		Body:        t.ExecuteTemplateString(t.Auth, "bodypasswordrecovery", args),
+		Body:        t.ExecuteTemplateString(t.Auth, "bodypasswordrecovery-recover", args),
+	})
+}
+
+type PasswordRecoveryRequestArgs struct{}
+
+func (t *templates) RenderPasswordRecoveryRequest(w io.Writer, args *PasswordRecoveryRequestArgs) {
+	t.renderBase(w, &baseArgs{
+		Title:       "Password Recovery Request",
+		Description: GetDescription("Password Recovery Request"),
+		Body:        t.ExecuteTemplateString(t.Auth, "bodypasswordrecovery-request", args),
 	})
 }

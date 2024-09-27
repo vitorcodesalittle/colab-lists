@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/mail"
 	"net/url"
 	"os"
 	"os/signal"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/gorilla/websocket"
 	migrate "vilmasoftware.com/colablists/cmd"
+	recovery "vilmasoftware.com/colablists/pkg"
 	"vilmasoftware.com/colablists/pkg/community"
 	"vilmasoftware.com/colablists/pkg/config"
 	"vilmasoftware.com/colablists/pkg/list"
@@ -39,6 +41,7 @@ var (
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
+	recoveryService *recovery.Recovery = &recovery.Recovery{UserRepository: usersRepository}
 )
 
 func getIndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -510,9 +513,29 @@ func deleteCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func getPasswordRecoveryHandler(w http.ResponseWriter, r *http.Request) {
-	views.Templates.RenderPasswordRecovery(w, &views.PasswordRecoveryArgs{
-		Token: r.URL.Query().Get("token"),
-	})
+	views.Templates.RenderPasswordRecovery(w, &views.PasswordRecoveryArgs{})
+}
+func postPasswordRecoveryHandler(w http.ResponseWriter, r *http.Request) {
+	password := r.FormValue("password")
+	token := r.FormValue("token")
+	if err := recoveryService.RecoverPassword(password, token); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func getPasswordRecoveryRequestHandler(w http.ResponseWriter, r *http.Request) {
+	views.Templates.RenderPasswordRecoveryRequest(w, &views.PasswordRecoveryRequestArgs{})
+}
+
+func postPasswordRecoveryRequestHandler(w http.ResponseWriter, r *http.Request) {
+	email := r.FormValue("email")
+	if _, err := mail.ParseAddress(email); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+	if err := recoveryService.CreatePasswordRecoveryRequest(email); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 }
 
 func main() {
@@ -556,6 +579,9 @@ func main() {
 	http.HandleFunc("PUT /communities/{communityId}", putCommunitiesHandler)
 	http.HandleFunc("DELETE /communities/{communityId}", deleteCommunitiesHandler)
 	http.HandleFunc("GET /password-recovery", getPasswordRecoveryHandler)
+	http.HandleFunc("POST /password-recovery", postPasswordRecoveryHandler)
+	http.HandleFunc("GET /password-recovery-request", getPasswordRecoveryRequestHandler)
+	http.HandleFunc("POST /password-recovery-request", postPasswordRecoveryRequestHandler)
 
 	// For development purposes only:
 	http.HandleFunc("GET /ws/hot-reload", getHotReloadHandler)
