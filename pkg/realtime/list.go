@@ -71,14 +71,14 @@ func (l *LiveEditor) HandleWebsocketConn(conn *connection) {
 
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				l.removeConnection(conn.Conn)
-				log.Println("Unexcepted Close Error: ", err)
+				log.Printf("unexcepted Close Error: %v\n", err)
 				return
 			} else if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				l.removeConnection(conn.Conn)
-				log.Println("Close Error: ", err)
+				log.Printf("close Error: %v\n", err)
 				return
 			}
-			log.Println("Unexpected error reading websocket message ", err.Error())
+			log.Printf("Unexpected error reading websocket message %v\n", err)
 			continue
 		}
 		switch messageType {

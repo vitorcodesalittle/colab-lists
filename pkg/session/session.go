@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"log"
 	"net/http"
 	"time"
 
@@ -65,11 +66,11 @@ func SessionPeriodicallyCleaner() {
 			if time.Since(session.LastUsed) > config.GetConfig().SessionTimeout {
 				db, err := infra.CreateConnection()
 				if err != nil {
-					println("Failed to delete session " + sessionId + " because of database connection error " + err.Error())
+					log.Printf("Failed to delete session %v because of database connection error %v", sessionId, err)
 				}
 				err = deleteSessionById(sessionId, db)
 				if err != nil {
-					println("Failed to delete session! " + sessionId)
+					log.Printf("Failed to delete session %v\n", sessionId)
 				}
 				delete(SessionsMap, sessionId)
 			}

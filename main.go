@@ -75,7 +75,6 @@ func postLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		log.Printf("Error when logging in %v", err)
 		http.Redirect(w, r, "/login?formError="+err.Error(), http.StatusSeeOther)
 		return
 	}
@@ -243,7 +242,6 @@ func putListSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	list, err := listsRepository.Update(found.List)
 	if err != nil {
-		log.Println(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -347,8 +345,6 @@ func getCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 	}
-	fmt.Printf("SelectedCommunity: %v\n", comunityPageArgs.SelectedCommunity)
-
 	user, err := session.GetUserFromSession(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -410,14 +406,21 @@ type HotReloadMessage struct {
 
 var ServerRunID string
 
+func removeHotReloadCon(conn *websocket.Conn) {
+	for i, c := range allconns {
+		if c == conn {
+			allconns = append(allconns[:i], allconns[i+1:]...)
+			return
+		}
+	}
+}
 func handleHotReload(conn *websocket.Conn) {
 	defer conn.Close()
 	for {
 		hotReloadMessage := &HotReloadMessage{}
 		err := conn.ReadJSON(hotReloadMessage)
 		if err != nil {
-			log.Println("Error reading message")
-			log.Println(err)
+			removeHotReloadCon(conn)
 			return
 		}
 		conn.WriteJSON(&HotReloadMessage{ServerRunId: ServerRunID})
@@ -558,8 +561,6 @@ func main() {
 		log.Fatal(err)
 	}
 	//
-	fmt.Printf("SessionMap: %v\n", session.SessionsMap)
-
 	http.HandleFunc("GET /login", getLoginHandler)
 	http.HandleFunc("POST /login", postLoginHandler)
 	http.HandleFunc("GET /logout", getLogoutHandler)
@@ -586,7 +587,6 @@ func main() {
 	// For development purposes only:
 	http.HandleFunc("GET /ws/hot-reload", getHotReloadHandler)
 
-	log.Printf("Server config = %v\n", config)
 	log.Printf("Server started at %s\n", config.Listen)
 	httpServer := http.Server{
 		Addr:              config.Listen,

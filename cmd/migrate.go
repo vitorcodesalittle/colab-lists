@@ -49,7 +49,6 @@ func MigrateDb() MigrationResult {
 	migrations := listMigrations()
 	slices.Sort(appliedMigrations)
 	log.Printf("Applied migrations: %v", appliedMigrations)
-	log.Printf("Migrations: %v", migrations)
 	slices.Sort(migrations)
 	migrationsIdx, appliedMigrationsIdx := 0, 0
 	toApply := make([]string, 0)
@@ -92,7 +91,6 @@ func MigrateDb() MigrationResult {
 		}
 	}
 	defer tx.Rollback()
-	fmt.Printf("Applying migrations: %v\n", toApply)
 	for _, migration := range toApply {
 		err := executeMigration(tx, migration)
 		if err != nil {

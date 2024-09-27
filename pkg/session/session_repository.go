@@ -1,8 +1,6 @@
 package session
 
 import (
-	"fmt"
-
 	"vilmasoftware.com/colablists/pkg/infra"
 	"vilmasoftware.com/colablists/pkg/user"
 )
@@ -18,12 +16,10 @@ func SaveSessionsInDb() error {
 		return err
 	}
 	defer tx.Rollback()
-	///println("Deleting all sessions")
 	_, err = tx.Exec(`DELETE FROM luser_session`)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Saving sessions %v\n", SessionsMap)
 	for _, session := range SessionsMap {
 		insertSession(session, tx)
 	}
@@ -41,7 +37,6 @@ func SaveSessionInDb(sesh *Session) error {
 	SessionsMap[sesh.SessionId] = sesh
 	defer conn.Close()
 	return insertSession(sesh, conn)
-
 }
 
 func RestoreSessionsFromDb() error {
@@ -68,7 +63,6 @@ func RestoreSessionsFromDb() error {
 		}
 		SessionsMap[session.SessionId] = session
 	}
-	fmt.Printf("Restored sessions! %v\n", SessionsMap)
 	return nil
 }
 

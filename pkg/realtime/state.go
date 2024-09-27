@@ -1,7 +1,6 @@
 package realtime
 
 import (
-	"log"
 	"strconv"
 
 	"vilmasoftware.com/colablists/pkg/list"
@@ -129,7 +128,6 @@ func (ls *ListState) EditItem(args *EditItemArgs) *list.Item {
 
 	qtd, err := strconv.Atoi(args.Quantity)
 	if err != nil {
-		log.Printf("Error converting quantity to int: %v\n", err)
 		return nil
 	}
 	if args.Field == "description" {

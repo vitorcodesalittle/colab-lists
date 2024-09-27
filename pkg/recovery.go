@@ -22,14 +22,11 @@ func IsPasswordValid(password string) bool {
 }
 
 func (r *Recovery) CreatePasswordRecoveryRequest(email string) error {
-	println("Looking for user with email " + email)
 	user, err := r.UserRepository.FindByEmail(email)
-	println("User found " + user.String())
 	if err != nil {
 		return err
 	}
 	if user.Id == 0 {
-		println("User not found")
 		return nil
 	}
 	tokenBytes := make([]byte, 256)

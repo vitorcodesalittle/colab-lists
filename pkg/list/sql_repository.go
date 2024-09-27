@@ -107,13 +107,12 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
     Where listId = ?
     `)
 	if err != nil {
-		println("error at scan")
-		panic(err)
+		log.Fatal(err)
 	}
 	rs := stmt.QueryRow(id)
 	resultlis, err := scanList(rs)
 	if err != nil {
-		println("error at scan list")
+		log.Fatal("error at scan list")
 		return List{}, err
 	}
 
@@ -124,12 +123,10 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
     WHERE lc.listId = ?
     `)
 	if err != nil {
-		log.Println("Failed to query luser")
 		return List{}, err
 	}
 	rscolaborators, err := stmt.Query(resultlis.Creator.Id)
 	if err != nil {
-		println("error at colab query")
 		return List{}, err
 	}
 	defer rscolaborators.Close()
@@ -153,7 +150,6 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 	}
 	rs2, err := stmt.Query(id)
 	if err != nil {
-		println("error at group query")
 		return List{}, err
 	}
 	defer rs2.Close()
@@ -170,7 +166,6 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
         WHERE groupId = ?
         `)
 		if err != nil {
-			println("error at item query")
 			return List{}, err
 		}
 		rsg, err := stmt.Query(g.GroupId)

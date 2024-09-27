@@ -52,12 +52,13 @@ func ParseConfig() *Config {
 		_, err := os.Stat(config.PrivateKey)
 		if err != nil {
 			log.Println("Failed to find the private-key at " + config.PrivateKey)
-			panic(err)
+			log.Fatal(err)
 		}
 		_, err = os.Stat(config.Certificate)
 		if err != nil {
 			log.Println("Failed to find the certificate at " + config.Certificate)
-			panic(err)
+			log.Fatal(err)
+
 		}
 	}
 
