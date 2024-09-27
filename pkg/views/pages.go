@@ -25,8 +25,14 @@ func (t *templates) RenderList(w io.Writer, args *ListArgs) {
 	t.renderBase(w, &baseArgs{ExtraHead: t.ExecuteTemplateString(t.List, "extrahead", args), Body: t.ExecuteTemplateString(t.List, "body", args), Title: "!!!!" + args.List.Title, Description: GetDescription("")})
 }
 
+type ListCreationForm struct {
+	Communities      []*community.Community
+	DefaultCommunity *community.Community
+}
+
 type ListsArgs struct {
 	Lists []list.List
+	Form  ListCreationForm
 }
 
 func (t *templates) RenderLists(w io.Writer, args *ListsArgs) {

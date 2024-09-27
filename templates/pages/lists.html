@@ -1,7 +1,6 @@
 {{ define "body" }}
 {{ template "authnav" }}
-<div class="px-4"
-    x-data="{ section: 'Your lists', creatingList: false }">
+<div class="px-4" x-data="{ section: 'Your lists', creatingList: false }">
     <div>
         <p>Current section <span x-text="section"></span></p>
         <button @click="section = 'Your lists'">Your lists</button>
@@ -22,6 +21,7 @@
                             <p class="max-w-24 truncate">{{ .Title }}</p>
                             <div class="flex flex-grow flex-row justify-end items-center space-x-2">
                                 <span>{{ .Description }}</span>
+                                {{ if .Community }}<span>{{ .Community.CommunityName }}</span>{{ else }} <span>Private</span>{{ end }}
                                 <time datetime="{{ .UpdatedAt }}">
                                     {{ .UpdatedAt.Format "2006-01-02" }}
                                 </time>
@@ -39,6 +39,11 @@
                     <input type="text" id="title" name="title" required>
                     <label for="title">Description</label>
                     <input type="text" id="description" name="description">
+                    <select name="communityId" type="text" id="communityId" value="{{ if .Form.DefaultCommunity -}} .DefaultCommunity.CommunityId {{- end }}">
+                        {{ range .Form.Communities }}
+                        <option value="{{ .CommunityId }}">{{ .CommunityName}}</option>
+                        {{ end }}
+                    </select>
                     <button type="submit"
                         class="rounded p-2 mr-auto ml-auto bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold mx-auto mt-4">Create</button>
                 </form>

@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"vilmasoftware.com/colablists/pkg/community"
 	infra "vilmasoftware.com/colablists/pkg/infra"
 	"vilmasoftware.com/colablists/pkg/user"
 )
@@ -24,13 +25,13 @@ func (s *SqlListRepository) Create(list *ListCreationParams) (List, error) {
 		return List{}, err
 	}
 	stmt, err := tx.Prepare(`
-    INSERT INTO list (title, description, creatorLuserId)
-    VALUES (?, ?, ?)
+    INSERT INTO list (title, description, creatorLuserId, communityId)
+    VALUES (?, ?, ?, ?)
   `)
 	if err != nil {
 		return List{}, err
 	}
-	result, err := stmt.Exec(list.Title, list.Description, list.CreatorId)
+	result, err := stmt.Exec(list.Title, list.Description, list.CreatorId, list.CommunityId)
 	if err != nil {
 		return List{}, err
 	}
@@ -83,11 +84,25 @@ func scanList(row Scanner) (List, error) {
 	l := &List{
 		Creator: user.User{},
 	}
-	err := row.Scan(&l.Id, &l.Title, &l.Description, &l.Creator.Id, &l.UpdatedAt, &l.HouseId)
+	var communityId int64
+	err := row.Scan(&l.Id, &l.Title, &l.Description, &l.Creator.Id, &l.UpdatedAt, &communityId)
 	if err != nil {
 		return List{}, err
 	}
+	if communityId != 0 {
+		l.Community = &community.Community{CommunityId: communityId}
+	}
 	return *l, nil
+}
+
+func GetCommunity(tx infra.Queryable, comm *community.Community) error {
+	row := tx.QueryRow(`SELECT c.communityName, c.createdByLuserId, c.default_, c.createdAt, c.updatedAt from community c where communityId = ?`, comm.CommunityId)
+	if row.Err() != nil {
+		return row.Err()
+	}
+	comm.CreatedBy = &user.User{}
+	row.Scan(&comm.CommunityName, &comm.CreatedBy.Id, comm.Default, &comm.CreatedAt, &comm.UpdatedAt)
+	return nil
 }
 
 // Get implements ListsRepository.
@@ -112,8 +127,14 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 	rs := stmt.QueryRow(id)
 	resultlis, err := scanList(rs)
 	if err != nil {
-		log.Fatal("error at scan list")
+		log.Println("error at scan list")
+		log.Fatalln(err)
 		return List{}, err
+	}
+	if resultlis.Community != nil {
+		if err = GetCommunity(tx, resultlis.Community); err != nil {
+			return List{}, err
+		}
 	}
 
 	stmt, err = tx.Prepare(`
@@ -221,6 +242,26 @@ func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
 		}
 		ls = append(ls, l)
 	}
+	comms := make(map[int64]*community.Community)
+	for _, list := range ls {
+		log.Printf("Getting comm for list %v\n", list)
+		if list.Community != nil {
+			comm, ok := comms[list.Community.CommunityId]
+			if !ok {
+				err := GetCommunity(db, list.Community)
+				if err != nil {
+					return nil, err
+				}
+				comms[list.Community.CommunityId] = list.Community
+			} else {
+				list.Community = comm
+			}
+			log.Printf("Got comm %v\n", list.Community)
+		} else {
+			log.Printf("No comm")
+		}
+	}
+
 	return ls, nil
 }
 

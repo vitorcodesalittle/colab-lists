@@ -128,8 +128,18 @@ func getListsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+
+	communities, err := communityRepository.FindMyHouses(user.Id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	views.Templates.RenderLists(w, &views.ListsArgs{
 		Lists: lists,
+		Form: views.ListCreationForm{
+			Communities:      communities,
+			DefaultCommunity: community.GetDefault(communities),
+		},
 	})
 }
 
@@ -215,6 +225,15 @@ func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 func postListsHandler(w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	description := r.FormValue("description")
+	communityIdString := r.FormValue("communityId")
+	var communityId *int64
+	if len(communityIdString) > 0 {
+		communityIdInt, err := strconv.ParseInt(communityIdString, 10, 64)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+		communityId = &communityIdInt
+	}
 	user, err := session.GetUserFromSession(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
@@ -223,6 +242,7 @@ func postListsHandler(w http.ResponseWriter, r *http.Request) {
 		Title:       title,
 		Description: description,
 		CreatorId:   user.Id,
+		CommunityId: communityId,
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

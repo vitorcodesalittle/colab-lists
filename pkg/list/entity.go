@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"vilmasoftware.com/colablists/pkg/community"
 	"vilmasoftware.com/colablists/pkg/user"
 )
 
@@ -17,7 +18,7 @@ type List struct {
 	Groups       []*Group
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
-	HouseId      *int64
+	Community    *community.Community
 }
 
 type Group struct {

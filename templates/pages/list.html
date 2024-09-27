@@ -60,6 +60,9 @@
                     <span class="group-hover/edit:text-2xl transition-all i-mdi-edit text-neutral-200 text-xl"></span>
                 </a>
             </div>
+            {{ if .List.Community }}
+            <a href="/communities?selectedId={{ .List.Community.CommunityId }}"><span>{{ .List.Community.CommunityName }}</span></a>
+            {{ end }}
             <p><i name="description">{{ .List.Description }}</i></p>
             {{block "colaborators" .List.ColaboratorsOnline}}
             <div id="colaborators" hx-swap-oob="outerHTML">

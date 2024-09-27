@@ -4,6 +4,7 @@ type ListCreationParams struct {
 	Title       string
 	Description string
 	CreatorId   int64
+	CommunityId *int64
 }
 
 const (

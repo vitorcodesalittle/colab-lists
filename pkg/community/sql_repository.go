@@ -160,3 +160,12 @@ func (h *HouseRepository) Delete(communityId, userId int64) error {
 	}
 	return nil
 }
+
+func GetDefault(comms []*Community) *Community {
+	for _, comm := range comms {
+		if comm != nil && comm.Default {
+			return comm
+		}
+	}
+	return nil
+}
