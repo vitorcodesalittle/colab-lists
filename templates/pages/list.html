@@ -72,10 +72,12 @@
                 </div>
             </div>
             {{ if .List.Community }}
-            <a href="/communities?selectedId={{ .List.Community.CommunityId }}"><span>{{ .List.Community.CommunityName
+            <a class="text-lg" href="/communities?selectedId={{ .List.Community.CommunityId }}"><span>Community: {{ .List.Community.CommunityName
                     }}</span></a>
             {{ end }}
-            <p><i name="description">{{ .List.Description }}</i></p>
+            </br>
+            <label>Description:</label>
+            <span><i name="description">{{ .List.Description }}</i></span>
             {{block "colaborators" .List.ColaboratorsOnline}}
             <div id="colaborators" hx-swap-oob="outerHTML">
                 <p>Colaborators {{ . | len }}:</p>
@@ -97,7 +99,7 @@
                                 hx-trigger="change changed throttle:400ms" name="text"
                                 hx-vals='{"actionType": 5, "groupIndex": {{ .GroupIndex }}}' ws-send />
                             <button ws-send hx-vals='{"actionType": 7, "groupIndex": {{ .GroupIndex }}}'
-                                class="hover:bg-neutral-300 hover:shadow-sm hover:font-semibold transition-all rounded-full w-8 h-8 ml-auto py-1 px-1 flex items-center justify-center">
+                                class="hover:bg-neutral-300 hover:shadow-sm hover:font-semibold transition-all rounded-full w-5 h-5 ml-auto py-1 px-1 flex items-center justify-center">
                                 <span class="i-mdi-close text-brand-800 text-lg"></span>
                             </button>
                         </div>
@@ -107,7 +109,7 @@
                             {{ block "item" (indexeditem $.GroupIndex $item.Id $item "") }}
                             <div hx-swap-oob="{{ .HxSwapOob }}">
                                 <div id="desc-{{.GroupIndex}}-{{.ItemIndex}}"
-                                    class='flex-row flex items-center border-transparent border-b-1'>
+                                    class='flex-row flex items-center border-b-1'>
                                     <div class="flex-row flex items-center"
                                         hx-trigger="focus from:#desc-{{.GroupIndex}}-{{.ItemIndex}}-input, focus from:#qty-{{.GroupIndex}}-{{.ItemIndex}}-input"
                                         ws-send value="{{ .Item.Description }}"
@@ -138,7 +140,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <button class="ml-auto" ws-send
+                                    <button class="hover:bg-neutral-300 hover:shadow-sm hover:font-semibold transition-all ml-auto w-5 h-5 rounded-full py-1 px-1 flex items-center justify-center" ws-send
                                         hx-vals='{"actionType": 8, "groupIndex": {{ .GroupIndex }}, "itemIndex": {{ .ItemIndex }}}'>
                                         <span class="i-mdi-close border text-brand-800 text-lg"></span>
                                     </button>
@@ -148,7 +150,7 @@
                             {{ end }}
                         </div>
                         <button ws-send hx-vals='{"actionType": 6, "groupIndex": {{ .GroupIndex }}}'
-                            class="group/add-group rounded px-2 py-1 bg-brand-700 hover:bg-brand-800 text-neutral-100 text-md transition-all border-transparent shadow-md mx-auto mt-2 flex-row flex items-center mb-2">
+                            class="group/add-group rounded px-2 py-1 bg-brand-700 hover:bg-brand-800 text-neutral-100 text-md transition-all border-transparent rouded-full shadow-md mx-auto mt-2 flex-row flex items-center mb-2">
                             <span class="i-mdi-plus text-xl transition-all">
                             </span>
                             New Item
@@ -173,7 +175,7 @@
 
 {{ block "save" . }}
 <div hx-swap-oob="true" id="save" class="fixed -bottom-6 max-w-md px-8 flex justify-end w-full mb-8">
-    {{ if or .IsDirty true }}
+    {{ if .IsDirty }}
     <button hx-put="/lists/{{ .List.Id }}/save" hx-indicator="save-indicator"
         class="rounded px-2 py-1 bg-brand-700 font-semibold text-neutral-100 text-md hover:bg-brand-800 transition-all border-transparent shadow-md hover:font-bold">Save
     </button>
