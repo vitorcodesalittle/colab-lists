@@ -52,10 +52,11 @@ func (t *templates) RenderSignup(w io.Writer, args *SignupArgs) {
 }
 
 type baseArgs struct {
-	ExtraHead   string
-	Body        string
-	Title       string
-	Description string
+	ExtraHead    string
+	Body         string
+	Title        string
+	Description  string
+	UseHotReload bool
 }
 
 func (t *templates) renderBase(w io.Writer, args *baseArgs) {

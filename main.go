@@ -434,6 +434,7 @@ func removeHotReloadCon(conn *websocket.Conn) {
 		}
 	}
 }
+
 func handleHotReload(conn *websocket.Conn) {
 	defer conn.Close()
 	for {
@@ -538,6 +539,7 @@ func deleteCommunitiesHandler(w http.ResponseWriter, r *http.Request) {
 func getPasswordRecoveryHandler(w http.ResponseWriter, r *http.Request) {
 	views.Templates.RenderPasswordRecovery(w, &views.PasswordRecoveryArgs{})
 }
+
 func postPasswordRecoveryHandler(w http.ResponseWriter, r *http.Request) {
 	password := r.FormValue("password")
 	token := r.FormValue("token")
@@ -631,7 +633,9 @@ func main() {
 	http.HandleFunc("POST /password-recovery-request", postPasswordRecoveryRequestHandler)
 
 	// For development purposes only:
-	http.HandleFunc("GET /ws/hot-reload", getHotReloadHandler)
+	if config.HotReload {
+		http.HandleFunc("GET /ws/hot-reload", getHotReloadHandler)
+	}
 
 	log.Printf("Server started at %s\n", config.Listen)
 	httpServer := http.Server{
