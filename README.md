@@ -1,7 +1,5 @@
 # Colablists
 
-4. Create a house and add users to it
-    - Users share all lists in house.
 5. Allow copying list in text format
 6. Allow to import a list from text format
 1. Add form validation
