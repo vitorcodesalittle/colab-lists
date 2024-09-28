@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"vilmasoftware.com/colablists/pkg/list"
@@ -36,11 +37,30 @@ func (l *LiveEditor) Info() {
 	}
 }
 
+func (l *LiveEditor) HandleTimeouts() {
+	ticker := time.NewTicker(5 * time.Minute)
+	for {
+		<-ticker.C
+		println("Starting timeout handler")
+		for k, v := range l.listsById {
+			if time.Since(v.Ui.LastUsed) > 5*time.Minute {
+				println("removing list ", k)
+				for _, conn := range v.connections {
+					l.removeConnection(conn.Conn)
+				}
+				delete(l.listsById, k)
+			}
+		}
+	}
+}
+
 func NewLiveEditor(repository list.ListsRepository) *LiveEditor {
-	return &LiveEditor{
+	editor := &LiveEditor{
 		listRepository: repository,
 		listsById:      make(map[int64]*ListState),
 	}
+	go editor.HandleTimeouts()
+	return editor
 }
 
 func (l *LiveEditor) GetConnectionsOfList(listId int64) []*connection {
@@ -68,7 +88,6 @@ func (l *LiveEditor) HandleWebsocketConn(conn *connection) {
 	for {
 		messageType, p, err := conn.Conn.ReadMessage()
 		if err != nil {
-
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				l.removeConnection(conn.Conn)
 				log.Printf("unexcepted Close Error: %v\n", err)
@@ -77,9 +96,11 @@ func (l *LiveEditor) HandleWebsocketConn(conn *connection) {
 				l.removeConnection(conn.Conn)
 				log.Printf("close Error: %v\n", err)
 				return
+			} else {
+				l.removeConnection(conn.Conn)
+				log.Printf("Unexpected error reading websocket message %v\n", err)
+				return
 			}
-			log.Printf("Unexpected error reading websocket message %v\n", err)
-			continue
 		}
 		switch messageType {
 		case websocket.CloseMessage:
@@ -101,6 +122,10 @@ func (l *LiveEditor) HandleWebsocketConn(conn *connection) {
 			if action.Type == nil {
 				log.Println("ActionType is nil")
 				continue
+			}
+			listState := l.GetCurrentListState(conn.ListId)
+			if listState != nil {
+				listState.Ui.LastUsed = time.Now()
 			}
 			switch *action.Type {
 			case ACTION_FOCUS_ITEM:

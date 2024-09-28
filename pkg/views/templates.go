@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	textTemplate "text/template"
+	"time"
 
 	"vilmasoftware.com/colablists/pkg/list"
 	"vilmasoftware.com/colablists/pkg/user"
@@ -24,6 +25,7 @@ type templates struct {
 type ListUi struct {
 	*list.List
 	ColaboratorsOnline []*UserUi
+	LastUsed           time.Time
 	// Try not to use this
 	// focusMap map[int64]map[int]int
 }
@@ -48,6 +50,7 @@ func NewListUi(list *list.List, user *user.User) *ListUi {
 	return &ListUi{
 		List:               list,
 		ColaboratorsOnline: []*UserUi{{User: user, Color: "#18d825"}},
+		LastUsed:           time.Now(),
 	}
 }
 
