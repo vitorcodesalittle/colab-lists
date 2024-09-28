@@ -10,13 +10,14 @@
         const {actionType} = msg;
         if (actionType === 1) {
             // Handle focus
-            const {groupIndex, itemIndex, color} = msg
-            document.querySelector(`#desc-${groupIndex}-${itemIndex}`).style.borderColor = color;
-            document.querySelector(`#desc-${groupIndex}-${itemIndex}`).classList.add(`border-b-1`);
-            document.querySelector(`#desc-${groupIndex}-${itemIndex} #user-indicator img`).src = '';
+            const {groupIndex, itemIndex, color, avatarUrl} = msg
+            document.querySelector(`#desc-${groupIndex}-${itemIndex} #user-indicator > div`).style.backgroundColor = color;
+            document.querySelector(`#desc-${groupIndex}-${itemIndex} #user-indicator`).style.display = 'block';
+            document.querySelector(`#desc-${groupIndex}-${itemIndex} #user-indicator img`).src = avatarUrl;
         } else if (actionType === 2) {
             // Handle blur
             const {groupIndex, itemIndex, color} = msg;
+            document.querySelector(`#desc-${groupIndex}-${itemIndex} #user-indicator`).style.display = 'none';
             document.querySelector(`#desc-${groupIndex}-${itemIndex}`).style.borderColor = 'transparent'
         }
         return false
@@ -33,7 +34,7 @@
 {{ define "body" }}
 
 {{ template "authnav" }}
-<div class="px-4 py-2 pb-8 max-w-md mx-auto">
+<div class="px-4 py-2 pb-8 max-w-md mx-auto relative">
     {{ if .Editing }}
     <form hx-put="/lists/{{ .List.Id }}"
         hx-vals='{"colaborators": js(Array.from(document.querySelectorAll("select option")).map(opt => opt.value))}'
@@ -92,8 +93,8 @@
                 <div hx-swap-oob="{{ .HxSwapOob }}">
                     <div id="{{.Id}}" class="mt-2 border-brand-700 p-2 border rounded-md mb-2">
                         <div class="flex flex-row items-center w-full">
-                            <input class="border-0 w-40"
-                                value="{{ .Group.Name }}" hx-trigger="change changed throttle:400ms" name="text"
+                            <input class="border-0 w-40" value="{{ .Group.Name }}"
+                                hx-trigger="change changed throttle:400ms" name="text"
                                 hx-vals='{"actionType": 5, "groupIndex": {{ .GroupIndex }}}' ws-send />
                             <button ws-send hx-vals='{"actionType": 7, "groupIndex": {{ .GroupIndex }}}'
                                 class="hover:bg-neutral-300 hover:shadow-sm hover:font-semibold transition-all rounded-full w-8 h-8 ml-auto py-1 px-1 flex items-center justify-center">
@@ -129,9 +130,10 @@
                                                 value="{{ .Item.Quantity }}" name="quantity" type="number"
                                                 id="qty-{{.GroupIndex}}-{{.ItemIndex}}-input" />
                                             {{ end }}
-                                            <div id="user-indicator">
-                                                <div class="absolute -left-3 top-4 bg-cyan-100 rounded-full flex items-center justify-center border-brand-700 border h-5 w-5">
-                                                    <img src="/favicon.ico" width="50%" height="50%" class=""/>
+                                            <div id="user-indicator" class="hidden">
+                                                <div
+                                                    class="absolute -left-3 top-6 bg-cyan-100 rounded-full flex items-center justify-center border-brand-700 border h-5 w-5">
+                                                    <img src="/favicon.ico" width="50%" height="50%" class="" />
                                                 </div>
                                             </div>
                                         </div>
@@ -166,16 +168,16 @@
     </div>
     {{ end }}
 
-    {{ block "save" . }}
-    <div hx-swap-oob="true" id="save" class="fixed -bottom-4 right-4">
-        {{ if .IsDirty }}
-        <button hx-put="/lists/{{ .List.Id }}/save" hx-indicator="save-indicator"
-            class="rounded px-2 py-1 bg-brand-700 text-neutral-100 text-md hover:bg-brand-800 transition-all border-transparent shadow-md hover:font-bold">Save
-            <span class="i-mdi-save m-auto text-lg"></span></button>
-        <p id="save-indicator" class="htmx-indicator">Saving list...</p>
-        {{ end }}
-    </div>
+    <div class="border-green border border-red border-blue boder-pink hidden" />
+</div>
+
+{{ block "save" . }}
+<div hx-swap-oob="true" id="save" class="fixed -bottom-6 max-w-md px-8 flex justify-end w-full mb-8">
+    {{ if or .IsDirty true }}
+    <button hx-put="/lists/{{ .List.Id }}/save" hx-indicator="save-indicator"
+        class="rounded px-2 py-1 bg-brand-700 font-semibold text-neutral-100 text-md hover:bg-brand-800 transition-all border-transparent shadow-md hover:font-bold">Save
+    </button>
     {{ end }}
 </div>
-<div class="border-green border border-red border-blue boder-pink hidden" />
+{{ end }}
 {{ end }}

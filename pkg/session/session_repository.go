@@ -49,7 +49,7 @@ func RestoreSessionsFromDb() error {
 		return err
 	}
 
-	rows, err := sql.Query("SELECT session.*, lu.username FROM luser_session session LEFT JOIN luser lu ON session.luserId = lu.luserId")
+	rows, err := sql.Query("SELECT session.*, lu.username, lu.avatarUrl FROM luser_session session LEFT JOIN luser lu ON session.luserId = lu.luserId")
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func RestoreSessionsFromDb() error {
 	for rows.Next() {
 		user := user.User{}
 		session := &Session{User: &user}
-		err := rows.Scan(&session.SessionId, &session.User.Id, &session.LastUsed, &session.CreatedAt, &session.User.Username)
+		err := rows.Scan(&session.SessionId, &session.User.Id, &session.LastUsed, &session.CreatedAt, &session.User.Username, &session.User.AvatarUrl)
 		if err != nil {
 			return err
 		}

@@ -41,12 +41,12 @@ func (l *List) String() string {
 }
 
 type Item struct {
-	Id          int64
-	GroupId     int64
-	Description string
-	Quantity    int
-	Order       int64
-	Checked     int8
+	Id          int64  `json:"id"`
+	GroupId     int64  `json:"groupId"`
+	Description string `json:"description"`
+	Quantity    int    `json:"quantity"`
+	Order       int64  `json:"order"`
+	Checked     int8   `json:"checked"`
 }
 
 func (i *Item) String() string {

@@ -211,6 +211,7 @@ func (l *LiveEditor) HandleFocusItem(action *FocusItemAction, conn *connection) 
 		Item:       item,
 		Color:      l.GetColaboratorOnline(conn.ListId, conn.User.Id).Color,
 		ActionType: ACTION_FOCUS_ITEM,
+		AvatarUrl:  &conn.User.AvatarUrl,
 	}
 	conns := l.GetConnectionsOfList(conn.ListId)
 	for _, conn2 := range conns {
@@ -320,7 +321,7 @@ func (l *LiveEditor) HandleAddItem(args *AddItemAction, conn *connection) {
 	buf := bytes.NewBufferString(s)
 	color := l.GetColaboratorOnline(conn.ListId, conn.User.Id).Color
 	groupIdStr := strconv.FormatInt(int64(args.GroupIndex), 10)
-	views.Templates.RenderItem(buf, *views.NewIndexedItem(item.GroupId, item.Id, item, color, "beforeend:#items-"+groupIdStr))
+	views.Templates.RenderItem(buf, *views.NewIndexedItem(item.GroupId, item.Id, item, color, nil, "beforeend:#items-"+groupIdStr))
 	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *views.NewListUi(editList.List, conn.User), IsDirty: true})
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
 		conn.Conn.WriteMessage(websocket.TextMessage, buf.Bytes())
@@ -354,7 +355,7 @@ func (l *LiveEditor) HandleDeleteItem(args *DeleteItemArgs, conn *connection) {
 	s := ""
 	buf := bytes.NewBufferString(s)
 	color := l.GetColaboratorOnline(conn.ListId, conn.User.Id).Color
-	i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, &list.Item{}, color, fmt.Sprintf("delete:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
+	i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, &list.Item{}, color, nil, fmt.Sprintf("delete:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
 	views.Templates.RenderItem(buf, i)
 	views.Templates.RenderSaveList(buf, &views.ListArgs{List: *views.NewListUi(editList.List, conn.User), IsDirty: true})
 	for _, conn := range l.GetConnectionsOfList(conn.ListId) {
@@ -378,7 +379,7 @@ func (l *LiveEditor) HandleEditItem(args *EditItemArgs, conn *connection) {
 	s := ""
 	buf := bytes.NewBufferString(s)
 	color := l.GetColaboratorOnline(conn.ListId, conn.User.Id).Color
-	i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, item, color, fmt.Sprintf("outerHTML:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
+	i := *views.NewIndexedItem(args.GroupIndex, args.ItemIndex, item, color, nil, fmt.Sprintf("outerHTML:#desc-%d-%d", args.GroupIndex, args.ItemIndex))
 	if args.Field == "description" {
 		views.Templates.RenderItemDescription(buf, i)
 	} else if args.Field != "quantity" {
