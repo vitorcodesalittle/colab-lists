@@ -33,6 +33,7 @@ type ListCreationForm struct {
 type ListsArgs struct {
 	Lists []list.List
 	Form  ListCreationForm
+	New   bool
 }
 
 func (t *templates) RenderLists(w io.Writer, args *ListsArgs) {
