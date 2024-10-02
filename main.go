@@ -6,11 +6,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/mail"
-	"net/url"
 	"os"
 	"os/signal"
 	"strconv"
@@ -140,6 +138,7 @@ func getListsHandler(w http.ResponseWriter, r *http.Request) {
 			Communities:      communities,
 			DefaultCommunity: community.GetDefault(communities),
 		},
+		New: r.URL.Query().Has("new"),
 	})
 }
 
@@ -166,10 +165,6 @@ func getListDetailHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	allUsers, err := usersRepository.GetAll()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
 
 	user, err := session.GetUserFromSession(r)
 	if err != nil {
@@ -178,10 +173,9 @@ func getListDetailHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	listArgs := &views.ListArgs{
-		List:     *views.NewListUi(&list, user),
-		Editing:  r.URL.Query().Has("edit"),
-		AllUsers: allUsers,
-		IsDirty:  false,
+		List:    *views.NewListUi(&list, user),
+		Editing: r.URL.Query().Has("edit"),
+		IsDirty: false,
 	}
 	list2 := liveEditor.GetCurrentListState(int64(id))
 	if list2 != nil {
@@ -207,10 +201,6 @@ func getUserHandler(w http.ResponseWriter, r *http.Request) {
 func getUsersHandler(w http.ResponseWriter, r *http.Request) {
 	// Get id from path parameter
 	query := r.URL.Query().Get("q")
-	if len(query) < 3 {
-		http.Error(w, "Query should be at least 3 characters long", http.StatusBadRequest)
-		return
-	}
 	users, err := usersRepository.Search(query)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -277,6 +267,12 @@ func putListSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type UpdateListParams struct {
+	Title       *string   `json:"title"`
+	Description *string   `json:"description"`
+	Members     *[]string `json:"members"`
+}
+
 func putListHandler(w http.ResponseWriter, r *http.Request) {
 	listId, err := strconv.ParseInt(r.PathValue("listId"), 10, 64)
 	if err != nil {
@@ -286,31 +282,29 @@ func putListHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	formBody, err := io.ReadAll(r.Body)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+
+	var params UpdateListParams
+	json.NewDecoder(r.Body).Decode(&params)
+	if params.Title != nil {
+		list.Title = *params.Title
 	}
-	urlParsed, err := url.Parse("http://localhost:8080?" + string(formBody))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	if params.Description != nil {
+		list.Description = *params.Description
 	}
-	colaborators := urlParsed.Query()["colaborators"]
-	list.Title = urlParsed.Query().Get("title")
-	list.Description = urlParsed.Query().Get("description")
-	list.Colaborators = []user.User{}
-	for _, colaborator := range colaborators {
-		colaboratorId, err := strconv.Atoi(colaborator)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+	if params.Members != nil {
+		list.Colaborators = []user.User{}
+		for _, colaborator := range *params.Members {
+			colaboratorId, err := strconv.Atoi(colaborator)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+			}
+			user, err := usersRepository.Get(int64(colaboratorId))
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			list.Colaborators = append(list.Colaborators, user)
 		}
-		user, err := usersRepository.Get(int64(colaboratorId))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		list.Colaborators = append(list.Colaborators, user)
 	}
 	listv, err := listsRepository.Update(&list)
 	if err != nil {
@@ -318,7 +312,10 @@ func putListHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	liveEditor.GetCurrentListState(listId).Ui.List = listv
+	listState := liveEditor.GetCurrentListState(listId)
+	if listState != nil {
+		listState.Ui.List = listv
+	}
 
 	w.Header().Add("HX-Redirect", fmt.Sprintf("/lists/%d", listId))
 }
