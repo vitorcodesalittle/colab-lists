@@ -2,8 +2,10 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -37,19 +39,21 @@ func ParseConfig() *Config {
 	flag.DurationVar(&config.SessionTimeout, "session-timeout", 4*time.Hour, "Session timeout")
 	flag.StringVar(&config.Host, "smtp-host", "", "SMTP Host")
 	flag.IntVar(&config.Port, "smtp-port", 0, "SMTP Port")
-	flag.StringVar(&config.Username, "smtp-username", "", "SMTP Username")
-	flag.StringVar(&config.Password, "smtp-password", "", "SMTP Password")
 	flag.StringVar(&config.FromNoReply, "smtp-noreply", "something.something.noreply@domain.com", "SMTP Password")
+	flag.StringVar(&config.Password, "smtp-password", "", "SMTP Password")
+	flag.StringVar(&config.Username, "smtp-username", "", "SMTP Username")
 	flag.BoolVar(&config.HotReload, "hot-reload", false, "If passed, will serve a websocket endpoint that identifies this run, allowing the client to restart")
 	flag.StringVar(&config.AppUrl, "app-url", "https://lists.vilmasoftware.com.br", "the URL of the app")
 
 	flag.Parse()
-	config.SmtpConfig.Password = "CEzptXqCRuhP6M"
 	if config.DatabaseUrl == "" {
 		panic("--database-url is required")
 	}
 	if config.Listen == "" {
 		panic("-listen is required")
+	}
+	if !allOrNoneFilled([]string{config.Host, config.Username, strconv.Itoa(config.Port), config.Password, config.FromNoReply}) {
+		panic("All SMTP parameters must be filled, or none if you don't intend to use email service")
 	}
 	if config.UseTls {
 		_, err := os.Stat(config.PrivateKey)
@@ -66,6 +70,20 @@ func ParseConfig() *Config {
 	}
 
 	return config
+}
+
+func allOrNoneFilled(arr []string) bool {
+	var emptyCount int
+	for i, v := range arr {
+		if v == "" {
+			fmt.Printf("SMTP parameter %d is empty\n", i)
+			emptyCount++
+		}
+	}
+	if emptyCount != 0 && emptyCount != len(arr) {
+		return false
+	}
+	return true
 }
 
 var config *Config
