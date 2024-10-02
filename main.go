@@ -556,6 +556,7 @@ func postPasswordRecoveryRequestHandler(w http.ResponseWriter, r *http.Request) 
 	email := r.FormValue("email")
 	if _, err := mail.ParseAddress(email); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 	if err := recoveryService.CreatePasswordRecoveryRequest(email); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
