@@ -169,7 +169,7 @@
     <input id="search-user" type="text" placeholder="Search for a user"
         class="border border-neutral-300 rounded p-2 w-full" @input.debounce="fetchResults" />
 
-    Selected {{if . }}({{ . | len }}{{end}}):
+    Selected {{if . }}({{ . | len }}){{end}}:
     <div class="mt-2 inline-block w-full">
         <template x-for="(user, index) in value" :key="user.id">
             <div class="space-x-2 space-y-1 flex flex-row items-center border border-brand-800 w-fit px-2 py-1 rounded">
