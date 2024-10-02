@@ -112,8 +112,8 @@ func (h *HouseRepository) FindMyHouses(userId int64) ([]*Community, error) {
 	defer db.Close()
 	rows, err := db.Query(`SELECT c.*
     FROM community c
-    LEFT JOIN community_members m ON c.communityId = m.communityId
-    WHERE m.memberId = ? OR c.createdByLuserId = ?`, userId, userId)
+    WHERE c.createdByLuserId = ?
+    OR c.communityId IN (SELECT m.communityId FROM community_members m WHERE m.memberId = ?)`, userId, userId)
 	if err != nil {
 		return nil, err
 	}

@@ -165,7 +165,7 @@ func (s *SqlUsersRepository) Search(query string) ([]*User, error) {
 		return nil, err
 	}
 	defer conn.Close()
-	rs, err := conn.Query(`SELECT * FROM luser WHERE username LIKE CONCAT(?, '%') OR email LIKE CONCAT(?, '%')`, query, query)
+	rs, err := conn.Query(`SELECT * FROM luser WHERE username LIKE CONCAT(?, '%') OR email LIKE CONCAT(?, '%') LIMIT 20`, query, query)
 	if err != nil {
 		return nil, err
 	}

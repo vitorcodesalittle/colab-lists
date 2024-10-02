@@ -153,7 +153,7 @@ func (s *SqlListRepository) Get(id int64) (List, error) {
 	if err != nil {
 		return List{}, err
 	}
-	rscolaborators, err := stmt.Query(resultlis.Creator.Id)
+	rscolaborators, err := stmt.Query(id)
 	if err != nil {
 		return List{}, err
 	}
@@ -229,12 +229,11 @@ func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
 	rs, err := db.Query(`
   SELECT l.*
   FROM list l
-  LEFT JOIN list_colaborators lc ON l.listId = lc.listId
-  LEFT JOIN luser lu ON lc.luserId = lu.luserId
-  WHERE lu.luserId = ?
-  OR l.creatorLuserId = ?
+  WHERE l.creatorLuserId = ?
+  OR l.listId IN (SELECT listId FROM list_colaborators WHERE luserId = ?)
+  OR l.listId IN (SELECT listId FROM community_members WHERE memberId = ?)
   ORDER BY l.updatedAt DESC
-  `, userId, userId)
+  `, userId, userId, userId)
 	if err == sql.ErrNoRows {
 		return make([]List, 0), nil
 	} else if err != nil {
@@ -336,6 +335,7 @@ func (s *SqlListRepository) Update(list *List) (*List, error) {
 			}
 		}
 	}
+	println("Inserting colaborators")
 	for _, user := range list.Colaborators {
 		_, err = tx.Exec(`
                 INSERT INTO list_colaborators (listId, luserId)
