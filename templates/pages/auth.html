@@ -18,7 +18,8 @@
             {{ end }}
         </div>
     </form>
-    <a href="/password-recovery-request" class="mt-5 cursor-pointer border-transparent border hover:border-b-brand-500 transition">Forgot my
+    <a href="/password-recovery-request"
+        class="mt-5 cursor-pointer border-transparent border hover:border-b-brand-500 transition">Forgot my
         password</a>
     <a href="/signup" class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">Create an
         account</a>
@@ -58,21 +59,34 @@
 
 
 {{ define "bodypasswordrecovery-recover" }}
-<form hx-post="/password-recovery" hx-vals="js:{token: new URL(window.location).searchParams.get('token')}">
-    <label>New password:</label>
-    <input type="password" name="password" />
-    <label>Confirm new password:</label>
-    <input type="password" />
-    <button type="submit">Confirm</button>
-</form>
+<div class="px-4 py-2 max-w-md mx-auto">
+    <div class="px-4 py-2 max-w-md mx-auto">
+        <div class="border rounded border-brand-700 px-2 py-1 space-y-3">
+            <h3 class="mx-auto w-fit">Password recovery</h3>
+            <form hx-post="/password-recovery" class="flex flex-col items-center" hx-vals="js:{token: new URL(window.location).searchParams.get('token')}">
+                <label>New password:</label>
+                <input type="password" name="password" />
+                <label>Confirm new password:</label>
+                <input type="password" name="confirmPassword" />
+                <button class="rounded p-2 mr-auto ml-auto bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold mx-auto mt-4" type="submit">Confirm</button>
+            </form>
+        </div>
+    </div>
+</div>
 {{ end }}
 
 
 {{ define "bodypasswordrecovery-request" }}
-<form hx-post="/password-recovery-request">
-    <label>Email:</label>
-    <input type="email" name="email" />
-    <button type="submit">Confirm</button>
-</form>
+<div class="px-4 py-2 max-w-md mx-auto">
+    <div class="border rounded border-brand-700 px-2 py-1 space-y-3">
+        <h3 class="mx-auto w-fit">Password recovery</h3>
+        <p>You'll get a link to recover your password in your email from <code>vilmasoftware@gmail.com</code></p>
+        <form hx-post="/password-recovery-request" class="flex flex-col item-center">
+            <label>Email:</label>
+            <input type="email" name="email" />
+            <button type="submit"
+                class="rounded p-2 mr-auto ml-auto bg-brand-800 text-neutral-100 text-md hover:bg-brand-600 transition-all border-transparent shadow-md hover:font-bold mx-auto mt-4">Confirm</button>
+        </form>
+    </div>
+</div>
 {{ end }}
-
