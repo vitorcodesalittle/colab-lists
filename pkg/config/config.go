@@ -2,10 +2,8 @@ package config
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -52,9 +50,6 @@ func ParseConfig() *Config {
 	if config.Listen == "" {
 		panic("-listen is required")
 	}
-	if !allOrNoneFilled([]string{config.Host, config.Username, strconv.Itoa(config.Port), config.Password, config.FromNoReply}) {
-		panic("All SMTP parameters must be filled, or none if you don't intend to use email service")
-	}
 	if config.UseTls {
 		_, err := os.Stat(config.PrivateKey)
 		if err != nil {
@@ -70,20 +65,6 @@ func ParseConfig() *Config {
 	}
 
 	return config
-}
-
-func allOrNoneFilled(arr []string) bool {
-	var emptyCount int
-	for i, v := range arr {
-		if v == "" {
-			fmt.Printf("SMTP parameter %d is empty\n", i)
-			emptyCount++
-		}
-	}
-	if emptyCount != 0 && emptyCount != len(arr) {
-		return false
-	}
-	return true
 }
 
 var config *Config
