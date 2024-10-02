@@ -1,5 +1,4 @@
 {{ define "communitiesextrahead" }}
-<script src="https://cdn.jsdelivr.net/gh/Emtyloc/json-enc-custom@main/json-enc-custom.js"></script>
 {{ end }}
 
 {{ define "communitiesbody" }}
@@ -11,9 +10,6 @@
             <h2>Communities</h2>
             <div class="flex-row flex items-center">
                 {{ if or .Query.SelectedId .Query.EditingId }}
-                <div class="rounded p-2 cursor-pointer hover:bg-neutral-200"
-                    hx-delete="/communities/{{ .SelectedCommunity.CommunityId }}">Remove</div>
-                <a href="/communities?editingId={{ .Query.SelectedId }}"><span>Edit</span></a>
                 {{ else }}
                 <a href="/communities?new=true" class=" bg-brand-700 p-1 rounded-full flex items-center justify-center">
                     <span class="i-mdi-plus text-neutral-200 w-5 h-5"></span>
@@ -24,7 +20,21 @@
         {{ block "selectedcommunity" .SelectedCommunity }}
         {{ if . }}
         <section id="selected-house">
-            <h3>{{ .CommunityName }}</h3>
+            <div class="flex flex-row items-center justify-between">
+                <h3>{{ .CommunityName }}</h3>
+                <div class="flex flex-row items-center space-x-2">
+                    <div class="group/delete hover:bg-red-700 transition-all flex items-center font-semibold px-2 py-1 rounded bg-red-500 cursor-pointer text-neutral-200"
+                        hx-delete="/communities/{{ .CommunityId }}">
+                        <span class="font-thin i-mdi-delete text-neutral-200 text-xl mr-1"></span>
+                        Delete
+                    </div>
+                    <a href="/communities?editingId={{ .CommunityId }}"
+                        class="group/edit hover:bg-brand-800 flex items-center font-semibold px-2 py-1 rounded bg-brand-700 text-neutral-200">
+                        <span class="transition-all i-mdi-edit text-xl mr-1"></span>
+                        <p>Edit</p>
+                    </a>
+                </div>
+            </div>
             <label>Members:</label>
             {{ range .Members }}
             {{ template "usercard" .User }}
@@ -35,9 +45,12 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {{ range .Communities }}
-            <a href="/communities?selectedId={{ .CommunityId }}">
+            <a href="/communities?selectedId={{ .CommunityId }}" class="p-2 rounded border-brand-800 border">
                 <h3>{{ .CommunityName }}</h3>
-                <p>{{ .CreatedAt }}</p>
+                <label>Criado em:</label>
+                <time datetime="{{ .CreatedAt }}">
+                    {{ .UpdatedAt.Format "2006-01-02" }}
+                </time>
             </a>
             {{ end }}
         </div>

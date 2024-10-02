@@ -25,11 +25,16 @@
     </script>
 
     <script>
-        document.querySelectorAll('time').forEach($e => {
-            $e.innerHTML = date.toLocaleDateString();
-        });
+        console.log("Fixing dates")
+        window.onload = function () {
+            document.querySelectorAll('time').forEach($e => {
+                console.log("Hey yo")
+                $e.innerHTML = new Date($e.getAttribute("datetime")).toLocaleString()
+            });
+        }
     </script>
 
+    <script src="https://cdn.jsdelivr.net/gh/Emtyloc/json-enc-custom@main/json-enc-custom.js"></script>
     <script src="//unpkg.com/alpinejs" defer></script>
     {{ if .UseHotReload }}
     <script>
@@ -83,11 +88,31 @@
             <div
                 class="bg-neutral-100 min-h-2/3 rounded shadow-2xl z-50 text-brand-800 flex flex-col w-56 p-4 pl-8 pt-8 space-y-2">
                 <a href="/communities"
-                    class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">Communities</a>
-                <a href="/lists"
-                    class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">Lists</a>
+                    class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">
+                    <div>
+
+
+                    <span class="i-mdi-account-group text-lg font-weight-thin"></span>
+                        Communities
+                    </div>
+                </a>
+                <a href="/lists" class="cursor-pointer border-transparent border hover:border-b-brand-500 transition">
+                    <span class="i-mdi-communities text-lg font-weight-thin">
+                        <div>
+
+                    <span class="i-mdi-list-status text-lg font-weight-thin"></span>
+                            Lists
+                        </div>
+                    </span>
+                </a>
                 <a href="/logout"
-                    class="cursor-pointer border-transparent border hover:border-b-brand-500 transition" style="margin-top: 196px">Logout</a>
+                    class="cursor-pointer border-transparent flex flex-row items-center space-x-2 border hover:border-b-brand-500 transition"
+                    style="margin-top: 196px">
+                    <span class="i-mdi-logout text-lg font-weight-thin"></span>
+                    <div>
+                        Logout
+                    </div>
+                </a>
             </div>
         </div>
     </div>
@@ -129,8 +154,7 @@
 
 {{ define "selectuser" }}
 
-<div
-    x-data="{ searchResult: [], value: [
+<div x-data="{ searchResult: [], value: [
             {{ if . }}
             {{ range . }}
             { id: {{ .Id }}, username: '{{ .Username }}', avatarUrl: '{{ .AvatarUrl }}' },
@@ -142,15 +166,17 @@
         }
     }">
 
-    <p x-text="'Total result ' + searchResult.length "></p>
     <input id="search-user" type="text" placeholder="Search for a user"
         class="border border-neutral-300 rounded p-2 w-full" @input.debounce="fetchResults" />
-    <div class="mt-2">
-        Selected:
+
+    Selected ({{ . | len }}):
+    <div class="mt-2 inline-block w-full">
         <template x-for="(user, index) in value" :key="user.id">
-            <div class="flex flex-row items-center space-x-2">
+            <div class="space-x-2 space-y-1 flex flex-row items-center border border-brand-800 w-fit px-2 py-1 rounded">
                 <div x-text="user.username"></div>
-                <button @click="removeUser(user)">x</button>
+                <button @click="removeUser(user)" class="rounded-full h-6 w-6">
+                    <span class="i-mdi-close"></span>
+                </button>
                 <input class="hidden" :name="`members[${index}]`" :value="user.id" />
             </div>
         </template>

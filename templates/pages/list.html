@@ -37,18 +37,15 @@
 <div class="px-4 py-2 pb-8 max-w-md mx-auto relative">
     {{ if .Editing }}
     <form hx-put="/lists/{{ .List.Id }}"
+        hx-ext="json-enc-custom"
         hx-vals='{"colaborators": js(Array.from(document.querySelectorAll("select option")).map(opt => opt.value))}'
         class="flex-col space-y-1 flex">
+        <label for="title">Title:</label>
         <input class="input-h3" name="title" value="{{ .List.Title }}" placeholder="Name your list" />
+        <label for="description">Description:</label>
         <input name="description" value="{{ .List.Description }}" placeholder="Describe your list" />
-        <label>Colaborators {{ .AllUsers | len }}</label>
-        <select multiple name="colaborators">
-            {{ range .AllUsers }}
-            <option value="{{ .Id }}">
-                {{ .Username }}
-            </option>
-            {{ end }}
-        </select>
+        <label>Colaborators:</label>
+        {{ template "selectuser" .List.Colaborators }}
         <button type="submit">Save</button>
 
     </form>

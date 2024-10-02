@@ -5,10 +5,10 @@
         <div class="flex flex-col items-center">
             <div class="flex flex-row items-center w-full justify-between">
                 <h2>Your Lists</h2>
-                <button @click="creatingList = true"
+                <a href="/lists?new=true"
                     class=" bg-brand-700 p-1 rounded-full flex items-center justify-center">
                     <span class="i-mdi-plus text-neutral-200 w-5 h-5"></span>
-                </button>
+                </a>
             </div>
             <ul class="w-full space-y-2">
                 {{ range .Lists }}
@@ -30,12 +30,13 @@
             </ul>
             <span>You have a total of {{ .Lists | len }} lists</span>
         </div>
+        {{ if .New }}
         <div>
-            <div x-show="creatingList" class="flex flex-col items-center" @click.outside="creatingList = false">
+            <div class="flex flex-col items-center">
 
                 <div class="fixed top-0 left-0 w-screen h-screen bg-gray-200 px-8 flex flex-col items-center"
                     style="background-color: rgba(0, 0, 0, 0.5)" x-data="{}">
-                    <div class="bg-neutral-100 p-4 rounded mt-16 w-fit" style="max-width: 99%" @click.outside="creatingList = false">
+                    <div @click.outside="window.history.go(-1)" class="bg-neutral-100 p-4 rounded mt-16 w-fit" style="max-width: 99%">
                         <h3>New List</h3>
                         <form method="post" action="/lists" class="flex flex-col space-y-1">
                             <label for="title">Title:</label>
@@ -56,7 +57,7 @@
                 </div>
             </div>
         </div>
+        {{ end }}
     </div>
-</div>
 
-{{ end }}
+    {{ end }}
