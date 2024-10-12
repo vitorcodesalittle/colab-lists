@@ -13,7 +13,7 @@ import (
 	"vilmasoftware.com/colablists/pkg/user"
 )
 
-const CleanerInterval time.Duration = 5 * time.Minute
+const CleanerInterval time.Duration = 36 * time.Hour
 
 var SessionsMap map[string]*Session = make(map[string]*Session)
 
@@ -55,6 +55,7 @@ func GetUserFromSession(r *http.Request) (*user.User, error) {
 	if !ok {
 		return nil, errors.New("Session not found")
 	}
+	SessionsMap[sessionId.Value].LastUsed = time.Now()
 	return session.User, nil
 }
 
@@ -62,18 +63,20 @@ func SessionPeriodicallyCleaner() {
 	ticker := time.NewTicker(CleanerInterval)
 	for {
 		<-ticker.C
+		db, err := infra.CreateConnection()
+		if err != nil {
+			log.Printf("Failed to clean sessions because of database connection error %v", err)
+			continue
+		}
 		for sessionId, session := range SessionsMap {
-			if time.Since(session.LastUsed) > config.GetConfig().SessionTimeout {
-				db, err := infra.CreateConnection()
-				if err != nil {
-					log.Printf("Failed to delete session %v because of database connection error %v", sessionId, err)
-				}
+			if time.Since(session.CreatedAt) > config.GetConfig().SessionTimeout {
 				err = deleteSessionById(sessionId, db)
 				if err != nil {
 					log.Printf("Failed to delete session %v\n", sessionId)
 				}
-				delete(SessionsMap, sessionId)
 			}
 		}
+		SessionsMap = make(map[string]*Session)
+		db.Close()
 	}
 }
