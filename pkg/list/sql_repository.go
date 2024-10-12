@@ -250,7 +250,6 @@ func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
 	}
 	comms := make(map[int64]*community.Community)
 	for _, list := range ls {
-		log.Printf("Getting comm for list %v\n", list)
 		if list.Community != nil {
 			comm, ok := comms[list.Community.CommunityId]
 			if !ok {
@@ -262,9 +261,6 @@ func (s *SqlListRepository) GetAll(userId int64) ([]List, error) {
 			} else {
 				list.Community = comm
 			}
-			log.Printf("Got comm %v\n", list.Community)
-		} else {
-			log.Printf("No comm")
 		}
 	}
 
