@@ -39,6 +39,7 @@ func (l *LiveEditor) Info() {
 
 func (l *LiveEditor) HandleTimeouts() {
 	ticker := time.NewTicker(24 * time.Hour)
+	defer ticker.Stop()
 	for {
 		<-ticker.C
 		for k, v := range l.listsById {

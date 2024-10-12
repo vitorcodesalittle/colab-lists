@@ -61,6 +61,7 @@ func GetUserFromSession(r *http.Request) (*user.User, error) {
 
 func SessionPeriodicallyCleaner() {
 	ticker := time.NewTicker(CleanerInterval)
+	defer ticker.Stop()
 	for {
 		<-ticker.C
 		db, err := infra.CreateConnection()
