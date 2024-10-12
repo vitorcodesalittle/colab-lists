@@ -262,9 +262,6 @@ func putListSaveHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// TODO: send changes to all users
 	views.Templates.RenderSaveList(w, &views.ListArgs{List: *views.NewListUi(list, user), IsDirty: false})
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
 }
 
 type UpdateListParams struct {
