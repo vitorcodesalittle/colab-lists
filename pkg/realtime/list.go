@@ -38,16 +38,11 @@ func (l *LiveEditor) Info() {
 }
 
 func (l *LiveEditor) HandleTimeouts() {
-	ticker := time.NewTicker(5 * time.Minute)
+	ticker := time.NewTicker(24 * time.Hour)
 	for {
 		<-ticker.C
-		println("Starting timeout handler")
 		for k, v := range l.listsById {
-			if time.Since(v.Ui.LastUsed) > 5*time.Minute {
-				println("removing list ", k)
-				for _, conn := range v.connections {
-					l.removeConnection(conn.Conn)
-				}
+			if time.Since(v.Ui.LastUsed) > 2*time.Hour {
 				delete(l.listsById, k)
 			}
 		}
@@ -71,41 +66,25 @@ func (l *LiveEditor) GetConnectionsOfList(listId int64) []*connection {
 	return conns.connections
 }
 
-func (l *LiveEditor) removeConnection(conn *websocket.Conn) {
-	for k, v := range l.listsById {
-		connections := make([]*connection, 0)
-		for _, c := range v.connections {
-			if c.Conn != conn {
-				connections = append(connections, c)
-			}
-		}
-		l.listsById[k].connections = connections
-	}
-}
-
 func (l *LiveEditor) HandleWebsocketConn(conn *connection) {
 	conn.Conn.WriteMessage(websocket.TextMessage, []byte("Hello"))
 	for {
 		messageType, p, err := conn.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				l.removeConnection(conn.Conn)
 				log.Printf("unexcepted Close Error: %v\n", err)
 				return
 			} else if websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				l.removeConnection(conn.Conn)
 				log.Printf("close Error: %v\n", err)
 				return
 			} else {
-				l.removeConnection(conn.Conn)
 				log.Printf("Unexpected error reading websocket message %v\n", err)
 				return
 			}
 		}
 		switch messageType {
 		case websocket.CloseMessage:
-			l.removeConnection(conn.Conn)
-			continue
+			return
 		case websocket.PingMessage:
 			continue
 		case websocket.PongMessage:
