@@ -6,9 +6,9 @@ import (
 	"log"
 	"time"
 
-	"vilmasoftware.com/colablists/pkg/community"
-	infra "vilmasoftware.com/colablists/pkg/infra"
-	"vilmasoftware.com/colablists/pkg/user"
+	"vilmasoftware.com/colablists/internal/community"
+	infra "vilmasoftware.com/colablists/internal/infra"
+	"vilmasoftware.com/colablists/internal/user"
 )
 
 type SqlListRepository struct{}

@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"vilmasoftware.com/colablists/pkg/config"
-	"vilmasoftware.com/colablists/pkg/infra"
-	"vilmasoftware.com/colablists/pkg/user"
+	"vilmasoftware.com/colablists/internal/config"
+	"vilmasoftware.com/colablists/internal/infra"
+	"vilmasoftware.com/colablists/internal/user"
 )
 
 type Recovery struct {

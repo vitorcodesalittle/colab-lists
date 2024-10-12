@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 
-	"vilmasoftware.com/colablists/pkg/infra"
+	"vilmasoftware.com/colablists/internal/infra"
 )
 
 const migrationsFolder = "migrations"

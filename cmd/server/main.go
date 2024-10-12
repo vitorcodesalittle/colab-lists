@@ -17,14 +17,14 @@ import (
 
 	"github.com/gorilla/websocket"
 	migrate "vilmasoftware.com/colablists/cmd"
-	recovery "vilmasoftware.com/colablists/pkg"
-	"vilmasoftware.com/colablists/pkg/community"
-	"vilmasoftware.com/colablists/pkg/config"
-	"vilmasoftware.com/colablists/pkg/list"
-	"vilmasoftware.com/colablists/pkg/realtime"
-	"vilmasoftware.com/colablists/pkg/session"
-	"vilmasoftware.com/colablists/pkg/user"
-	"vilmasoftware.com/colablists/pkg/views"
+	recovery "vilmasoftware.com/colablists/internal"
+	"vilmasoftware.com/colablists/internal/community"
+	"vilmasoftware.com/colablists/internal/config"
+	"vilmasoftware.com/colablists/internal/list"
+	"vilmasoftware.com/colablists/internal/realtime"
+	"vilmasoftware.com/colablists/internal/session"
+	"vilmasoftware.com/colablists/internal/user"
+	"vilmasoftware.com/colablists/internal/views"
 )
 
 var (

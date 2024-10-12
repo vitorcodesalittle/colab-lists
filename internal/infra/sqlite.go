@@ -5,7 +5,7 @@ import (
 	"os"
 
 	_ "github.com/mattn/go-sqlite3"
-	"vilmasoftware.com/colablists/pkg/config"
+	"vilmasoftware.com/colablists/internal/config"
 )
 
 type Queryable interface {

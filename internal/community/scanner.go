@@ -1,6 +1,6 @@
 package community
 
-import "vilmasoftware.com/colablists/pkg/user"
+import "vilmasoftware.com/colablists/internal/user"
 
 type Scannable interface {
 	Scan(dest ...interface{}) error

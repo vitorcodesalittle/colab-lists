@@ -1,8 +1,8 @@
 package session
 
 import (
-	"vilmasoftware.com/colablists/pkg/infra"
-	"vilmasoftware.com/colablists/pkg/user"
+	"vilmasoftware.com/colablists/internal/infra"
+	"vilmasoftware.com/colablists/internal/user"
 )
 
 func SaveSessionsInDb() error {

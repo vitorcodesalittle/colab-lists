@@ -3,9 +3,9 @@ package realtime
 import (
 	"strconv"
 
-	"vilmasoftware.com/colablists/pkg/list"
-	"vilmasoftware.com/colablists/pkg/user"
-	"vilmasoftware.com/colablists/pkg/views"
+	"vilmasoftware.com/colablists/internal/list"
+	"vilmasoftware.com/colablists/internal/user"
+	"vilmasoftware.com/colablists/internal/views"
 )
 
 type ListState struct {

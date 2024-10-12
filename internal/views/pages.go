@@ -5,9 +5,9 @@ import (
 	"io"
 	textTemplate "text/template"
 
-	"vilmasoftware.com/colablists/pkg/community"
-	"vilmasoftware.com/colablists/pkg/list"
-	"vilmasoftware.com/colablists/pkg/user"
+	"vilmasoftware.com/colablists/internal/community"
+	"vilmasoftware.com/colablists/internal/list"
+	"vilmasoftware.com/colablists/internal/user"
 )
 
 func (t *templates) RenderIndex(w io.Writer, args *IndexArgs) {

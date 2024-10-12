@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
-	"vilmasoftware.com/colablists/pkg/infra"
+	"vilmasoftware.com/colablists/internal/infra"
 )
 
 type SqlUsersRepository struct{}

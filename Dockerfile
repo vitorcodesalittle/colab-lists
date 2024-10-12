@@ -6,7 +6,7 @@ COPY . .
 RUN apk update && apk upgrade
 RUN apk add --no-cache gcc
 RUN apk add --no-cache musl-dev
-RUN CGO_ENABLED=1 go build -o /app/main -ldflags "-s -w" .
+RUN CGO_ENABLED=1 go build -o /app/main -ldflags "-s -w" ./cmd/server/main.go
 
 FROM alpine:3.19
 WORKDIR /app

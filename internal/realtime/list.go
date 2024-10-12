@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"vilmasoftware.com/colablists/pkg/list"
-	"vilmasoftware.com/colablists/pkg/user"
-	"vilmasoftware.com/colablists/pkg/views"
+	"vilmasoftware.com/colablists/internal/list"
+	"vilmasoftware.com/colablists/internal/user"
+	"vilmasoftware.com/colablists/internal/views"
 )
 
 type connection struct {

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"vilmasoftware.com/colablists/pkg/infra"
+	"vilmasoftware.com/colablists/internal/infra"
 )
 
 type HouseRepository struct{}

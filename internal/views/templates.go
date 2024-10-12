@@ -6,8 +6,8 @@ import (
 	textTemplate "text/template"
 	"time"
 
-	"vilmasoftware.com/colablists/pkg/list"
-	"vilmasoftware.com/colablists/pkg/user"
+	"vilmasoftware.com/colablists/internal/list"
+	"vilmasoftware.com/colablists/internal/user"
 )
 
 var Templates *templates = newTemplates()

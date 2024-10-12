@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 
 	gomail "gopkg.in/mail.v2"
-	"vilmasoftware.com/colablists/pkg/config"
+	"vilmasoftware.com/colablists/internal/config"
 )
 
 func SendEmail(to []string, subject string, body string) error {

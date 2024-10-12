@@ -3,7 +3,7 @@ package community
 import (
 	"time"
 
-	"vilmasoftware.com/colablists/pkg/user"
+	"vilmasoftware.com/colablists/internal/user"
 )
 
 type Community struct {

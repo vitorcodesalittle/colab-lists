@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"vilmasoftware.com/colablists/pkg/community"
-	"vilmasoftware.com/colablists/pkg/user"
+	"vilmasoftware.com/colablists/internal/community"
+	"vilmasoftware.com/colablists/internal/user"
 )
 
 type List struct {
